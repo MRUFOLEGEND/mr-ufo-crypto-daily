@@ -939,7 +939,7 @@ function updateMaster() {
   if(keyEvent) html+=`<br>⚡ Next event: <strong>${keyEvent}</strong>`;
   html+=`<br><span style="color:var(--dim)">Dominant factor: ${labels[strongest] || '—'} (${(S.scores[strongest]||0).toFixed(1)}). `;
   if(total>=2) html+='Multiple factors aligned bullish — high confluence long setup.';
-  else if(total<=−2) html+='Multiple factors aligned bearish — avoid longs, consider short setups.';
+  else if(total<=-2) html+='Multiple factors aligned bearish — avoid longs, consider short setups.';
   else if(total>0.5) html+='Slight bullish edge. Prefer longs on dips, watch for HTF confirmation.';
   else if(total<-0.5) html+='Slight bearish tilt. Be cautious with longs, reduce exposure.';
   else html+='No clear edge. Range-trading environment, wait for breakout/confluence.';
