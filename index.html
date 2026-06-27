@@ -656,7 +656,7 @@ const S={
 };
 
 // ─── FETCH HELPERS ────────────────────────────────────────
-async function apiFetch(url, timeout=9000) {
+async function apiFetch(url, timeout=6000) {
   const ctrl=new AbortController();
   const t=setTimeout(()=>ctrl.abort(),timeout);
   try {
@@ -971,40 +971,49 @@ function setScoreEl(id, val) {
 // ─── MAIN REFRESH ────────────────────────────────────────
 async function refreshAll() {
   document.getElementById('last-upd').textContent='Refreshing…';
-
   const TF_IDS=TFS.map(t=>t.id);
+  const tfResults={};
 
-  try {
-    // Parallel fetch — Binance for prices/klines, CoinPaprika for global, alternative.me for F&G
-    const [tickerRes, week7Res, paprikaRes, usdtRes, fgRes, fundRes, ...klineRes] = await Promise.allSettled([
-      apiFetch(`${BINANCE}/ticker/24hr?symbols=%5B%22BTCUSDT%22%2C%22ETHUSDT%22%2C%22SOLUSDT%22%5D`),
-      apiFetch(`${BINANCE}/ticker?symbol=BTCUSDT&windowSize=7d`),
-      apiFetch('https://api.coinpaprika.com/v1/global'),
-      apiFetch('https://api.coinpaprika.com/v1/tickers/usdt-tether?quotes=USD'),
-      apiFetch('https://api.alternative.me/fng/?limit=1'),
-      apiFetch(`${BINANCE_F}/premiumIndex?symbol=BTCUSDT`),
-      ...TF_IDS.map(tf=>apiFetch(klinesUrl('BTCUSDT',tf,250)))
-    ]);
+  // Fire all fetches independently — each updates the UI as soon as it lands
+  const safe=p=>p.catch(e=>{console.warn(e);return null;});
 
-    if(tickerRes.status==='fulfilled') updatePricesFromBinance(tickerRes.value, week7Res.status==='fulfilled'?week7Res.value:null);
-    if(paprikaRes.status==='fulfilled') updateGlobalFromPaprika(paprikaRes.value, usdtRes.status==='fulfilled'?usdtRes.value:{});
-    if(fgRes.status==='fulfilled') updateFG(fgRes.value.data[0]);
-    if(fundRes.status==='fulfilled') updateFunding(fundRes.value);
+  // Prices — Binance ticker (fastest, shows up first)
+  safe(Promise.all([
+    apiFetch(`${BINANCE}/ticker/24hr?symbols=%5B%22BTCUSDT%22%2C%22ETHUSDT%22%2C%22SOLUSDT%22%5D`),
+    apiFetch(`${BINANCE}/ticker?symbol=BTCUSDT&windowSize=7d`)
+  ])).then(res=>{
+    if(res) updatePricesFromBinance(res[0], res[1]);
+  });
 
-    // Build TF results map
-    const tfResults={};
-    klineRes.forEach((r,i)=>{
-      if(r.status==='fulfilled') tfResults[TF_IDS[i]]=analyzeOHLCV(r.value);
+  // Global market structure — CoinPaprika
+  safe(Promise.all([
+    apiFetch('https://api.coinpaprika.com/v1/global'),
+    apiFetch('https://api.coinpaprika.com/v1/tickers/usdt-tether?quotes=USD')
+  ])).then(res=>{
+    if(res) updateGlobalFromPaprika(res[0], res[1]);
+  });
+
+  // Fear & Greed
+  safe(apiFetch('https://api.alternative.me/fng/?limit=1'))
+    .then(d=>{ if(d) updateFG(d.data[0]); });
+
+  // Funding rate
+  safe(apiFetch(`${BINANCE_F}/premiumIndex?symbol=BTCUSDT`))
+    .then(d=>{ if(d) updateFunding(d); });
+
+  // Timeframe klines — each updates the table as it arrives
+  let loadedTFs=0;
+  TF_IDS.forEach(tf=>{
+    safe(apiFetch(klinesUrl('BTCUSDT',tf,250))).then(data=>{
+      if(data) tfResults[tf]=analyzeOHLCV(data);
+      loadedTFs++;
+      renderTF(tfResults); // re-render after each TF loads
+      if(loadedTFs===TF_IDS.length){
+        recalc();
+        document.getElementById('last-upd').textContent='Updated: '+new Date().toLocaleTimeString();
+      }
     });
-    renderTF(tfResults);
-
-    recalc();
-    document.getElementById('last-upd').textContent='Updated: '+new Date().toLocaleTimeString();
-
-  } catch(err) {
-    console.error(err);
-    document.getElementById('last-upd').textContent='Error — check console';
-  }
+  });
 }
 
 // Auto-refresh every 5 min
