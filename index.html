@@ -214,6 +214,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
     <button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
     <div class="last-upd" id="last-upd">Not loaded</div>
+    <div id="api-status" style="font-size:9px;color:var(--dim);text-align:right"></div>
   </div>
 </header>
 
@@ -969,50 +970,65 @@ function setScoreEl(id, val) {
 }
 
 // ─── MAIN REFRESH ────────────────────────────────────────
+function setStatus(msg) {
+  const el=document.getElementById('api-status');
+  if(el) el.textContent=msg;
+}
+
 async function refreshAll() {
   document.getElementById('last-upd').textContent='Refreshing…';
+  setStatus('');
   const TF_IDS=TFS.map(t=>t.id);
   const tfResults={};
+  let loadedTFs=0;
 
-  // Fire all fetches independently — each updates the UI as soon as it lands
-  const safe=p=>p.catch(e=>{console.warn(e);return null;});
+  // Prices — Binance 24hr ticker
+  apiFetch(`${BINANCE}/ticker/24hr?symbols=%5B%22BTCUSDT%22%2C%22ETHUSDT%22%2C%22SOLUSDT%22%5D`)
+    .then(d=>{ try{ updatePricesFromBinance(d,null); setStatus('✓ Prices'); }catch(e){ console.error('prices',e); setStatus('✗ Prices: '+e.message); } })
+    .catch(e=>{ console.error('prices fetch',e); setStatus('✗ Prices (fetch failed)'); });
 
-  // Prices — Binance ticker (fastest, shows up first)
-  safe(Promise.all([
-    apiFetch(`${BINANCE}/ticker/24hr?symbols=%5B%22BTCUSDT%22%2C%22ETHUSDT%22%2C%22SOLUSDT%22%5D`),
-    apiFetch(`${BINANCE}/ticker?symbol=BTCUSDT&windowSize=7d`)
-  ])).then(res=>{
-    if(res) updatePricesFromBinance(res[0], res[1]);
-  });
+  // 7-day BTC
+  apiFetch(`${BINANCE}/ticker?symbol=BTCUSDT&windowSize=7d`)
+    .then(d=>{ try{
+      const c7=parseFloat(d.priceChangePercent);
+      const el=document.getElementById('btc-7d');
+      el.textContent=(c7>=0?'+':'')+c7.toFixed(2)+'%';
+      el.style.color=c7>=0?'var(--bull)':'var(--bear)';
+    }catch(e){ console.warn('7d',e); }})
+    .catch(e=>console.warn('7d fetch',e));
 
-  // Global market structure — CoinPaprika
-  safe(Promise.all([
-    apiFetch('https://api.coinpaprika.com/v1/global'),
-    apiFetch('https://api.coinpaprika.com/v1/tickers/usdt-tether?quotes=USD')
-  ])).then(res=>{
-    if(res) updateGlobalFromPaprika(res[0], res[1]);
-  });
+  // Global — CoinPaprika
+  apiFetch('https://api.coinpaprika.com/v1/global')
+    .then(g=>{
+      apiFetch('https://api.coinpaprika.com/v1/tickers/usdt-tether?quotes=USD')
+        .then(u=>{ try{ updateGlobalFromPaprika(g,u); setStatus(s=>s+' ✓ Global'); }catch(e){ console.error('global',e); }})
+        .catch(()=>{ try{ updateGlobalFromPaprika(g,{}); }catch(e){ console.error('global2',e); }});
+    })
+    .catch(e=>{ console.error('paprika',e); setStatus('✗ Global (offline?)'); });
 
   // Fear & Greed
-  safe(apiFetch('https://api.alternative.me/fng/?limit=1'))
-    .then(d=>{ if(d) updateFG(d.data[0]); });
+  apiFetch('https://api.alternative.me/fng/?limit=1')
+    .then(d=>{ try{ updateFG(d.data[0]); }catch(e){ console.error('fg',e); }})
+    .catch(e=>console.warn('fg fetch',e));
 
   // Funding rate
-  safe(apiFetch(`${BINANCE_F}/premiumIndex?symbol=BTCUSDT`))
-    .then(d=>{ if(d) updateFunding(d); });
+  apiFetch(`${BINANCE_F}/premiumIndex?symbol=BTCUSDT`)
+    .then(d=>{ try{ updateFunding(d); }catch(e){ console.error('funding',e); }})
+    .catch(e=>console.warn('funding fetch',e));
 
-  // Timeframe klines — each updates the table as it arrives
-  let loadedTFs=0;
+  // Timeframe klines
   TF_IDS.forEach(tf=>{
-    safe(apiFetch(klinesUrl('BTCUSDT',tf,250))).then(data=>{
-      if(data) tfResults[tf]=analyzeOHLCV(data);
-      loadedTFs++;
-      renderTF(tfResults); // re-render after each TF loads
-      if(loadedTFs===TF_IDS.length){
-        recalc();
-        document.getElementById('last-upd').textContent='Updated: '+new Date().toLocaleTimeString();
-      }
-    });
+    apiFetch(klinesUrl('BTCUSDT',tf,250))
+      .then(data=>{
+        try{ tfResults[tf]=analyzeOHLCV(data); }catch(e){ console.error('ohlcv '+tf,e); }
+        loadedTFs++;
+        try{ renderTF(tfResults); }catch(e){ console.error('renderTF',e); }
+        if(loadedTFs===TF_IDS.length){
+          try{ recalc(); }catch(e){ console.error('recalc',e); }
+          document.getElementById('last-upd').textContent='Updated: '+new Date().toLocaleTimeString();
+        }
+      })
+      .catch(e=>{ console.error('klines '+tf, e); loadedTFs++; if(loadedTFs===TF_IDS.length) document.getElementById('last-upd').textContent='Updated (partial): '+new Date().toLocaleTimeString(); });
   });
 }
 
