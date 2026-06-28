@@ -148,9 +148,55 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 /* ERROR */
 .err{color:var(--bear);font-size:10px;padding:4px 0}
+
+/* BASC CORNER LOGO */
+.basc-corner{
+  position:fixed;top:70px;right:14px;z-index:200;
+  opacity:.85;pointer-events:none;
+  filter:drop-shadow(0 0 8px rgba(78,127,255,.5));
+}
+.basc-corner img{width:72px;height:72px;object-fit:contain;border-radius:50%;border:2px solid var(--accent);display:block;background:var(--surface)}
+
+/* UFO MARGIN DECORATIONS */
+.ufo-rail{
+  position:fixed;top:0;bottom:0;width:38px;z-index:50;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:space-around;pointer-events:none;
+  overflow:hidden;
+}
+.ufo-rail.left{left:0}
+.ufo-rail.right{right:0}
+.ufo{font-size:20px;animation:ufo-float 4s ease-in-out infinite;opacity:.35}
+.ufo:nth-child(2){animation-delay:-1.3s;animation-duration:5.2s}
+.ufo:nth-child(3){animation-delay:-2.7s;animation-duration:3.8s}
+.ufo:nth-child(4){animation-delay:-.7s;animation-duration:6s}
+.ufo:nth-child(5){animation-delay:-3.1s;animation-duration:4.5s}
+@keyframes ufo-float{
+  0%,100%{transform:translateY(0) rotate(-5deg)}
+  50%{transform:translateY(-12px) rotate(5deg)}
+}
 </style>
 </head>
 <body>
+
+<!-- BASC corner logo -->
+<div class="basc-corner"><img src="BASC.png" alt="BASC"></div>
+
+<!-- UFO side rails -->
+<div class="ufo-rail left">
+  <span class="ufo">🛸</span>
+  <span class="ufo">🛸</span>
+  <span class="ufo">🛸</span>
+  <span class="ufo">🛸</span>
+  <span class="ufo">🛸</span>
+</div>
+<div class="ufo-rail right">
+  <span class="ufo">🛸</span>
+  <span class="ufo">🛸</span>
+  <span class="ufo">🛸</span>
+  <span class="ufo">🛸</span>
+  <span class="ufo">🛸</span>
+</div>
 
 <!-- ═══════════════════════ HEADER ═══════════════════════ -->
 <header>
@@ -163,7 +209,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <img class="ape-avatar" src="BASC.png" alt="Mr UFO">
     <div>
       <div class="ape-name">MR UFO</div>
-      <div class="ape-tag">Pro Trader</div>
+      <div class="ape-tag">Trader</div>
     </div>
   </div>
 
@@ -220,6 +266,38 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 <!-- ═══════════════════════ MAIN ═══════════════════════ -->
 <div class="main">
+
+  <!-- ── OVERALL SUMMARY (TOP) ── -->
+  <div class="summary-card">
+    <div class="section-label">OVERALL ANALYSIS SUMMARY</div>
+    <div class="score-row">
+      <div class="score-box">
+        <div class="score-box-label">Macro</div>
+        <div class="score-box-val" id="sc-macro">—</div>
+      </div>
+      <div class="score-box">
+        <div class="score-box-label">Market Structure</div>
+        <div class="score-box-val" id="sc-struct">—</div>
+      </div>
+      <div class="score-box">
+        <div class="score-box-label">Sentiment</div>
+        <div class="score-box-val" id="sc-sent">—</div>
+      </div>
+      <div class="score-box">
+        <div class="score-box-label">On-Chain</div>
+        <div class="score-box-val" id="sc-onchain">—</div>
+      </div>
+      <div class="score-box">
+        <div class="score-box-label">Technical</div>
+        <div class="score-box-val" id="sc-tech">—</div>
+      </div>
+      <div class="score-box" style="border-color:var(--accent)">
+        <div class="score-box-label">MASTER</div>
+        <div class="score-box-val" id="sc-master">—</div>
+      </div>
+    </div>
+    <div class="summary-text" id="summary-text" style="color:var(--dim)">Loading analysis...</div>
+  </div>
 
   <!-- ── FACTOR COLUMNS ── -->
   <div class="factor-grid">
@@ -497,37 +575,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
   </div>
 
-  <!-- ── OVERALL SUMMARY ── -->
-  <div class="summary-card">
-    <div class="section-label">OVERALL ANALYSIS SUMMARY</div>
-    <div class="score-row">
-      <div class="score-box">
-        <div class="score-box-label">Macro</div>
-        <div class="score-box-val" id="sc-macro">—</div>
-      </div>
-      <div class="score-box">
-        <div class="score-box-label">Market Structure</div>
-        <div class="score-box-val" id="sc-struct">—</div>
-      </div>
-      <div class="score-box">
-        <div class="score-box-label">Sentiment</div>
-        <div class="score-box-val" id="sc-sent">—</div>
-      </div>
-      <div class="score-box">
-        <div class="score-box-label">On-Chain</div>
-        <div class="score-box-val" id="sc-onchain">—</div>
-      </div>
-      <div class="score-box">
-        <div class="score-box-label">Technical</div>
-        <div class="score-box-val" id="sc-tech">—</div>
-      </div>
-      <div class="score-box" style="border-color:var(--accent)">
-        <div class="score-box-label">MASTER</div>
-        <div class="score-box-val" id="sc-master">—</div>
-      </div>
-    </div>
-    <div class="summary-text" id="summary-text" style="color:var(--dim)">Loading analysis...</div>
-  </div>
 
 </div><!-- /main -->
 
@@ -618,7 +665,7 @@ function analyzeOHLCV(klines) {
                 macdVal.hist>0?'↑ WEAKENING':
                 macdVal.hist<0&&macdVal.hist<macdVal.prevHist?'↓ BEARISH':'↓ RECOVERING';
   // Volume label
-  const volLbl=volRatio>1.3?'HIGH':'< 0.8'?'LOW':'NORMAL';
+  const volLbl=volRatio>1.3?'HIGH':volRatio<0.8?'LOW':'NORMAL';
   // Structure label
   const structLbl=isHHHL?'HH/HL 🟢':isLHLL?'LH/LL 🔴':'RANGING';
 
@@ -1001,7 +1048,7 @@ async function refreshAll() {
   apiFetch('https://api.coinpaprika.com/v1/global')
     .then(g=>{
       apiFetch('https://api.coinpaprika.com/v1/tickers/usdt-tether?quotes=USD')
-        .then(u=>{ try{ updateGlobalFromPaprika(g,u); setStatus(s=>s+' ✓ Global'); }catch(e){ console.error('global',e); }})
+        .then(u=>{ try{ updateGlobalFromPaprika(g,u); setStatus('✓ Global data loaded'); }catch(e){ console.error('global',e); }})
         .catch(()=>{ try{ updateGlobalFromPaprika(g,{}); }catch(e){ console.error('global2',e); }});
     })
     .catch(e=>{ console.error('paprika',e); setStatus('✗ Global (offline?)'); });
@@ -1030,6 +1077,14 @@ async function refreshAll() {
       })
       .catch(e=>{ console.error('klines '+tf, e); loadedTFs++; if(loadedTFs===TF_IDS.length) document.getElementById('last-upd').textContent='Updated (partial): '+new Date().toLocaleTimeString(); });
   });
+}
+
+// Warn when opened from file:// (APIs will be blocked by browser CORS policy)
+if(location.protocol==='file:'){
+  const warn=document.createElement('div');
+  warn.style.cssText='position:fixed;top:0;left:0;right:0;background:#ff3d5a;color:#fff;text-align:center;padding:7px 14px;font-size:11px;z-index:9999;font-family:monospace;letter-spacing:.5px';
+  warn.innerHTML='⚠ Opened from file:// — API data will not load. Open via a local server: right-click index.html → Open With → a web server, or run <strong>python -m http.server 8080</strong> and visit <strong>http://localhost:8080</strong>';
+  document.body.prepend(warn);
 }
 
 // Auto-refresh every 5 min
