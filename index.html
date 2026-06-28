@@ -107,14 +107,14 @@ header{
 
 /* TIMEFRAME TABLE */
 .tf-scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:860px}
+table{width:100%;border-collapse:collapse;min-width:1080px}
 th{
   background:var(--surface2);color:var(--dim);font-size:9px;letter-spacing:1.5px;
   text-transform:uppercase;padding:9px 10px;text-align:center;
   border-bottom:1px solid var(--border);white-space:nowrap;
 }
 th:first-child{text-align:left;padding-left:14px}
-td{padding:9px 10px;text-align:center;border-bottom:1px solid var(--border);font-size:11px;vertical-align:middle}
+td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--border);font-size:11px;vertical-align:middle}
 td:first-child{text-align:left;padding-left:14px;font-weight:700;font-size:12px;color:var(--accent);white-space:nowrap}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:rgba(255,255,255,.02)}
@@ -122,6 +122,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .cbear{color:var(--bear)}
 .cneutral{color:var(--neutral)}
 .bias-cell{font-weight:700;padding:3px 9px;border-radius:4px;font-size:10px;letter-spacing:.5px;display:inline-block;white-space:nowrap}
+/* small select for table cells */
+.ms-sm{
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:2px 4px;border-radius:4px;font-size:10px;font-family:inherit;
+  cursor:pointer;width:100%;max-width:130px;
+}
 
 /* SUMMARY */
 .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 18px}
@@ -297,6 +303,40 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </div>
     </div>
     <div class="summary-text" id="summary-text" style="color:var(--dim)">Loading analysis...</div>
+  </div>
+
+  <!-- ── TIMEFRAME BIAS MATRIX (MIDDLE) ── -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">⏱ Timeframe Bias Matrix — BTC/USDT</span>
+      <span style="font-size:10px;color:var(--dim)">Live · RSI · MACD · EMA · Structure · Divergence · 1-2-3 Drives</span>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div class="tf-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Timeframe</th>
+              <th>vs EMA 20</th>
+              <th>vs EMA 50</th>
+              <th>vs EMA 200</th>
+              <th>RSI (14)</th>
+              <th>MACD</th>
+              <th>EMA Stack</th>
+              <th>Volume</th>
+              <th>Structure</th>
+              <th>Divergence</th>
+              <th>1-2-3 Drives</th>
+              <th>Score</th>
+              <th>BIAS</th>
+            </tr>
+          </thead>
+          <tbody id="tf-body">
+            <tr><td colspan="13" style="text-align:center;padding:20px" class="loading">Fetching Binance data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- ── FACTOR COLUMNS ── -->
@@ -543,38 +583,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
   </div><!-- /factor-grid -->
 
-  <!-- ── TIMEFRAME BIAS MATRIX ── -->
-  <div class="card">
-    <div class="card-hdr">
-      <span class="card-title">⏱ Timeframe Bias Matrix — BTC/USDT</span>
-      <span style="font-size:10px;color:var(--dim)">Live from Binance · RSI · MACD · EMA20/50/200 · Volume · Structure</span>
-    </div>
-    <div class="card-body" style="padding:0">
-      <div class="tf-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Timeframe</th>
-              <th>vs EMA 20</th>
-              <th>vs EMA 50</th>
-              <th>vs EMA 200</th>
-              <th>RSI (14)</th>
-              <th>MACD</th>
-              <th>EMA Stack</th>
-              <th>Volume</th>
-              <th>Structure</th>
-              <th>Score</th>
-              <th>BIAS</th>
-            </tr>
-          </thead>
-          <tbody id="tf-body">
-            <tr><td colspan="11" style="text-align:center;padding:20px" class="loading">Fetching Binance data...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
 
 </div><!-- /main -->
 
@@ -722,7 +730,7 @@ function klinesUrl(sym,interval,limit=250) {
   return `${BINANCE}/klines?symbol=${sym}&interval=${interval}&limit=${limit}`;
 }
 
-// ─── RENDER TIMEFRAME TABLE ───────────────────────────────
+// ─── TIMEFRAME STATE (persisted) ─────────────────────────
 const TFS=[
   {id:'1w',label:'Weekly'},
   {id:'1d',label:'Daily'},
@@ -733,13 +741,55 @@ const TFS=[
   {id:'1m',label:'1 Min'}
 ];
 
+let tfResultsCache={};
+const tfState=JSON.parse(localStorage.getItem('tfState')||'{}');
+function saveTfState(){localStorage.setItem('tfState',JSON.stringify(tfState));}
+
+function setTfState(id,key,val){
+  if(!tfState[id]) tfState[id]={div:'none',drives:'none'};
+  tfState[id][key]=val;
+  saveTfState();
+  renderTF(tfResultsCache);
+  recalc();
+}
+
+// ─── RENDER TIMEFRAME TABLE ───────────────────────────────
+function divScore(d){
+  return d==='bull'?1.5:d==='hbull'?1.0:d==='bear'?-1.5:d==='hbear'?-1.0:0;
+}
+function drivesScore(d){
+  return d==='bull'?1.0:d==='bear'?-1.0:0;
+}
+
+function divLabel(d){
+  return d==='bull'?'<span class="cbull">🟢 Bull Div</span>':
+         d==='hbull'?'<span class="cbull">🔵 Hid Bull</span>':
+         d==='bear'?'<span class="cbear">🔴 Bear Div</span>':
+         d==='hbear'?'<span class="cbear">🟠 Hid Bear</span>':
+         '<span style="opacity:.4">—</span>';
+}
+function drivesLabel(d){
+  return d==='bull'?'<span class="cbull">🟢 3-Drives ↑</span>':
+         d==='bear'?'<span class="cbear">🔴 3-Drives ↓</span>':
+         '<span style="opacity:.4">—</span>';
+}
+
 function renderTF(results) {
+  tfResultsCache=results;
   let html='', totalScore=0, count=0;
+
   for(const {id,label} of TFS) {
     const r=results[id];
-    if(!r){html+=`<tr><td>${label}</td><td colspan="10" class="loading">No data</td></tr>`;continue;}
+    const st=tfState[id]||{div:'none',drives:'none'};
 
-    totalScore+=r.score; count++;
+    if(!r){
+      html+=`<tr><td>${label}</td><td colspan="12" class="loading">No data</td></tr>`;
+      continue;
+    }
+
+    const manAdj=divScore(st.div)+drivesScore(st.drives);
+    const rowScore=r.score+manAdj;
+    totalScore+=rowScore; count++;
 
     const e20c=r.vsE20>0?'cbull':'cbear';
     const e50c=r.vsE50>0?'cbull':'cbear';
@@ -749,9 +799,24 @@ function renderTF(results) {
     const emasc=r.emaStack.includes('BULL')?'cbull':r.emaStack.includes('BEAR')?'cbear':'cneutral';
     const volc=r.volRatio>1.3?'cbull':r.volRatio<0.7?'cbear':'cneutral';
     const strc=r.structLbl.includes('HH')?'cbull':r.structLbl.includes('LH')?'cbear':'cneutral';
-    const scorec=r.score>=1?'cbull':r.score<=-1?'cbear':'cneutral';
+    const scorec=rowScore>=1?'cbull':rowScore<=-1?'cbear':'cneutral';
+    const bias=biasOf(rowScore);
 
-    const bias=biasOf(r.score);
+    // Divergence select — preserves chosen value
+    const divSel=`<select class="ms-sm" onchange="setTfState('${id}','div',this.value)">
+      <option value="none" ${st.div==='none'?'selected':''}>— None</option>
+      <option value="bull" ${st.div==='bull'?'selected':''}>🟢 Bull Div</option>
+      <option value="hbull" ${st.div==='hbull'?'selected':''}>🔵 Hidden Bull</option>
+      <option value="bear" ${st.div==='bear'?'selected':''}>🔴 Bear Div</option>
+      <option value="hbear" ${st.div==='hbear'?'selected':''}>🟠 Hidden Bear</option>
+    </select>`;
+
+    // 1-2-3 Drives select
+    const drivesSel=`<select class="ms-sm" onchange="setTfState('${id}','drives',this.value)">
+      <option value="none" ${st.drives==='none'?'selected':''}>— None</option>
+      <option value="bull" ${st.drives==='bull'?'selected':''}>🟢 Bull (3↓→↑)</option>
+      <option value="bear" ${st.drives==='bear'?'selected':''}>🔴 Bear (3↑→↓)</option>
+    </select>`;
 
     html+=`<tr>
       <td>${label}</td>
@@ -763,7 +828,9 @@ function renderTF(results) {
       <td class="${emasc}">${r.emaStack}</td>
       <td class="${volc}">${r.volRatio.toFixed(2)}x</td>
       <td class="${strc}">${r.structLbl}</td>
-      <td class="${scorec}" style="font-weight:700">${r.score.toFixed(1)}</td>
+      <td>${divSel}</td>
+      <td>${drivesSel}</td>
+      <td class="${scorec}" style="font-weight:700">${rowScore.toFixed(1)}<small style="opacity:.5;font-size:9px">${manAdj!==0?' ('+(manAdj>0?'+':'')+manAdj.toFixed(1)+')':''}</small></td>
       <td><span class="bias-cell ${bias.cls}">${bias.text}</span></td>
     </tr>`;
   }
