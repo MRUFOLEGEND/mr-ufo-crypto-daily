@@ -235,6 +235,25 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <div class="price-tile-price" id="h-sol-price">$—</div>
     <div class="price-tile-chg" id="h-sol-change">—%</div>
   </div>
+
+  <div style="width:1px;height:40px;background:var(--border);flex-shrink:0"></div>
+
+  <div class="price-tile">
+    <div class="price-tile-coin"><span class="coin-dot" style="background:#00b4d8"></span>QQQ</div>
+    <div class="price-tile-price" id="h-qqq-price">$—</div>
+    <div class="price-tile-chg" id="h-qqq-change">—%</div>
+  </div>
+  <div class="price-tile">
+    <div class="price-tile-coin"><span class="coin-dot" style="background:#9b59f5"></span>NDX</div>
+    <div class="price-tile-price" id="h-ndx-price">—</div>
+    <div class="price-tile-chg" id="h-ndx-change">—%</div>
+  </div>
+  <div class="price-tile">
+    <div class="price-tile-coin"><span class="coin-dot" style="background:#f5a623"></span>SPX</div>
+    <div class="price-tile-price" id="h-spx-price">—</div>
+    <div class="price-tile-chg" id="h-spx-change">—%</div>
+  </div>
+
   <div class="h-stat">
     <div class="h-stat-label">Mkt Cap</div>
     <div class="h-stat-val" id="h-mcap">$—</div>
@@ -1083,6 +1102,44 @@ function setScoreEl(id, val) {
   el.style.color=colorOf(val);
 }
 
+// ─── STOCK / INDEX PRICES (Yahoo Finance) ────────────────
+async function fetchStocks() {
+  const symbols = ['QQQ', '%5EIXIC', '%5EGSPC']; // QQQ, ^IXIC (NASDAQ), ^GSPC (SPX)
+  const ids     = ['h-qqq', 'h-ndx', 'h-spx'];
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=QQQ,%5EIXIC,%5EGSPC&fields=regularMarketPrice,regularMarketChangePercent,marketState`;
+
+  try {
+    const data = await apiFetch(url, 8000);
+    const results = data?.quoteResponse?.result || [];
+    results.forEach((q, i) => {
+      const priceEl = document.getElementById(ids[i] + '-price');
+      const chgEl   = document.getElementById(ids[i] + '-change');
+      if (!priceEl || !chgEl) return;
+
+      const price = q.regularMarketPrice;
+      const chgPct = q.regularMarketChangePercent;
+      const closed = q.marketState && q.marketState !== 'REGULAR';
+
+      // Format price — no $ prefix for indices
+      const isETF = ids[i] === 'h-qqq';
+      const fmt = price >= 1000
+        ? price.toLocaleString('en-US', {maximumFractionDigits: 2})
+        : price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      priceEl.textContent = (isETF ? '$' : '') + fmt;
+
+      chgEl.textContent = (chgPct >= 0 ? '+' : '') + chgPct.toFixed(2) + '%' + (closed ? ' ●' : '');
+      chgEl.style.color = chgPct >= 0 ? 'var(--bull)' : 'var(--bear)';
+      if (closed) chgEl.title = 'Market closed — showing last close';
+    });
+  } catch(e) {
+    ['h-qqq','h-ndx','h-spx'].forEach(id => {
+      const el = document.getElementById(id + '-price');
+      if (el) el.textContent = 'N/A';
+    });
+    console.warn('stocks fetch', e);
+  }
+}
+
 // ─── MAIN REFRESH ────────────────────────────────────────
 function setStatus(msg) {
   const el=document.getElementById('api-status');
@@ -1119,6 +1176,9 @@ async function refreshAll() {
         .catch(()=>{ try{ updateGlobalFromPaprika(g,{}); }catch(e){ console.error('global2',e); }});
     })
     .catch(e=>{ console.error('paprika',e); setStatus('✗ Global (offline?)'); });
+
+  // Stocks / Indices
+  fetchStocks();
 
   // Fear & Greed
   apiFetch('https://api.alternative.me/fng/?limit=1')
