@@ -164,18 +164,10 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .mini-tf td:first-child{text-align:left;padding-left:10px;font-weight:700;color:var(--accent);font-size:11px}
 .mini-tf tr:last-child td{border-bottom:none}
 
-/* JUNGLE SIDE RAILS */
-.jungle-rail{position:fixed;top:0;bottom:0;width:46px;z-index:50;pointer-events:none;overflow:hidden}
-.jungle-rail.left{left:0}
-.jungle-rail.right{right:0}
-.jungle-rail svg{position:absolute;top:0;left:0;width:100%;height:100%}
-.jungle-rail.right svg{transform:scaleX(-1);transform-origin:center center}
-
 /* MOBILE */
 @media(max-width:768px){
   header{position:relative}
-  .jungle-rail{display:none}
-  .main{padding:10px}
+.main{padding:10px}
   .factor-grid{grid-template-columns:1fr}
   .price-tile{min-width:80px;padding:6px 10px}
   .price-tile-price{font-size:15px}
@@ -185,102 +177,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
 </style>
 </head>
 <body>
-
-<!-- Jungle side rails -->
-<div class="jungle-rail left" aria-hidden="true">
-  <svg viewBox="0 0 50 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-    <!-- vine -->
-    <path d="M10 0 C14 80 6 165 11 245 C16 325 7 410 11 490 C15 570 6 655 10 730 C14 805 7 890 10 1000" stroke="#2a5c18" stroke-width="1.8" fill="none" opacity="0.42"/>
-    <!-- leaf y=75 right -->
-    <path d="M10,90 C32,68 52,50 47,30 C42,12 10,58 10,90Z" fill="#163509" opacity="0.75"/>
-    <line x1="10" y1="90" x2="44" y2="37" stroke="#2d6a18" stroke-width="0.6" opacity="0.38"/>
-    <!-- leaf y=155 right wide -->
-    <path d="M9,170 C40,142 65,118 58,90 C51,64 10,130 9,170Z" fill="#1a3f0d" opacity="0.88"/>
-    <path d="M9,170 C44,138 70,110 61,80 C52,52 9,142 9,170Z" fill="#142e08" opacity="0.48"/>
-    <line x1="9" y1="170" x2="56" y2="96" stroke="#2d6a18" stroke-width="0.7" opacity="0.35"/>
-    <!-- leaf y=235 left -->
-    <path d="M9,248 C-5,230 -8,211 2,198 C10,188 11,222 9,248Z" fill="#163509" opacity="0.72"/>
-    <!-- leaf y=310 right -->
-    <path d="M11,325 C38,298 60,276 54,250 C47,226 12,292 11,325Z" fill="#1e4a10" opacity="0.82"/>
-    <line x1="11" y1="325" x2="51" y2="258" stroke="#2d6a18" stroke-width="0.6" opacity="0.35"/>
-    <!-- fern y=395 -->
-    <path d="M10,408 C21,395 30,380 26,368 C22,358 11,380 10,408Z" fill="#254d14" opacity="0.62"/>
-    <path d="M10,408 C2,394 -3,378 1,367 C5,358 10,382 10,408Z" fill="#1e4a10" opacity="0.62"/>
-    <path d="M10,408 C26,392 38,375 33,362 C28,351 11,381 10,408Z" fill="#1a3f0d" opacity="0.52"/>
-    <!-- leaf y=470 right large -->
-    <path d="M10,485 C44,454 68,428 60,400 C52,373 11,448 10,485Z" fill="#142e08" opacity="0.92"/>
-    <line x1="10" y1="485" x2="57" y2="412" stroke="#2d6a18" stroke-width="0.6" opacity="0.35"/>
-    <!-- leaf y=550 left -->
-    <path d="M9,565 C-5,546 -8,527 2,514 C10,504 11,539 9,565Z" fill="#1a3f0d" opacity="0.68"/>
-    <!-- berries y=608 -->
-    <circle cx="8" cy="610" r="3.8" fill="#0a3f14" opacity="0.55"/>
-    <circle cx="15" cy="603" r="3.2" fill="#0a3f14" opacity="0.45"/>
-    <circle cx="6" cy="620" r="2.6" fill="#0a3f14" opacity="0.4"/>
-    <circle cx="8" cy="610" r="3.8" fill="none" stroke="rgba(0,217,126,0.12)" stroke-width="1.5"/>
-    <!-- leaf y=665 right wide -->
-    <path d="M11,680 C42,650 66,624 58,596 C50,569 11,644 11,680Z" fill="#1e4a10" opacity="0.84"/>
-    <path d="M11,680 C46,646 72,616 62,586 C52,557 11,654 11,680Z" fill="#163509" opacity="0.48"/>
-    <!-- leaf y=755 left -->
-    <path d="M9,768 C-5,750 -7,731 2,719 C10,709 11,743 9,768Z" fill="#163509" opacity="0.72"/>
-    <!-- leaf y=835 right -->
-    <path d="M10,850 C42,818 66,790 58,762 C50,735 11,814 10,850Z" fill="#1a3f0d" opacity="0.86"/>
-    <line x1="10" y1="850" x2="55" y2="775" stroke="#2d6a18" stroke-width="0.6" opacity="0.32"/>
-    <!-- small fern y=925 -->
-    <path d="M10,938 C21,924 29,908 25,897 C21,888 11,907 10,938Z" fill="#254d14" opacity="0.58"/>
-    <path d="M10,938 C2,923 -2,907 2,897 C6,888 10,909 10,938Z" fill="#1e4a10" opacity="0.58"/>
-    <!-- bottom stems -->
-    <path d="M7,1000 L10,965" stroke="#2a5c18" stroke-width="2.5" fill="none" opacity="0.55"/>
-    <path d="M17,1000 L13,960" stroke="#1e4a10" stroke-width="1.8" fill="none" opacity="0.45"/>
-    <path d="M28,1000 L21,968" stroke="#254d14" stroke-width="1.5" fill="none" opacity="0.38"/>
-  </svg>
-</div>
-<div class="jungle-rail right" aria-hidden="true">
-  <svg viewBox="0 0 50 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-    <!-- vine -->
-    <path d="M10 0 C14 80 6 165 11 245 C16 325 7 410 11 490 C15 570 6 655 10 730 C14 805 7 890 10 1000" stroke="#2a5c18" stroke-width="1.8" fill="none" opacity="0.42"/>
-    <!-- leaf y=75 right -->
-    <path d="M10,90 C32,68 52,50 47,30 C42,12 10,58 10,90Z" fill="#163509" opacity="0.75"/>
-    <line x1="10" y1="90" x2="44" y2="37" stroke="#2d6a18" stroke-width="0.6" opacity="0.38"/>
-    <!-- leaf y=155 right wide -->
-    <path d="M9,170 C40,142 65,118 58,90 C51,64 10,130 9,170Z" fill="#1a3f0d" opacity="0.88"/>
-    <path d="M9,170 C44,138 70,110 61,80 C52,52 9,142 9,170Z" fill="#142e08" opacity="0.48"/>
-    <line x1="9" y1="170" x2="56" y2="96" stroke="#2d6a18" stroke-width="0.7" opacity="0.35"/>
-    <!-- leaf y=235 left -->
-    <path d="M9,248 C-5,230 -8,211 2,198 C10,188 11,222 9,248Z" fill="#163509" opacity="0.72"/>
-    <!-- leaf y=310 right -->
-    <path d="M11,325 C38,298 60,276 54,250 C47,226 12,292 11,325Z" fill="#1e4a10" opacity="0.82"/>
-    <line x1="11" y1="325" x2="51" y2="258" stroke="#2d6a18" stroke-width="0.6" opacity="0.35"/>
-    <!-- fern y=395 -->
-    <path d="M10,408 C21,395 30,380 26,368 C22,358 11,380 10,408Z" fill="#254d14" opacity="0.62"/>
-    <path d="M10,408 C2,394 -3,378 1,367 C5,358 10,382 10,408Z" fill="#1e4a10" opacity="0.62"/>
-    <path d="M10,408 C26,392 38,375 33,362 C28,351 11,381 10,408Z" fill="#1a3f0d" opacity="0.52"/>
-    <!-- leaf y=470 right large -->
-    <path d="M10,485 C44,454 68,428 60,400 C52,373 11,448 10,485Z" fill="#142e08" opacity="0.92"/>
-    <line x1="10" y1="485" x2="57" y2="412" stroke="#2d6a18" stroke-width="0.6" opacity="0.35"/>
-    <!-- leaf y=550 left -->
-    <path d="M9,565 C-5,546 -8,527 2,514 C10,504 11,539 9,565Z" fill="#1a3f0d" opacity="0.68"/>
-    <!-- berries y=608 -->
-    <circle cx="8" cy="610" r="3.8" fill="#0a3f14" opacity="0.55"/>
-    <circle cx="15" cy="603" r="3.2" fill="#0a3f14" opacity="0.45"/>
-    <circle cx="6" cy="620" r="2.6" fill="#0a3f14" opacity="0.4"/>
-    <circle cx="8" cy="610" r="3.8" fill="none" stroke="rgba(0,217,126,0.12)" stroke-width="1.5"/>
-    <!-- leaf y=665 right wide -->
-    <path d="M11,680 C42,650 66,624 58,596 C50,569 11,644 11,680Z" fill="#1e4a10" opacity="0.84"/>
-    <path d="M11,680 C46,646 72,616 62,586 C52,557 11,654 11,680Z" fill="#163509" opacity="0.48"/>
-    <!-- leaf y=755 left -->
-    <path d="M9,768 C-5,750 -7,731 2,719 C10,709 11,743 9,768Z" fill="#163509" opacity="0.72"/>
-    <!-- leaf y=835 right -->
-    <path d="M10,850 C42,818 66,790 58,762 C50,735 11,814 10,850Z" fill="#1a3f0d" opacity="0.86"/>
-    <line x1="10" y1="850" x2="55" y2="775" stroke="#2d6a18" stroke-width="0.6" opacity="0.32"/>
-    <!-- small fern y=925 -->
-    <path d="M10,938 C21,924 29,908 25,897 C21,888 11,907 10,938Z" fill="#254d14" opacity="0.58"/>
-    <path d="M10,938 C2,923 -2,907 2,897 C6,888 10,909 10,938Z" fill="#1e4a10" opacity="0.58"/>
-    <!-- bottom stems -->
-    <path d="M7,1000 L10,965" stroke="#2a5c18" stroke-width="2.5" fill="none" opacity="0.55"/>
-    <path d="M17,1000 L13,960" stroke="#1e4a10" stroke-width="1.8" fill="none" opacity="0.45"/>
-    <path d="M28,1000 L21,968" stroke="#254d14" stroke-width="1.5" fill="none" opacity="0.38"/>
-  </svg>
-</div>
 
 <!-- ═══════════════════════ HEADER ═══════════════════════ -->
 <header>
@@ -461,8 +357,8 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <div class="frow">
           <span class="fname">DXY Value</span>
           <div class="fright">
-            <input class="mi" id="dxy-val" type="number" placeholder="104.5" step="0.1" oninput="recalc()">
-            <select class="ms" id="dxy-trend" onchange="recalc()">
+            <input class="mi" id="dxy-val" type="number" placeholder="104.5" step="0.1" oninput="this.dataset.manual='1';recalc()">
+            <select class="ms" id="dxy-trend" onchange="this.dataset.manual='1';recalc()">
               <option value="up">↑ Rising (Bearish)</option>
               <option value="down" selected>↓ Falling (Bullish)</option>
               <option value="side">→ Sideways</option>
@@ -492,7 +388,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
         <div class="frow">
           <span class="fname">SPX / Risk Appetite</span>
-          <select class="ms" id="spx" onchange="recalc()">
+          <select class="ms" id="spx" onchange="this.dataset.manual='1';recalc()">
             <option value="on">Risk ON 🟢</option>
             <option value="neutral" selected>Neutral</option>
             <option value="off">Risk OFF 🔴</option>
@@ -733,6 +629,46 @@ function macd(closes, f=12, s=26, sig=9) {
   };
 }
 
+function rsiArray(closes, p=14) {
+  if(closes.length<=p) return closes.map(()=>50);
+  const out=new Array(p).fill(null);
+  let g=0,l=0;
+  for(let i=1;i<=p;i++){const d=closes[i]-closes[i-1];d>0?g+=d:l-=d;}
+  let ag=g/p,al=l/p;
+  out.push(al===0?100:100-(100/(1+ag/al)));
+  for(let i=p+1;i<closes.length;i++){
+    const d=closes[i]-closes[i-1];
+    ag=(ag*(p-1)+Math.max(d,0))/p;
+    al=(al*(p-1)+Math.max(-d,0))/p;
+    out.push(al===0?100:100-(100/(1+ag/al)));
+  }
+  return out;
+}
+
+function detectDivergence(closes, rsiArr, lookback=50) {
+  const n=closes.length;
+  if(n<lookback) return 'none';
+  const prices=closes.slice(-lookback), rsis=rsiArr.slice(-lookback), len=prices.length;
+  const lows=[],highs=[];
+  for(let i=2;i<len-2;i++){
+    const p=prices[i],r=rsis[i];
+    if(r==null) continue;
+    if(p<=prices[i-1]&&p<=prices[i-2]&&p<=prices[i+1]&&p<=prices[i+2]) lows.push({p,r});
+    if(p>=prices[i-1]&&p>=prices[i-2]&&p>=prices[i+1]&&p>=prices[i+2]) highs.push({p,r});
+  }
+  if(lows.length>=2){
+    const a=lows[lows.length-2],b=lows[lows.length-1];
+    if(b.p<a.p&&b.r>a.r+2) return 'bull';
+    if(b.p>a.p&&b.r<a.r-2) return 'hbull';
+  }
+  if(highs.length>=2){
+    const a=highs[highs.length-2],b=highs[highs.length-1];
+    if(b.p>a.p&&b.r<a.r-2) return 'bear';
+    if(b.p<a.p&&b.r>a.r+2) return 'hbear';
+  }
+  return 'none';
+}
+
 function analyzeOHLCV(klines) {
   if (!klines || klines.length < 30) return null;
   const C = klines.map(k=>+k[4]);
@@ -785,7 +721,9 @@ function analyzeOHLCV(klines) {
   // Structure label
   const structLbl=isHHHL?'HH/HL 🟢':isLHLL?'LH/LL 🔴':'RANGING';
 
-  return {p,vsE20,vsE50,vsE200,ee20,ee50,ee200,rsiVal,rsiLbl,macdLbl,macdHist:macdVal.hist,emaStack,volRatio,volLbl,structLbl,score};
+  const rsiArr=rsiArray(C);
+  const divAuto=detectDivergence(C,rsiArr);
+  return {p,vsE20,vsE50,vsE200,ee20,ee50,ee200,rsiVal,rsiLbl,macdLbl,macdHist:macdVal.hist,emaStack,volRatio,volLbl,structLbl,score,divAuto};
 }
 
 // ─── BIAS HELPERS ─────────────────────────────────────────
@@ -830,6 +768,16 @@ async function apiFetch(url, timeout=6000) {
     return r.json();
   } catch(e) { clearTimeout(t); throw e; }
 }
+async function apiFetchText(url, timeout=7000) {
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(),timeout);
+  try {
+    const r=await fetch(url,{signal:ctrl.signal});
+    clearTimeout(t);
+    if(!r.ok) throw new Error(r.status);
+    return r.text();
+  } catch(e) { clearTimeout(t); throw e; }
+}
 
 const BINANCE='https://api.binance.com/api/v3';
 const BINANCE_F='https://fapi.binance.com/fapi/v1';
@@ -854,7 +802,7 @@ const tfState=JSON.parse(localStorage.getItem('tfState')||'{}');
 function saveTfState(){localStorage.setItem('tfState',JSON.stringify(tfState));}
 
 function setTfState(id,key,val){
-  if(!tfState[id]) tfState[id]={div:'none',drives:'none'};
+  if(!tfState[id]) tfState[id]={div:'auto',drives:'none'};
   tfState[id][key]=val;
   saveTfState();
   renderTF(tfResultsCache);
@@ -896,14 +844,15 @@ function renderTF(results) {
 
   for(const {id,label} of TFS) {
     const r=results[id];
-    const st=tfState[id]||{div:'none',drives:'none'};
+    const st=tfState[id]||{div:'auto',drives:'none'};
 
     if(!r){
       html+=`<tr><td>${label}</td><td colspan="13" class="loading">No data</td></tr>`;
       continue;
     }
 
-    const manAdj=divScore(st.div)+drivesScore(st.drives);
+    const divVal=(st.div==='auto'||!st.div)?(r.divAuto||'none'):st.div;
+    const manAdj=divScore(divVal)+drivesScore(st.drives);
     const rowScore=r.score+manAdj;
     totalScore+=rowScore; count++;
 
@@ -918,13 +867,15 @@ function renderTF(results) {
     const scorec=rowScore>=1?'cbull':rowScore<=-1?'cbear':'cneutral';
     const bias=biasOf(rowScore);
 
-    // Divergence select — preserves chosen value
+    // Divergence select — auto-detected or manual override
+    const _autoLbl={bull:'🟢Bull',hbull:'🔵HidBull',bear:'🔴Bear',hbear:'🟠HidBear',none:'—'}[r.divAuto||'none'];
     const divSel=`<select class="ms-sm" onchange="setTfState('${id}','div',this.value)">
+      <option value="auto" ${(st.div==='auto'||!st.div)?'selected':''}>🤖 Auto(${_autoLbl})</option>
       <option value="none" ${st.div==='none'?'selected':''}>— None</option>
       <option value="bull" ${st.div==='bull'?'selected':''}>🟢 Bull Div</option>
-      <option value="hbull" ${st.div==='hbull'?'selected':''}>🔵 Hidden Bull</option>
+      <option value="hbull" ${st.div==='hbull'?'selected':''}>🔵 Hid Bull</option>
       <option value="bear" ${st.div==='bear'?'selected':''}>🔴 Bear Div</option>
-      <option value="hbear" ${st.div==='hbear'?'selected':''}>🟠 Hidden Bear</option>
+      <option value="hbear" ${st.div==='hbear'?'selected':''}>🟠 Hid Bear</option>
     </select>`;
 
     // 1-2-3 Drives select
@@ -962,9 +913,10 @@ function renderTF(results) {
   let miniHtml='';
   for(const {id,label} of TFS){
     const r=results[id];
-    const st=tfState[id]||{div:'none',drives:'none'};
+    const st=tfState[id]||{div:'auto',drives:'none'};
     if(!r){ miniHtml+=`<tr><td>${label}</td><td colspan="3" style="opacity:.4">—</td></tr>`; continue; }
-    const manAdj=divScore(st.div)+drivesScore(st.drives);
+    const divVal2=(st.div==='auto'||!st.div)?(r.divAuto||'none'):st.div;
+    const manAdj=divScore(divVal2)+drivesScore(st.drives);
     const rowScore=r.score+manAdj;
     const scorec=rowScore>=1?'cbull':rowScore<=-1?'cbear':'cneutral';
     const bias=biasOf(rowScore);
@@ -1222,43 +1174,98 @@ function setScoreEl(id, val) {
   el.style.color=colorOf(val);
 }
 
-// ─── STOCK / INDEX PRICES (Yahoo Finance v8 chart) ───────
-async function fetchOneStock(yahooSym, priceId, chgId, dollarPrefix) {
+// ─── STOCK / INDEX PRICES ────────────────────────────────
+function applyStockTile(priceId, chgId, price, chgPct, dollarPrefix) {
+  const pe=document.getElementById(priceId), ce=document.getElementById(chgId);
+  if(!pe||!ce) return;
+  const fmt=price>=1000
+    ?price.toLocaleString('en-US',{maximumFractionDigits:2})
+    :price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  pe.textContent=(dollarPrefix?'$':'')+fmt;
+  ce.textContent=(chgPct>=0?'+':'')+chgPct.toFixed(2)+'%';
+  ce.style.color=chgPct>=0?'var(--bull)':'var(--bear)';
+}
+
+async function stooqCSV(sym) {
   try {
-    const data = await apiFetch(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=2d`, 8000
-    );
-    const meta = data?.chart?.result?.[0]?.meta;
-    if (!meta) throw new Error('no meta');
+    const txt=await apiFetchText(`https://stooq.com/q/d/l/?s=${sym}&i=d`,7000);
+    const rows=txt.trim().split('\n').filter(l=>l&&!l.startsWith('Date'));
+    if(rows.length<2) return null;
+    const a=rows[rows.length-2].split(','), b=rows[rows.length-1].split(',');
+    const price=parseFloat(b[4]), prev=parseFloat(a[4]);
+    if(isNaN(price)||isNaN(prev)||prev===0) return null;
+    return {price, chgPct:((price-prev)/prev)*100};
+  } catch(e){ return null; }
+}
 
-    const price = meta.regularMarketPrice || meta.previousClose;
-    const prev  = meta.chartPreviousClose  || meta.previousClose;
-    const chgPct = prev ? ((price - prev) / prev) * 100 : 0;
-    const closed = meta.marketState && meta.marketState !== 'REGULAR';
-
-    const priceEl = document.getElementById(priceId);
-    const chgEl   = document.getElementById(chgId);
-    if (!priceEl || !chgEl) return;
-
-    const fmt = price >= 1000
-      ? price.toLocaleString('en-US', {maximumFractionDigits: 2})
-      : price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-    priceEl.textContent = (dollarPrefix ? '$' : '') + fmt;
-    chgEl.textContent   = (chgPct >= 0 ? '+' : '') + chgPct.toFixed(2) + '%' + (closed ? ' ●' : '');
-    chgEl.style.color   = chgPct >= 0 ? 'var(--bull)' : 'var(--bear)';
-    if (closed) chgEl.title = 'Market closed — showing last close';
-  } catch(e) {
-    const el = document.getElementById(priceId);
-    if (el) el.textContent = 'N/A';
-    console.warn('stock fetch', yahooSym, e);
+async function fetchStock(yahooSym, stooqSym, priceId, chgId, dollarPrefix, cb) {
+  // 1. Yahoo Finance v8
+  for(const host of ['query2','query1']){
+    try {
+      const d=await apiFetch(`https://${host}.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=2d`,6000);
+      const m=d?.chart?.result?.[0]?.meta;
+      if(m?.regularMarketPrice){
+        const price=m.regularMarketPrice;
+        const prev=m.chartPreviousClose||m.previousClose||price;
+        const chgPct=prev?((price-prev)/prev)*100:0;
+        applyStockTile(priceId,chgId,price,chgPct,dollarPrefix);
+        if(cb) cb(price,chgPct);
+        return;
+      }
+    } catch(e){}
   }
+  // 2. Stooq fallback
+  const sq=await stooqCSV(stooqSym);
+  if(sq){
+    applyStockTile(priceId,chgId,sq.price,sq.chgPct,dollarPrefix);
+    if(cb) cb(sq.price,sq.chgPct);
+    return;
+  }
+  // 3. Give up
+  const el=document.getElementById(priceId);
+  if(el) el.textContent='N/A';
+}
+
+function autoSetSPXRisk(price, chgPct) {
+  const sel=document.getElementById('spx');
+  if(!sel||sel.dataset.manual) return;
+  sel.value=chgPct>0.5?'on':chgPct<-0.5?'off':'neutral';
+  recalc();
 }
 
 async function fetchStocks() {
-  fetchOneStock('QQQ',     'h-qqq-price', 'h-qqq-change', true);
-  fetchOneStock('%5EIXIC', 'h-ndx-price', 'h-ndx-change', false);
-  fetchOneStock('%5EGSPC', 'h-spx-price', 'h-spx-change', false);
+  fetchStock('QQQ',    'qqq.us', 'h-qqq-price','h-qqq-change',true);
+  fetchStock('%5EIXIC','comp.us','h-ndx-price','h-ndx-change',false);
+  fetchStock('%5EGSPC','^spx',  'h-spx-price','h-spx-change',false,autoSetSPXRisk);
+}
+
+// ─── DXY AUTO-FETCH ──────────────────────────────────────
+async function fetchDXY() {
+  let price=null, chgPct=null;
+  for(const host of ['query2','query1']){
+    try {
+      const d=await apiFetch(`https://${host}.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?interval=1d&range=2d`,6000);
+      const m=d?.chart?.result?.[0]?.meta;
+      if(m?.regularMarketPrice){
+        price=m.regularMarketPrice;
+        const prev=m.chartPreviousClose||m.previousClose||price;
+        chgPct=prev?((price-prev)/prev)*100:0;
+        break;
+      }
+    } catch(e){}
+  }
+  if(!price){
+    const sq=await stooqCSV('dxy.us');
+    if(sq){price=sq.price;chgPct=sq.chgPct;}
+  }
+  if(price){
+    const vi=document.getElementById('dxy-val');
+    if(vi&&!vi.dataset.manual) vi.value=price.toFixed(2);
+    const ts=document.getElementById('dxy-trend');
+    if(ts&&!ts.dataset.manual)
+      ts.value=chgPct>0.08?'up':chgPct<-0.08?'down':'side';
+    recalc();
+  }
 }
 
 // ─── MAIN REFRESH ────────────────────────────────────────
@@ -1298,8 +1305,9 @@ async function refreshAll() {
     })
     .catch(e=>{ console.error('paprika',e); setStatus('✗ Global (offline?)'); });
 
-  // Stocks / Indices
+  // Stocks / Indices + DXY macro
   fetchStocks();
+  fetchDXY();
 
   // Fear & Greed
   apiFetch('https://api.alternative.me/fng/?limit=1')
