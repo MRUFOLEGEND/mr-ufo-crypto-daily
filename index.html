@@ -26,17 +26,22 @@ header{
   padding:10px 18px;display:flex;align-items:center;gap:20px;
   position:sticky;top:0;z-index:100;flex-wrap:wrap;
 }
-.logo{font-size:14px;font-weight:700;color:var(--accent);letter-spacing:2px;white-space:nowrap}
+.brand-block{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0}
+.logo-square{
+  width:96px;height:96px;background:var(--surface2);border:1px solid var(--accent);
+  border-radius:8px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;gap:1px;padding:6px;
+  box-shadow:0 0 10px rgba(78,127,255,.2);
+}
+.logo-sq-icon{font-size:24px;line-height:1}
+.logo-sq-text{font-size:8px;font-weight:700;color:var(--accent);letter-spacing:1.5px;line-height:1.5;text-transform:uppercase}
+.logo-sq-sub{font-size:7px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+.ape-avatar{width:96px;height:96px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;object-position:top;flex-shrink:0;box-shadow:0 0 14px rgba(78,127,255,.5)}
 .price-tile{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;min-width:110px;text-align:center}
 .price-tile-coin{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:3px}
 .coin-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .price-tile-price{font-size:18px;font-weight:700;color:#fff;line-height:1.1}
 .price-tile-chg{font-size:11px;font-weight:600;margin-top:2px}
-.logo-sub{font-size:9px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;margin-top:1px}
-.ape-avatar{width:70px;height:70px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;object-position:top;flex-shrink:0;box-shadow:0 0 14px rgba(78,127,255,.5)}
-.ape-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}
-.ape-name{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.5px}
-.ape-tag{font-size:9px;color:var(--dim)}
 .h-stat{text-align:center}
 .h-stat-label{font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
 .h-stat-val{font-size:13px;font-weight:700}
@@ -181,17 +186,13 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 <!-- ═══════════════════════ HEADER ═══════════════════════ -->
 <header>
-  <div>
-    <div class="logo">🛸 MR UFO CRYPTO DAILY</div>
-    <div class="logo-sub">Market Bias Analyzer</div>
-  </div>
-
-  <div class="ape-wrap">
-    <img class="ape-avatar" src="BASC.png" alt="Mr UFO">
-    <div style="text-align:center">
-      <div class="ape-name">MR UFO</div>
-      <div class="ape-tag">Trader</div>
+  <div class="brand-block">
+    <div class="logo-square">
+      <div class="logo-sq-icon">🛸</div>
+      <div class="logo-sq-text">MR UFO<br>CRYPTO DAILY</div>
+      <div class="logo-sq-sub">Market Bias</div>
     </div>
+    <img class="ape-avatar" src="BASC.png" alt="Mr UFO">
   </div>
 
   <!-- PRICE TILES -->
@@ -1199,30 +1200,36 @@ async function stooqCSV(sym) {
   } catch(e){ return null; }
 }
 
+function _yahooMeta(d){return d?.chart?.result?.[0]?.meta;}
+function _yahooPrice(m){
+  if(!m?.regularMarketPrice) return null;
+  const price=m.regularMarketPrice;
+  const prev=m.chartPreviousClose||m.previousClose||price;
+  return {price, chgPct:prev?((price-prev)/prev)*100:0};
+}
+
 async function fetchStock(yahooSym, stooqSym, priceId, chgId, dollarPrefix, cb) {
-  // 1. Yahoo Finance v8
+  const yhUrl=`/v8/finance/chart/${yahooSym}?interval=1d&range=2d`;
+
+  // 1. Yahoo Finance direct (query2 then query1)
   for(const host of ['query2','query1']){
     try {
-      const d=await apiFetch(`https://${host}.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=2d`,6000);
-      const m=d?.chart?.result?.[0]?.meta;
-      if(m?.regularMarketPrice){
-        const price=m.regularMarketPrice;
-        const prev=m.chartPreviousClose||m.previousClose||price;
-        const chgPct=prev?((price-prev)/prev)*100:0;
-        applyStockTile(priceId,chgId,price,chgPct,dollarPrefix);
-        if(cb) cb(price,chgPct);
-        return;
-      }
+      const r=_yahooPrice(_yahooMeta(await apiFetch(`https://${host}.finance.yahoo.com${yhUrl}`,6000)));
+      if(r){ applyStockTile(priceId,chgId,r.price,r.chgPct,dollarPrefix); if(cb)cb(r.price,r.chgPct); return; }
     } catch(e){}
   }
-  // 2. Stooq fallback
+
+  // 2. Yahoo Finance via CORS proxy (bypasses browser CORS block)
+  try {
+    const proxyUrl=`https://corsproxy.io/?url=${encodeURIComponent('https://query1.finance.yahoo.com'+yhUrl)}`;
+    const r=_yahooPrice(_yahooMeta(await apiFetch(proxyUrl,9000)));
+    if(r){ applyStockTile(priceId,chgId,r.price,r.chgPct,dollarPrefix); if(cb)cb(r.price,r.chgPct); return; }
+  } catch(e){}
+
+  // 3. Stooq CSV fallback
   const sq=await stooqCSV(stooqSym);
-  if(sq){
-    applyStockTile(priceId,chgId,sq.price,sq.chgPct,dollarPrefix);
-    if(cb) cb(sq.price,sq.chgPct);
-    return;
-  }
-  // 3. Give up
+  if(sq){ applyStockTile(priceId,chgId,sq.price,sq.chgPct,dollarPrefix); if(cb)cb(sq.price,sq.chgPct); return; }
+
   const el=document.getElementById(priceId);
   if(el) el.textContent='N/A';
 }
@@ -1235,9 +1242,10 @@ function autoSetSPXRisk(price, chgPct) {
 }
 
 async function fetchStocks() {
+  // Stooq uses .us ETF symbols which are guaranteed to exist
   fetchStock('QQQ',    'qqq.us', 'h-qqq-price','h-qqq-change',true);
-  fetchStock('%5EIXIC','comp.us','h-ndx-price','h-ndx-change',false);
-  fetchStock('%5EGSPC','^spx',  'h-spx-price','h-spx-change',false,autoSetSPXRisk);
+  fetchStock('%5EIXIC','qqq.us', 'h-ndx-price','h-ndx-change',false);   // NASDAQ-100 proxy
+  fetchStock('%5EGSPC','spy.us', 'h-spx-price','h-spx-change',false,autoSetSPXRisk); // S&P 500 proxy
 }
 
 // ─── DXY AUTO-FETCH ──────────────────────────────────────
