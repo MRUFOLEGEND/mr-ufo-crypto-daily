@@ -7,8 +7,8 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0b0d12;--surface:#13161f;--surface2:#1a1e2d;--border:#22263a;
-  --text:#cdd0db;--dim:#5a6180;
+  --bg:#0b0d12;--surface:#13161f;--surface2:#1a1e2d;--border:#2a2f48;
+  --text:#e2e5f0;--dim:#8891b0;
   --bull:#00d97e;--bear:#ff3d5a;--neutral:#f5a623;
   --bull-bg:rgba(0,217,126,.08);--bear-bg:rgba(255,61,90,.08);--neutral-bg:rgba(245,166,35,.08);
   --accent:#4e7fff;--accent2:#9b59f5;
@@ -106,7 +106,7 @@ header{
 .fg-labs{display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:var(--dim)}
 
 /* TIMEFRAME TABLE */
-.tf-scroll{overflow-x:auto}
+.tf-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;min-width:1080px}
 th{
   background:var(--surface2);color:var(--dim);font-size:9px;letter-spacing:1.5px;
@@ -164,42 +164,122 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .mini-tf td:first-child{text-align:left;padding-left:10px;font-weight:700;color:var(--accent);font-size:11px}
 .mini-tf tr:last-child td{border-bottom:none}
 
-/* UFO MARGIN DECORATIONS */
-.ufo-rail{
-  position:fixed;top:0;bottom:0;width:38px;z-index:50;
-  display:flex;flex-direction:column;align-items:center;
-  justify-content:space-around;pointer-events:none;
-  overflow:hidden;
-}
-.ufo-rail.left{left:0}
-.ufo-rail.right{right:0}
-.ufo{font-size:20px;animation:ufo-float 4s ease-in-out infinite;opacity:.35}
-.ufo:nth-child(2){animation-delay:-1.3s;animation-duration:5.2s}
-.ufo:nth-child(3){animation-delay:-2.7s;animation-duration:3.8s}
-.ufo:nth-child(4){animation-delay:-.7s;animation-duration:6s}
-.ufo:nth-child(5){animation-delay:-3.1s;animation-duration:4.5s}
-@keyframes ufo-float{
-  0%,100%{transform:translateY(0) rotate(-5deg)}
-  50%{transform:translateY(-12px) rotate(5deg)}
+/* JUNGLE SIDE RAILS */
+.jungle-rail{position:fixed;top:0;bottom:0;width:46px;z-index:50;pointer-events:none;overflow:hidden}
+.jungle-rail.left{left:0}
+.jungle-rail.right{right:0}
+.jungle-rail svg{position:absolute;top:0;left:0;width:100%;height:100%}
+.jungle-rail.right svg{transform:scaleX(-1);transform-origin:center center}
+
+/* MOBILE */
+@media(max-width:768px){
+  header{position:relative}
+  .jungle-rail{display:none}
+  .main{padding:10px}
+  .factor-grid{grid-template-columns:1fr}
+  .price-tile{min-width:80px;padding:6px 10px}
+  .price-tile-price{font-size:15px}
+  td,th{font-size:10px;padding:5px 6px}
+  td:first-child{font-size:11px}
 }
 </style>
 </head>
 <body>
 
-<!-- UFO side rails -->
-<div class="ufo-rail left">
-  <span class="ufo">🛸</span>
-  <span class="ufo">🛸</span>
-  <span class="ufo">🛸</span>
-  <span class="ufo">🛸</span>
-  <span class="ufo">🛸</span>
+<!-- Jungle side rails -->
+<div class="jungle-rail left" aria-hidden="true">
+  <svg viewBox="0 0 50 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <!-- vine -->
+    <path d="M10 0 C14 80 6 165 11 245 C16 325 7 410 11 490 C15 570 6 655 10 730 C14 805 7 890 10 1000" stroke="#2a5c18" stroke-width="1.8" fill="none" opacity="0.42"/>
+    <!-- leaf y=75 right -->
+    <path d="M10,90 C32,68 52,50 47,30 C42,12 10,58 10,90Z" fill="#163509" opacity="0.75"/>
+    <line x1="10" y1="90" x2="44" y2="37" stroke="#2d6a18" stroke-width="0.6" opacity="0.38"/>
+    <!-- leaf y=155 right wide -->
+    <path d="M9,170 C40,142 65,118 58,90 C51,64 10,130 9,170Z" fill="#1a3f0d" opacity="0.88"/>
+    <path d="M9,170 C44,138 70,110 61,80 C52,52 9,142 9,170Z" fill="#142e08" opacity="0.48"/>
+    <line x1="9" y1="170" x2="56" y2="96" stroke="#2d6a18" stroke-width="0.7" opacity="0.35"/>
+    <!-- leaf y=235 left -->
+    <path d="M9,248 C-5,230 -8,211 2,198 C10,188 11,222 9,248Z" fill="#163509" opacity="0.72"/>
+    <!-- leaf y=310 right -->
+    <path d="M11,325 C38,298 60,276 54,250 C47,226 12,292 11,325Z" fill="#1e4a10" opacity="0.82"/>
+    <line x1="11" y1="325" x2="51" y2="258" stroke="#2d6a18" stroke-width="0.6" opacity="0.35"/>
+    <!-- fern y=395 -->
+    <path d="M10,408 C21,395 30,380 26,368 C22,358 11,380 10,408Z" fill="#254d14" opacity="0.62"/>
+    <path d="M10,408 C2,394 -3,378 1,367 C5,358 10,382 10,408Z" fill="#1e4a10" opacity="0.62"/>
+    <path d="M10,408 C26,392 38,375 33,362 C28,351 11,381 10,408Z" fill="#1a3f0d" opacity="0.52"/>
+    <!-- leaf y=470 right large -->
+    <path d="M10,485 C44,454 68,428 60,400 C52,373 11,448 10,485Z" fill="#142e08" opacity="0.92"/>
+    <line x1="10" y1="485" x2="57" y2="412" stroke="#2d6a18" stroke-width="0.6" opacity="0.35"/>
+    <!-- leaf y=550 left -->
+    <path d="M9,565 C-5,546 -8,527 2,514 C10,504 11,539 9,565Z" fill="#1a3f0d" opacity="0.68"/>
+    <!-- berries y=608 -->
+    <circle cx="8" cy="610" r="3.8" fill="#0a3f14" opacity="0.55"/>
+    <circle cx="15" cy="603" r="3.2" fill="#0a3f14" opacity="0.45"/>
+    <circle cx="6" cy="620" r="2.6" fill="#0a3f14" opacity="0.4"/>
+    <circle cx="8" cy="610" r="3.8" fill="none" stroke="rgba(0,217,126,0.12)" stroke-width="1.5"/>
+    <!-- leaf y=665 right wide -->
+    <path d="M11,680 C42,650 66,624 58,596 C50,569 11,644 11,680Z" fill="#1e4a10" opacity="0.84"/>
+    <path d="M11,680 C46,646 72,616 62,586 C52,557 11,654 11,680Z" fill="#163509" opacity="0.48"/>
+    <!-- leaf y=755 left -->
+    <path d="M9,768 C-5,750 -7,731 2,719 C10,709 11,743 9,768Z" fill="#163509" opacity="0.72"/>
+    <!-- leaf y=835 right -->
+    <path d="M10,850 C42,818 66,790 58,762 C50,735 11,814 10,850Z" fill="#1a3f0d" opacity="0.86"/>
+    <line x1="10" y1="850" x2="55" y2="775" stroke="#2d6a18" stroke-width="0.6" opacity="0.32"/>
+    <!-- small fern y=925 -->
+    <path d="M10,938 C21,924 29,908 25,897 C21,888 11,907 10,938Z" fill="#254d14" opacity="0.58"/>
+    <path d="M10,938 C2,923 -2,907 2,897 C6,888 10,909 10,938Z" fill="#1e4a10" opacity="0.58"/>
+    <!-- bottom stems -->
+    <path d="M7,1000 L10,965" stroke="#2a5c18" stroke-width="2.5" fill="none" opacity="0.55"/>
+    <path d="M17,1000 L13,960" stroke="#1e4a10" stroke-width="1.8" fill="none" opacity="0.45"/>
+    <path d="M28,1000 L21,968" stroke="#254d14" stroke-width="1.5" fill="none" opacity="0.38"/>
+  </svg>
 </div>
-<div class="ufo-rail right">
-  <span class="ufo">🛸</span>
-  <span class="ufo">🛸</span>
-  <span class="ufo">🛸</span>
-  <span class="ufo">🛸</span>
-  <span class="ufo">🛸</span>
+<div class="jungle-rail right" aria-hidden="true">
+  <svg viewBox="0 0 50 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <!-- vine -->
+    <path d="M10 0 C14 80 6 165 11 245 C16 325 7 410 11 490 C15 570 6 655 10 730 C14 805 7 890 10 1000" stroke="#2a5c18" stroke-width="1.8" fill="none" opacity="0.42"/>
+    <!-- leaf y=75 right -->
+    <path d="M10,90 C32,68 52,50 47,30 C42,12 10,58 10,90Z" fill="#163509" opacity="0.75"/>
+    <line x1="10" y1="90" x2="44" y2="37" stroke="#2d6a18" stroke-width="0.6" opacity="0.38"/>
+    <!-- leaf y=155 right wide -->
+    <path d="M9,170 C40,142 65,118 58,90 C51,64 10,130 9,170Z" fill="#1a3f0d" opacity="0.88"/>
+    <path d="M9,170 C44,138 70,110 61,80 C52,52 9,142 9,170Z" fill="#142e08" opacity="0.48"/>
+    <line x1="9" y1="170" x2="56" y2="96" stroke="#2d6a18" stroke-width="0.7" opacity="0.35"/>
+    <!-- leaf y=235 left -->
+    <path d="M9,248 C-5,230 -8,211 2,198 C10,188 11,222 9,248Z" fill="#163509" opacity="0.72"/>
+    <!-- leaf y=310 right -->
+    <path d="M11,325 C38,298 60,276 54,250 C47,226 12,292 11,325Z" fill="#1e4a10" opacity="0.82"/>
+    <line x1="11" y1="325" x2="51" y2="258" stroke="#2d6a18" stroke-width="0.6" opacity="0.35"/>
+    <!-- fern y=395 -->
+    <path d="M10,408 C21,395 30,380 26,368 C22,358 11,380 10,408Z" fill="#254d14" opacity="0.62"/>
+    <path d="M10,408 C2,394 -3,378 1,367 C5,358 10,382 10,408Z" fill="#1e4a10" opacity="0.62"/>
+    <path d="M10,408 C26,392 38,375 33,362 C28,351 11,381 10,408Z" fill="#1a3f0d" opacity="0.52"/>
+    <!-- leaf y=470 right large -->
+    <path d="M10,485 C44,454 68,428 60,400 C52,373 11,448 10,485Z" fill="#142e08" opacity="0.92"/>
+    <line x1="10" y1="485" x2="57" y2="412" stroke="#2d6a18" stroke-width="0.6" opacity="0.35"/>
+    <!-- leaf y=550 left -->
+    <path d="M9,565 C-5,546 -8,527 2,514 C10,504 11,539 9,565Z" fill="#1a3f0d" opacity="0.68"/>
+    <!-- berries y=608 -->
+    <circle cx="8" cy="610" r="3.8" fill="#0a3f14" opacity="0.55"/>
+    <circle cx="15" cy="603" r="3.2" fill="#0a3f14" opacity="0.45"/>
+    <circle cx="6" cy="620" r="2.6" fill="#0a3f14" opacity="0.4"/>
+    <circle cx="8" cy="610" r="3.8" fill="none" stroke="rgba(0,217,126,0.12)" stroke-width="1.5"/>
+    <!-- leaf y=665 right wide -->
+    <path d="M11,680 C42,650 66,624 58,596 C50,569 11,644 11,680Z" fill="#1e4a10" opacity="0.84"/>
+    <path d="M11,680 C46,646 72,616 62,586 C52,557 11,654 11,680Z" fill="#163509" opacity="0.48"/>
+    <!-- leaf y=755 left -->
+    <path d="M9,768 C-5,750 -7,731 2,719 C10,709 11,743 9,768Z" fill="#163509" opacity="0.72"/>
+    <!-- leaf y=835 right -->
+    <path d="M10,850 C42,818 66,790 58,762 C50,735 11,814 10,850Z" fill="#1a3f0d" opacity="0.86"/>
+    <line x1="10" y1="850" x2="55" y2="775" stroke="#2d6a18" stroke-width="0.6" opacity="0.32"/>
+    <!-- small fern y=925 -->
+    <path d="M10,938 C21,924 29,908 25,897 C21,888 11,907 10,938Z" fill="#254d14" opacity="0.58"/>
+    <path d="M10,938 C2,923 -2,907 2,897 C6,888 10,909 10,938Z" fill="#1e4a10" opacity="0.58"/>
+    <!-- bottom stems -->
+    <path d="M7,1000 L10,965" stroke="#2a5c18" stroke-width="2.5" fill="none" opacity="0.55"/>
+    <path d="M17,1000 L13,960" stroke="#1e4a10" stroke-width="1.8" fill="none" opacity="0.45"/>
+    <path d="M28,1000 L21,968" stroke="#254d14" stroke-width="1.5" fill="none" opacity="0.38"/>
+  </svg>
 </div>
 
 <!-- ═══════════════════════ HEADER ═══════════════════════ -->
