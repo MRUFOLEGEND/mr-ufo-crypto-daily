@@ -23,9 +23,11 @@ body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code','C
 /* HEADER */
 header{
   background:var(--surface);border-bottom:1px solid var(--border);
-  padding:10px 18px;display:flex;align-items:center;gap:20px;
+  padding:10px 18px;display:flex;align-items:center;gap:16px;
   position:sticky;top:0;z-index:100;flex-wrap:wrap;
 }
+.price-rows{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.price-row{display:flex;gap:8px;align-items:center}
 .brand-block{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0}
 .logo-square{
   width:130px;height:130px;background:var(--surface2);border:2px solid var(--accent);
@@ -36,7 +38,7 @@ header{
 .logo-sq-ape{width:76px;height:76px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;object-position:top;flex-shrink:0}
 .logo-sq-text{font-size:8px;font-weight:700;color:var(--accent);letter-spacing:1.5px;line-height:1.5;text-transform:uppercase}
 .logo-sq-sub{font-size:11px;color:#fff;letter-spacing:2px;text-transform:uppercase;font-weight:600}
-.price-tile{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;min-width:110px;text-align:center}
+.price-tile{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 11px;min-width:90px;text-align:center}
 .price-tile-coin{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:3px}
 .coin-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .price-tile-price{font-size:18px;font-weight:700;color:#fff;line-height:1.1}
@@ -189,52 +191,52 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
   </div>
 
-  <!-- PRICE TILES -->
-  <div class="price-tile">
-    <div class="price-tile-coin"><span class="coin-dot" style="background:#f7931a"></span>BTC</div>
-    <div class="price-tile-price" id="h-btc-price">$—</div>
-    <div class="price-tile-chg" id="h-btc-change">—%</div>
-  </div>
-  <div class="price-tile">
-    <div class="price-tile-coin"><span class="coin-dot" style="background:#627eea"></span>ETH</div>
-    <div class="price-tile-price" id="h-eth-price">$—</div>
-    <div class="price-tile-chg" id="h-eth-change">—%</div>
-  </div>
-  <div class="price-tile">
-    <div class="price-tile-coin"><span class="coin-dot" style="background:#9945ff"></span>SOL</div>
-    <div class="price-tile-price" id="h-sol-price">$—</div>
-    <div class="price-tile-chg" id="h-sol-change">—%</div>
-  </div>
-
-  <div style="width:1px;height:40px;background:var(--border);flex-shrink:0"></div>
-
-  <div class="price-tile">
-    <div class="price-tile-coin"><span class="coin-dot" style="background:#00b4d8"></span>QQQ</div>
-    <div class="price-tile-price" id="h-qqq-price">$—</div>
-    <div class="price-tile-chg" id="h-qqq-change">—%</div>
-  </div>
-  <div class="price-tile">
-    <div class="price-tile-coin"><span class="coin-dot" style="background:#9b59f5"></span>NDX</div>
-    <div class="price-tile-price" id="h-ndx-price">—</div>
-    <div class="price-tile-chg" id="h-ndx-change">—%</div>
-  </div>
-  <div class="price-tile">
-    <div class="price-tile-coin"><span class="coin-dot" style="background:#f5a623"></span>SPX</div>
-    <div class="price-tile-price" id="h-spx-price">—</div>
-    <div class="price-tile-chg" id="h-spx-change">—%</div>
-  </div>
-
-  <div style="width:1px;height:40px;background:var(--border);flex-shrink:0"></div>
-
-  <div class="price-tile">
-    <div class="price-tile-coin"><span class="coin-dot" style="background:#e8d44d"></span>DXY</div>
-    <div class="price-tile-price" id="h-dxy-price">—</div>
-    <div class="price-tile-chg" id="h-dxy-change">—%</div>
-  </div>
-  <div class="price-tile">
-    <div class="price-tile-coin"><span class="coin-dot" style="background:#ffd700"></span>XAU</div>
-    <div class="price-tile-price" id="h-xau-price">$—</div>
-    <div class="price-tile-chg" id="h-xau-change">—%</div>
+  <!-- PRICE TILES — row 1: crypto + QQQ | row 2: indices + macro -->
+  <div class="price-rows">
+    <div class="price-row">
+      <div class="price-tile">
+        <div class="price-tile-coin"><span class="coin-dot" style="background:#f7931a"></span>BTC</div>
+        <div class="price-tile-price" id="h-btc-price">$—</div>
+        <div class="price-tile-chg" id="h-btc-change">—%</div>
+      </div>
+      <div class="price-tile">
+        <div class="price-tile-coin"><span class="coin-dot" style="background:#627eea"></span>ETH</div>
+        <div class="price-tile-price" id="h-eth-price">$—</div>
+        <div class="price-tile-chg" id="h-eth-change">—%</div>
+      </div>
+      <div class="price-tile">
+        <div class="price-tile-coin"><span class="coin-dot" style="background:#9945ff"></span>SOL</div>
+        <div class="price-tile-price" id="h-sol-price">$—</div>
+        <div class="price-tile-chg" id="h-sol-change">—%</div>
+      </div>
+      <div class="price-tile">
+        <div class="price-tile-coin"><span class="coin-dot" style="background:#00b4d8"></span>QQQ</div>
+        <div class="price-tile-price" id="h-qqq-price">$—</div>
+        <div class="price-tile-chg" id="h-qqq-change">—%</div>
+      </div>
+    </div>
+    <div class="price-row">
+      <div class="price-tile">
+        <div class="price-tile-coin"><span class="coin-dot" style="background:#9b59f5"></span>NDX</div>
+        <div class="price-tile-price" id="h-ndx-price">—</div>
+        <div class="price-tile-chg" id="h-ndx-change">—%</div>
+      </div>
+      <div class="price-tile">
+        <div class="price-tile-coin"><span class="coin-dot" style="background:#f5a623"></span>SPX</div>
+        <div class="price-tile-price" id="h-spx-price">—</div>
+        <div class="price-tile-chg" id="h-spx-change">—%</div>
+      </div>
+      <div class="price-tile">
+        <div class="price-tile-coin"><span class="coin-dot" style="background:#e8d44d"></span>DXY</div>
+        <div class="price-tile-price" id="h-dxy-price">—</div>
+        <div class="price-tile-chg" id="h-dxy-change">—%</div>
+      </div>
+      <div class="price-tile">
+        <div class="price-tile-coin"><span class="coin-dot" style="background:#ffd700"></span>XAU</div>
+        <div class="price-tile-price" id="h-xau-price">$—</div>
+        <div class="price-tile-chg" id="h-xau-change">—%</div>
+      </div>
+    </div>
   </div>
 
   <div class="h-stat">
