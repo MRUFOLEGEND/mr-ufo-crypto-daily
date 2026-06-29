@@ -13,8 +13,7 @@
   --bull-bg:rgba(0,217,126,.08);--bear-bg:rgba(255,61,90,.08);--neutral-bg:rgba(245,166,35,.08);
   --accent:#4e7fff;--accent2:#9b59f5;
 }
-body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code','Courier New',monospace;font-size:12px;min-height:100vh;position:relative}
-body::before{content:'';position:fixed;inset:0;background:url('BASC.png') center center / cover no-repeat;opacity:0.07;z-index:-1;pointer-events:none}
+body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code','Courier New',monospace;font-size:12px;min-height:100vh}
 
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:5px;height:5px}
@@ -103,13 +102,8 @@ header{
   padding:3px 8px;border-radius:4px;font-size:11px;font-family:inherit;width:90px;
 }
 
-/* FEAR & GREED */
-.fg-wrap{text-align:center;padding:6px 0 10px}
-.fg-num{font-size:36px;font-weight:700;line-height:1}
-.fg-txt{font-size:12px;font-weight:600;margin-top:3px;margin-bottom:10px}
-.fg-bar{height:7px;background:linear-gradient(to right,#ff3d5a,#f5a623,#00d97e);border-radius:4px;position:relative;margin:0 6px}
-.fg-pin{position:absolute;width:13px;height:13px;background:#fff;border:2px solid #000;border-radius:50%;top:-3px;transform:translateX(-50%);transition:left .5s ease}
-.fg-labs{display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:var(--dim)}
+/* FEAR & GREED GAUGE */
+.fg-gauge{text-align:center;padding:4px 0 8px;display:flex;justify-content:center}
 
 /* TIMEFRAME TABLE */
 .tf-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -478,15 +472,34 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </div>
       <div class="card-body">
 
-        <div class="fg-wrap">
-          <div class="fg-num" id="fg-num">—</div>
-          <div class="fg-txt" id="fg-txt">Loading...</div>
-          <div class="fg-bar">
-            <div class="fg-pin" id="fg-pin" style="left:50%"></div>
-          </div>
-          <div class="fg-labs">
-            <span>Ext. Fear</span><span>Fear</span><span>Neutral</span><span>Greed</span><span>Ext. Greed</span>
-          </div>
+        <div class="fg-gauge">
+          <svg viewBox="0 0 200 145" style="width:100%;max-width:210px" xmlns="http://www.w3.org/2000/svg">
+            <!-- Zone arcs: Extreme Fear | Fear | Neutral | Greed | Extreme Greed -->
+            <!-- Center (100,110), R_outer=82, R_inner=60 -->
+            <!-- Angles: 180°→144°→108°→72°→36°→0° (standard math, CCW in screen = sweep=0) -->
+            <path d="M 18 110 A 82 82 0 0 0 33.66 61.80 L 51.46 74.73 A 60 60 0 0 1 40 110 Z" fill="#c0392b"/>
+            <path d="M 33.66 61.80 A 82 82 0 0 0 74.66 32.01 L 81.46 52.94 A 60 60 0 0 1 51.46 74.73 Z" fill="#e67e22"/>
+            <path d="M 74.66 32.01 A 82 82 0 0 0 125.34 32.01 L 118.54 52.94 A 60 60 0 0 1 81.46 52.94 Z" fill="#f5a623"/>
+            <path d="M 125.34 32.01 A 82 82 0 0 0 166.34 61.80 L 148.54 74.73 A 60 60 0 0 1 118.54 52.94 Z" fill="#27ae60"/>
+            <path d="M 166.34 61.80 A 82 82 0 0 0 182 110 L 160 110 A 60 60 0 0 1 148.54 74.73 Z" fill="#00d97e"/>
+            <!-- Zone dividers -->
+            <line x1="33.66" y1="61.80" x2="51.46" y2="74.73" stroke="#0b0d12" stroke-width="1.5"/>
+            <line x1="74.66" y1="32.01" x2="81.46" y2="52.94" stroke="#0b0d12" stroke-width="1.5"/>
+            <line x1="125.34" y1="32.01" x2="118.54" y2="52.94" stroke="#0b0d12" stroke-width="1.5"/>
+            <line x1="166.34" y1="61.80" x2="148.54" y2="74.73" stroke="#0b0d12" stroke-width="1.5"/>
+            <!-- Needle (pivot 100,110; points up at v=50; rotation=(v-50)*1.8°) -->
+            <g id="fg-needle-g" transform="rotate(0,100,110)">
+              <polygon points="98.5,107 100,41 101.5,107" fill="rgba(255,255,255,0.95)"/>
+              <circle cx="100" cy="110" r="7" fill="#13161f" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+              <circle cx="100" cy="110" r="3" fill="white"/>
+            </g>
+            <!-- Value and label -->
+            <text x="100" y="128" text-anchor="middle" id="fg-num" fill="white" font-size="26" font-weight="700" font-family="'SF Mono','Fira Code',monospace">—</text>
+            <text x="100" y="142" text-anchor="middle" id="fg-txt" fill="#8891b0" font-size="8" letter-spacing="1.5" font-family="'SF Mono','Fira Code',monospace">LOADING...</text>
+            <!-- Edge labels -->
+            <text x="8" y="124" fill="#c0392b" font-size="7" font-family="'SF Mono','Fira Code',monospace">FEAR</text>
+            <text x="192" y="124" fill="#00d97e" font-size="7" text-anchor="end" font-family="'SF Mono','Fira Code',monospace">GREED</text>
+          </svg>
         </div>
 
         <div class="frow">
@@ -1161,15 +1174,20 @@ function updateGlobalFromPaprika(global, usdtTicker, ethTicker) {
 
 function updateFG(fg) {
   const val=parseInt(fg.value);
-  document.getElementById('fg-num').textContent=val;
-  document.getElementById('fg-txt').textContent=fg.value_classification;
-  document.getElementById('h-fg').textContent=val;
-  document.getElementById('fg-pin').style.left=val+'%';
+  const fc=val<=20?'#c0392b':val<=40?'#e67e22':val<=60?'#f5a623':val<=80?'#27ae60':'#00d97e';
 
-  const fc=val<=20?'var(--bear)':val<=40?'#ff8c42':val<=60?'var(--neutral)':val<=80?'#7bc67e':'var(--bull)';
-  document.getElementById('fg-num').style.color=fc;
-  document.getElementById('fg-txt').style.color=fc;
+  // Header stat
+  document.getElementById('h-fg').textContent=val;
   document.getElementById('h-fg').style.color=fc;
+
+  // Speedometer — needle: rotation = (val-50)*1.8 degrees around pivot (100,110)
+  document.getElementById('fg-needle-g').setAttribute('transform',`rotate(${(val-50)*1.8},100,110)`);
+  const numEl=document.getElementById('fg-num');
+  const txtEl=document.getElementById('fg-txt');
+  numEl.textContent=val;
+  numEl.setAttribute('fill',fc);
+  txtEl.textContent=fg.value_classification.toUpperCase();
+  txtEl.setAttribute('fill',fc);
 
   // Contrarian scoring
   if(val<=20) S._fg=2;
