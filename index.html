@@ -36,7 +36,7 @@ header{
   box-shadow:0 0 16px rgba(78,127,255,.3);overflow:hidden;
 }
 .logo-sq-ape{width:76px;height:76px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;object-position:top;flex-shrink:0}
-.logo-sq-text{font-size:8px;font-weight:700;color:var(--accent);letter-spacing:1.5px;line-height:1.5;text-transform:uppercase}
+.logo-sq-text{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;line-height:1.4;text-transform:uppercase}
 .logo-sq-sub{font-size:11px;color:#fff;letter-spacing:2px;text-transform:uppercase;font-weight:600}
 .price-tile{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 11px;min-width:90px;text-align:center}
 .price-tile-coin{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:3px}
@@ -185,7 +185,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <div class="brand-block">
     <div class="logo-square">
       <img class="logo-sq-ape" src="BASC.png" alt="Mr UFO">
-      <div class="logo-sq-text">MR UFO&nbsp;·&nbsp;CRYPTO DAILY</div>
+      <div class="logo-sq-text">MR UFO<br>CRYPTO DAILY</div>
       <div class="logo-sq-sub">Market Bias</div>
     </div>
   </div>
@@ -399,7 +399,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
         <div class="frow">
           <span class="fname">Fed Policy</span>
-          <select class="ms" id="fed" onchange="recalc()">
+          <select class="ms" id="fed" onchange="this.dataset.manual='1';recalc()">
             <option value="qe">QE — Bullish 🟢</option>
             <option value="cut">Rate Cut — Bullish</option>
             <option value="pause" selected>Pause — Neutral</option>
@@ -410,7 +410,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
         <div class="frow">
           <span class="fname">Global M2</span>
-          <select class="ms" id="m2" onchange="recalc()">
+          <select class="ms" id="m2" onchange="this.dataset.manual='1';recalc()">
             <option value="up">↑ Expanding 🟢</option>
             <option value="flat" selected>→ Flat</option>
             <option value="down">↓ Contracting 🔴</option>
@@ -504,7 +504,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
         <div class="frow">
           <span class="fname">Open Interest</span>
-          <select class="ms" id="oi" onchange="recalc()">
+          <select class="ms" id="oi" onchange="this.dataset.manual='1';recalc()">
             <option value="rpu">↑ OI + Price Up (Bullish)</option>
             <option value="rpd">↓ OI + Price Down (Bearish)</option>
             <option value="opd">⚠ OI Up, Price Down</option>
@@ -582,7 +582,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
         <div class="frow">
           <span class="fname">Stablecoin Supply</span>
-          <select class="ms" id="stable" onchange="recalc()">
+          <select class="ms" id="stable" onchange="this.dataset.manual='1';recalc()">
             <option value="grow">↑ Growing (Dry Powder 🟢)</option>
             <option value="flat" selected>→ Flat</option>
             <option value="shrink">↓ Shrinking 🔴</option>
@@ -1107,11 +1107,23 @@ function updateGlobalFromPaprika(global, usdtTicker, ethTicker) {
   const totalMcap=global.market_cap_usd;
   const btcD=global.bitcoin_dominance_percentage||0;
 
-  let usdtD=0;
+  let usdtD=0, usdtMcap=0;
   try{
-    const usdtMcap=usdtTicker.quotes.USD.market_cap;
-    usdtD=(usdtMcap/totalMcap)*100;
+    usdtMcap=usdtTicker.quotes.USD.market_cap||0;
+    usdtD=totalMcap?(usdtMcap/totalMcap)*100:0;
   }catch(e){}
+
+  // Stablecoin supply trend — compare vs previous refresh
+  if(usdtMcap>0){
+    const prevUsdtMcap=parseFloat(localStorage.getItem('prev_usdt_mcap')||'0');
+    if(prevUsdtMcap>0){
+      const stableChg=(usdtMcap-prevUsdtMcap)/prevUsdtMcap;
+      const stableSel=document.getElementById('stable');
+      if(stableSel&&!stableSel.dataset.manual)
+        stableSel.value=stableChg>0.003?'grow':stableChg<-0.003?'shrink':'flat';
+    }
+    localStorage.setItem('prev_usdt_mcap',usdtMcap.toString());
+  }
 
   // TOTAL3 = Total market cap minus BTC minus ETH
   let ethMcap=0;
@@ -1457,6 +1469,69 @@ function setStatus(msg) {
   if(el) el.textContent=msg;
 }
 
+// ─── FRED AUTO-FILL (Fed Policy + M2) ────────────────────────
+async function fetchFREDcsv(seriesId) {
+  const url=`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${seriesId}`;
+  let txt=null;
+  try{ txt=await apiFetchText(url,8000); }catch(e){}
+  if(!txt){
+    try{ txt=await apiFetchText(`https://corsproxy.io/?url=${encodeURIComponent(url)}`,12000); }catch(e){}
+  }
+  if(!txt) return null;
+  const rows=txt.trim().split('\n').filter(l=>l&&!l.startsWith('DATE'));
+  return rows.slice(-6).map(r=>{
+    const [date,val]=r.split(',');
+    return {date:(date||'').trim(),val:parseFloat((val||'').trim())};
+  }).filter(r=>!isNaN(r.val));
+}
+
+async function fetchFedAndM2() {
+  // Fed Funds Rate — compare latest vs 3 months ago to detect cut/hike/pause
+  fetchFREDcsv('FEDFUNDS').then(data=>{
+    if(!data||data.length<2) return;
+    const sel=document.getElementById('fed');
+    if(!sel||sel.dataset.manual) return;
+    const latest=data[data.length-1].val;
+    const older=data[Math.max(0,data.length-4)].val;
+    const diff=latest-older;
+    sel.value=diff<=-0.5?'cut':diff>=0.5?'hike':'pause';
+    recalc();
+    setStatus('✓ FRED: Fed policy auto-set');
+  }).catch(()=>{});
+
+  // M2 Money Supply — month-over-month trend
+  fetchFREDcsv('M2SL').then(data=>{
+    if(!data||data.length<2) return;
+    const sel=document.getElementById('m2');
+    if(!sel||sel.dataset.manual) return;
+    const latest=data[data.length-1].val;
+    const prev=data[data.length-2].val;
+    const chg=(latest-prev)/prev*100;
+    sel.value=chg>0.1?'up':chg<-0.1?'down':'flat';
+    recalc();
+  }).catch(()=>{});
+}
+
+// ─── BINANCE OI TREND AUTO-FILL ──────────────────────────────
+async function fetchOITrend() {
+  try{
+    const d=await apiFetch(`${BINANCE_F}/openInterestHist?symbol=BTCUSDT&period=4h&limit=7`,8000);
+    if(!Array.isArray(d)||d.length<2) return;
+    const oiNow=parseFloat(d[d.length-1].sumOpenInterest);
+    const oiOld=parseFloat(d[0].sumOpenInterest);
+    const oiChg=(oiNow-oiOld)/oiOld;
+    const priceChg=(S._btcChange24h||0)/100;
+    const sel=document.getElementById('oi');
+    if(!sel||sel.dataset.manual) return;
+    if(oiChg>0.01&&priceChg>0.005)       sel.value='rpu';
+    else if(oiChg<-0.01&&priceChg<-0.005) sel.value='rpd';
+    else if(oiChg>0.01&&priceChg<-0.005)  sel.value='opd';
+    else                                   sel.value='neutral';
+    recalc();
+    setStatus('✓ OI trend auto-set');
+  }catch(e){ console.warn('OI trend',e); }
+}
+
 async function refreshAll() {
   document.getElementById('last-upd').textContent='Refreshing…';
   setStatus('');
@@ -1494,6 +1569,12 @@ async function refreshAll() {
   // Stocks / Indices + DXY macro
   fetchStocks();
   fetchDXY();
+
+  // FRED: Fed policy + M2 auto-fill
+  fetchFedAndM2();
+
+  // Binance: OI trend auto-fill
+  fetchOITrend();
 
   // Fear & Greed
   apiFetch('https://api.alternative.me/fng/?limit=1')
