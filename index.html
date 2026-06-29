@@ -13,7 +13,8 @@
   --bull-bg:rgba(0,217,126,.08);--bear-bg:rgba(255,61,90,.08);--neutral-bg:rgba(245,166,35,.08);
   --accent:#4e7fff;--accent2:#9b59f5;
 }
-body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code','Courier New',monospace;font-size:12px;min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code','Courier New',monospace;font-size:12px;min-height:100vh;position:relative}
+body::before{content:'';position:fixed;inset:0;background:url('BASC.png') center center / cover no-repeat;opacity:0.07;z-index:-1;pointer-events:none}
 
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:5px;height:5px}
@@ -26,17 +27,16 @@ header{
   padding:10px 18px;display:flex;align-items:center;gap:20px;
   position:sticky;top:0;z-index:100;flex-wrap:wrap;
 }
-.brand-block{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0}
+.brand-block{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0}
 .logo-square{
-  width:96px;height:96px;background:var(--surface2);border:1px solid var(--accent);
-  border-radius:8px;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;text-align:center;gap:1px;padding:6px;
-  box-shadow:0 0 10px rgba(78,127,255,.2);
+  width:130px;height:130px;background:var(--surface2);border:2px solid var(--accent);
+  border-radius:10px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;gap:3px;padding:6px;
+  box-shadow:0 0 16px rgba(78,127,255,.3);overflow:hidden;
 }
-.logo-sq-icon{font-size:24px;line-height:1}
+.logo-sq-ape{width:76px;height:76px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;object-position:top;flex-shrink:0}
 .logo-sq-text{font-size:8px;font-weight:700;color:var(--accent);letter-spacing:1.5px;line-height:1.5;text-transform:uppercase}
-.logo-sq-sub{font-size:7px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
-.ape-avatar{width:96px;height:96px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;object-position:top;flex-shrink:0;box-shadow:0 0 14px rgba(78,127,255,.5)}
+.logo-sq-sub{font-size:11px;color:#fff;letter-spacing:2px;text-transform:uppercase;font-weight:600}
 .price-tile{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;min-width:110px;text-align:center}
 .price-tile-coin{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:3px}
 .coin-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0}
@@ -188,11 +188,10 @@ tr:hover td{background:rgba(255,255,255,.02)}
 <header>
   <div class="brand-block">
     <div class="logo-square">
-      <div class="logo-sq-icon">🛸</div>
-      <div class="logo-sq-text">MR UFO<br>CRYPTO DAILY</div>
+      <img class="logo-sq-ape" src="BASC.png" alt="Mr UFO">
+      <div class="logo-sq-text">MR UFO&nbsp;·&nbsp;CRYPTO DAILY</div>
       <div class="logo-sq-sub">Market Bias</div>
     </div>
-    <img class="ape-avatar" src="BASC.png" alt="Mr UFO">
   </div>
 
   <!-- PRICE TILES -->
@@ -647,26 +646,27 @@ function rsiArray(closes, p=14) {
   return out;
 }
 
-function detectDivergence(closes, rsiArr, lookback=50) {
+function detectDivergence(closes, rsiArr, lookback=80) {
   const n=closes.length;
-  if(n<lookback) return 'none';
-  const prices=closes.slice(-lookback), rsis=rsiArr.slice(-lookback), len=prices.length;
+  if(n<20) return 'none';
+  const sz=Math.min(lookback,n);
+  const prices=closes.slice(-sz), rsis=rsiArr.slice(-sz), len=prices.length;
   const lows=[],highs=[];
   for(let i=2;i<len-2;i++){
     const p=prices[i],r=rsis[i];
     if(r==null) continue;
-    if(p<=prices[i-1]&&p<=prices[i-2]&&p<=prices[i+1]&&p<=prices[i+2]) lows.push({p,r});
-    if(p>=prices[i-1]&&p>=prices[i-2]&&p>=prices[i+1]&&p>=prices[i+2]) highs.push({p,r});
+    if(p<prices[i-1]&&p<prices[i-2]&&p<prices[i+1]&&p<prices[i+2]) lows.push({p,r,i});
+    if(p>prices[i-1]&&p>prices[i-2]&&p>prices[i+1]&&p>prices[i+2]) highs.push({p,r,i});
   }
   if(lows.length>=2){
     const a=lows[lows.length-2],b=lows[lows.length-1];
-    if(b.p<a.p&&b.r>a.r+2) return 'bull';
-    if(b.p>a.p&&b.r<a.r-2) return 'hbull';
+    if(b.p<a.p&&b.r>a.r+1) return 'bull';
+    if(b.p>a.p&&b.r<a.r-1) return 'hbull';
   }
   if(highs.length>=2){
     const a=highs[highs.length-2],b=highs[highs.length-1];
-    if(b.p>a.p&&b.r<a.r-2) return 'bear';
-    if(b.p<a.p&&b.r>a.r+2) return 'hbear';
+    if(b.p>a.p&&b.r<a.r-1) return 'bear';
+    if(b.p<a.p&&b.r>a.r+1) return 'hbear';
   }
   return 'none';
 }
