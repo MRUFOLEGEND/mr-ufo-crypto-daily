@@ -173,8 +173,9 @@ tr:hover td{background:rgba(255,255,255,.02)}
 /* MOBILE */
 @media(max-width:768px){
   header{position:relative}
-.main{padding:10px}
+  .main{padding:10px}
   .factor-grid{grid-template-columns:1fr}
+  #alt-grid{grid-template-columns:1fr 1fr!important}
   .price-tile{min-width:80px;padding:6px 10px}
   .price-tile-price{font-size:15px}
   td,th{font-size:10px;padding:5px 6px}
@@ -227,6 +228,19 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <div class="price-tile-coin"><span class="coin-dot" style="background:#f5a623"></span>SPX</div>
     <div class="price-tile-price" id="h-spx-price">—</div>
     <div class="price-tile-chg" id="h-spx-change">—%</div>
+  </div>
+
+  <div style="width:1px;height:40px;background:var(--border);flex-shrink:0"></div>
+
+  <div class="price-tile">
+    <div class="price-tile-coin"><span class="coin-dot" style="background:#e8d44d"></span>DXY</div>
+    <div class="price-tile-price" id="h-dxy-price">—</div>
+    <div class="price-tile-chg" id="h-dxy-change">—%</div>
+  </div>
+  <div class="price-tile">
+    <div class="price-tile-coin"><span class="coin-dot" style="background:#ffd700"></span>XAU</div>
+    <div class="price-tile-price" id="h-xau-price">$—</div>
+    <div class="price-tile-chg" id="h-xau-change">—%</div>
   </div>
 
   <div class="h-stat">
@@ -588,6 +602,48 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
   </div><!-- /factor-grid -->
 
+  <!-- ── ALTSEASON INDEX ── -->
+  <div class="card" style="padding:0">
+    <div class="card-hdr">
+      <span class="card-title">🌊 Altseason Index</span>
+      <span class="sig sig-neutral" id="sig-altseason">LOADING</span>
+    </div>
+    <div id="alt-grid" class="card-body" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:16px;align-items:center;padding:12px 16px">
+      <div>
+        <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:4px">USDT.D</div>
+        <div style="font-size:20px;font-weight:700" id="alt-usdtd">—</div>
+        <div style="font-size:10px;margin-top:2px" id="alt-usdtd-sig">—</div>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:4px">BTC DOMINANCE</div>
+        <div style="font-size:20px;font-weight:700" id="alt-btcd">—</div>
+        <div style="font-size:10px;margin-top:2px" id="alt-btcd-sig">—</div>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:4px">TOTAL3 (ex-BTC/ETH)</div>
+        <div style="font-size:20px;font-weight:700" id="alt-total3">—</div>
+        <div style="font-size:10px;margin-top:2px" id="alt-total3-sig">—</div>
+      </div>
+      <div style="min-width:180px">
+        <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:6px">ALTSEASON SCORE</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:9px;color:var(--dim)">BTC</span>
+          <span style="font-size:26px;font-weight:700" id="alt-score">—</span>
+          <span style="font-size:9px;color:var(--dim)">ALT</span>
+        </div>
+        <div style="height:10px;background:var(--surface2);border-radius:5px;overflow:hidden">
+          <div id="alt-bar" style="height:100%;width:0%;background:var(--accent);border-radius:5px;transition:width .6s ease"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:3px">
+          <span style="font-size:8px;color:var(--dim)">0</span>
+          <span style="font-size:8px;color:var(--dim)">50</span>
+          <span style="font-size:8px;color:var(--dim)">100</span>
+        </div>
+      </div>
+    </div>
+    <div class="tip" id="alt-tip" style="padding:6px 16px 10px">Fetching market data…</div>
+  </div>
+
 
 </div><!-- /main -->
 
@@ -756,7 +812,8 @@ function fmtMcap(n) {
 // ─── GLOBAL STATE ─────────────────────────────────────────
 const S={
   scores:{macro:0,struct:0,sent:0,onchain:0,tech:0},
-  _fg:0, _fund:0, _struct:0
+  _fg:0, _fund:0, _struct:0,
+  _btcChange24h:0, _ethChange24h:0
 };
 
 // ─── FETCH HELPERS ────────────────────────────────────────
@@ -950,9 +1007,10 @@ function updatePricesFromBinance(tickers, week7arr) {
   tickers.forEach(t=>by[t.symbol]=t);
   const btc=by['BTCUSDT'], eth=by['ETHUSDT'], sol=by['SOLUSDT'];
 
-  if(btc) setPriceTile('h-btc-price','h-btc-change',parseFloat(btc.lastPrice),parseFloat(btc.priceChangePercent));
+  if(btc){ setPriceTile('h-btc-price','h-btc-change',parseFloat(btc.lastPrice),parseFloat(btc.priceChangePercent)); S._btcChange24h=parseFloat(btc.priceChangePercent); }
   if(eth) {
     setPriceTile('h-eth-price','h-eth-change',parseFloat(eth.lastPrice),parseFloat(eth.priceChangePercent));
+    S._ethChange24h=parseFloat(eth.priceChangePercent);
     if(btc) document.getElementById('eth-btc').textContent=(parseFloat(eth.lastPrice)/parseFloat(btc.lastPrice)).toFixed(5);
   }
   if(sol) setPriceTile('h-sol-price','h-sol-change',parseFloat(sol.lastPrice),parseFloat(sol.priceChangePercent));
@@ -967,8 +1025,70 @@ function updatePricesFromBinance(tickers, week7arr) {
   }
 }
 
+// ─── ALTSEASON INDEX ─────────────────────────────────────
+function updateAltseason(btcD, usdtD, total3, total3Chg24h) {
+  // BTC.D component (0–40 pts): lower dominance = more alt capital
+  let btcPts = btcD<40?40:btcD<45?32:btcD<50?22:btcD<55?12:btcD<60?4:0;
+  const btcLbl = btcD<42?'VERY LOW':btcD<47?'LOW':btcD<53?'NEUTRAL':btcD<58?'HIGH':'DOMINANT';
+  const btcCol = btcD<47?'var(--bull)':btcD<53?'var(--neutral)':'var(--bear)';
+
+  // USDT.D component (0–30 pts): lower = cash deployed into market
+  let usdtPts = usdtD<3?30:usdtD<4?24:usdtD<5?16:usdtD<6?8:0;
+  const usdtLbl = usdtD<3.5?'BULLISH':usdtD<4.5?'POSITIVE':usdtD<5.5?'NEUTRAL':usdtD<7?'CAUTION':'BEARISH';
+  const usdtCol = usdtD<4.5?'var(--bull)':usdtD<5.5?'var(--neutral)':'var(--bear)';
+
+  // TOTAL3 24h change component (0–30 pts)
+  let t3Pts = total3Chg24h>4?30:total3Chg24h>2?22:total3Chg24h>0?14:total3Chg24h>-2?6:0;
+  const t3Sign = total3Chg24h>=0?'+':'';
+  const t3Lbl = t3Sign+total3Chg24h.toFixed(1)+'% 24h';
+  const t3Col = total3Chg24h>0.5?'var(--bull)':total3Chg24h<-0.5?'var(--bear)':'var(--neutral)';
+
+  const score = Math.min(100, btcPts + usdtPts + t3Pts);
+
+  let label, sigCls;
+  if(score>=75){label='STRONG ALT SEASON';sigCls='sig-bull';}
+  else if(score>=55){label='ALT SEASON';sigCls='sig-bull';}
+  else if(score>=38){label='MIXED / ROTATING';sigCls='sig-neutral';}
+  else if(score>=20){label='BTC SEASON';sigCls='sig-bear';}
+  else{label='BTC DOMINANT';sigCls='sig-bear';}
+
+  const barCol = score>=55?'#00d97e':score>=38?'#f5a623':'#ff3d5a';
+
+  const el=id=>document.getElementById(id);
+  el('alt-usdtd').textContent=usdtD.toFixed(2)+'%';
+  el('alt-usdtd').style.color=usdtCol;
+  el('alt-usdtd-sig').textContent=usdtLbl;
+  el('alt-usdtd-sig').style.color=usdtCol;
+
+  el('alt-btcd').textContent=btcD.toFixed(1)+'%';
+  el('alt-btcd').style.color=btcCol;
+  el('alt-btcd-sig').textContent=btcLbl;
+  el('alt-btcd-sig').style.color=btcCol;
+
+  el('alt-total3').textContent=fmtMcap(total3);
+  el('alt-total3').style.color=t3Col;
+  el('alt-total3-sig').textContent=t3Lbl;
+  el('alt-total3-sig').style.color=t3Col;
+
+  el('alt-score').textContent=score;
+  el('alt-score').style.color=barCol;
+  el('alt-bar').style.width=score+'%';
+  el('alt-bar').style.background=barCol;
+
+  setSignalEl('sig-altseason',sigCls,label);
+
+  const tips=[
+    score>=75?'Strong altseason: BTC dominance low + cash deployed + alts pumping. Historical alt runs follow these conditions.':
+    score>=55?'Altseason building. Alts outperforming BTC. Look for breakouts on high-cap alts with good fundamentals.':
+    score>=38?'Mixed/rotating market. BTC and alts trading sideways. Selective approach — favor alts with own catalysts.':
+    score>=20?'BTC season: capital sitting in BTC. Alts lagging. Stay in majors and wait for BTC dominance to turn down.':
+              'Risk-off: high BTC dominance + elevated USDT.D. Capital leaving alts. Defensive positioning advised.'
+  ];
+  el('alt-tip').textContent=tips[0];
+}
+
 // Global market data from CoinPaprika
-function updateGlobalFromPaprika(global, usdtTicker) {
+function updateGlobalFromPaprika(global, usdtTicker, ethTicker) {
   const totalMcap=global.market_cap_usd;
   const btcD=global.bitcoin_dominance_percentage||0;
 
@@ -976,6 +1096,23 @@ function updateGlobalFromPaprika(global, usdtTicker) {
   try{
     const usdtMcap=usdtTicker.quotes.USD.market_cap;
     usdtD=(usdtMcap/totalMcap)*100;
+  }catch(e){}
+
+  // TOTAL3 = Total market cap minus BTC minus ETH
+  let ethMcap=0;
+  try{ ethMcap=ethTicker.quotes.USD.market_cap||0; }catch(e){}
+  const btcMcap=totalMcap*(btcD/100);
+  const total3=Math.max(0, totalMcap-btcMcap-ethMcap);
+
+  // Estimate TOTAL3 24h change using weighted decomposition
+  const totalChg24h=global.market_cap_change_24h||0;
+  let total3Chg24h=totalChg24h; // fallback: same as overall market
+  try{
+    const totalPrev=totalMcap/(1+totalChg24h/100);
+    const btcPrev=btcMcap/(1+(S._btcChange24h||0)/100);
+    const ethPrev=ethMcap/(1+(S._ethChange24h||0)/100);
+    const t3Prev=totalPrev-btcPrev-ethPrev;
+    if(t3Prev>0) total3Chg24h=(total3-t3Prev)/t3Prev*100;
   }catch(e){}
 
   document.getElementById('h-mcap').textContent=fmtMcap(totalMcap);
@@ -1009,6 +1146,9 @@ function updateGlobalFromPaprika(global, usdtTicker) {
     document.getElementById('usdtd-trend').style.color=diff<-0.1?'var(--bull)':diff>0.1?'var(--bear)':'var(--neutral)';
   }
   if(usdtD) localStorage.setItem('usdtd_prev',usdtD.toString());
+
+  // Altseason index
+  updateAltseason(btcD, usdtD, total3, total3Chg24h);
 
   // Structure score
   let structScore=usdtSig*0.75;
@@ -1243,9 +1383,10 @@ function autoSetSPXRisk(price, chgPct) {
 
 async function fetchStocks() {
   // Stooq uses .us ETF symbols which are guaranteed to exist
-  fetchStock('QQQ',    'qqq.us', 'h-qqq-price','h-qqq-change',true);
-  fetchStock('%5EIXIC','qqq.us', 'h-ndx-price','h-ndx-change',false);   // NASDAQ-100 proxy
-  fetchStock('%5EGSPC','spy.us', 'h-spx-price','h-spx-change',false,autoSetSPXRisk); // S&P 500 proxy
+  fetchStock('QQQ',    'qqq.us',  'h-qqq-price','h-qqq-change',true);
+  fetchStock('%5EIXIC','qqq.us',  'h-ndx-price','h-ndx-change',false);   // NASDAQ-100 proxy
+  fetchStock('%5EGSPC','spy.us',  'h-spx-price','h-spx-change',false,autoSetSPXRisk); // S&P 500
+  fetchStock('GC%3DF', 'gc.f',   'h-xau-price','h-xau-change',true);   // Gold futures
 }
 
 // ─── DXY AUTO-FETCH ──────────────────────────────────────
@@ -1273,6 +1414,14 @@ async function fetchDXY() {
     const ts=document.getElementById('dxy-trend');
     if(ts&&!ts.dataset.manual)
       ts.value=chgPct>0.08?'up':chgPct<-0.08?'down':'side';
+    // Header tile — DXY up = bearish for crypto, so invert color
+    const dp=document.getElementById('h-dxy-price');
+    const dc=document.getElementById('h-dxy-change');
+    if(dp) dp.textContent=price.toFixed(2);
+    if(dc){
+      dc.textContent=(chgPct>=0?'+':'')+chgPct.toFixed(2)+'%';
+      dc.style.color=chgPct>0?'var(--bear)':'var(--bull)';
+    }
     recalc();
   }
 }
@@ -1305,12 +1454,15 @@ async function refreshAll() {
     }catch(e){ console.warn('7d',e); }})
     .catch(e=>console.warn('7d fetch',e));
 
-  // Global — CoinPaprika
+  // Global — CoinPaprika (global + USDT + ETH for TOTAL3)
   apiFetch('https://api.coinpaprika.com/v1/global')
     .then(g=>{
-      apiFetch('https://api.coinpaprika.com/v1/tickers/usdt-tether?quotes=USD')
-        .then(u=>{ try{ updateGlobalFromPaprika(g,u); setStatus('✓ Global data loaded'); }catch(e){ console.error('global',e); }})
-        .catch(()=>{ try{ updateGlobalFromPaprika(g,{}); }catch(e){ console.error('global2',e); }});
+      Promise.all([
+        apiFetch('https://api.coinpaprika.com/v1/tickers/usdt-tether?quotes=USD').catch(()=>({})),
+        apiFetch('https://api.coinpaprika.com/v1/tickers/eth-ethereum?quotes=USD').catch(()=>({}))
+      ]).then(([u,eth])=>{
+        try{ updateGlobalFromPaprika(g,u,eth); setStatus('✓ Global data loaded'); }catch(e){ console.error('global',e); }
+      });
     })
     .catch(e=>{ console.error('paprika',e); setStatus('✗ Global (offline?)'); });
 
