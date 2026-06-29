@@ -717,27 +717,37 @@ function rsiArray(closes, p=14) {
   return out;
 }
 
-function detectDivergence(closes, rsiArr, lookback=80) {
+function detectDivergence(closes, rsiArr, lookback=100) {
   const n=closes.length;
-  if(n<20) return 'none';
+  if(n<15) return 'none';
   const sz=Math.min(lookback,n);
   const prices=closes.slice(-sz), rsis=rsiArr.slice(-sz), len=prices.length;
-  const lows=[],highs=[];
-  for(let i=2;i<len-2;i++){
-    const p=prices[i],r=rsis[i];
-    if(r==null) continue;
-    if(p<prices[i-1]&&p<prices[i-2]&&p<prices[i+1]&&p<prices[i+2]) lows.push({p,r,i});
-    if(p>prices[i-1]&&p>prices[i-2]&&p>prices[i+1]&&p>prices[i+2]) highs.push({p,r,i});
+
+  // 3-candle pivot detection; deduplicate pivots within 4 bars (keep more extreme)
+  const lows=[], highs=[];
+  for(let i=1;i<len-1;i++){
+    const r=rsis[i]; if(r==null) continue;
+    if(prices[i]<prices[i-1]&&prices[i]<prices[i+1]){
+      if(!lows.length||i-lows[lows.length-1].i>=4) lows.push({p:prices[i],r,i});
+      else if(prices[i]<lows[lows.length-1].p) lows[lows.length-1]={p:prices[i],r,i};
+    }
+    if(prices[i]>prices[i-1]&&prices[i]>prices[i+1]){
+      if(!highs.length||i-highs[highs.length-1].i>=4) highs.push({p:prices[i],r,i});
+      else if(prices[i]>highs[highs.length-1].p) highs[highs.length-1]={p:prices[i],r,i};
+    }
   }
-  if(lows.length>=2){
-    const a=lows[lows.length-2],b=lows[lows.length-1];
-    if(b.p<a.p&&b.r>a.r+1) return 'bull';
-    if(b.p>a.p&&b.r<a.r-1) return 'hbull';
+
+  // Scan pairs from most recent backwards; return first divergence found
+  const T=0.8; // RSI threshold
+  for(let k=lows.length-1;k>=1;k--){
+    const a=lows[k-1],b=lows[k];
+    if(b.p<a.p&&b.r>a.r+T) return 'bull';
+    if(b.p>a.p&&b.r<a.r-T) return 'hbull';
   }
-  if(highs.length>=2){
-    const a=highs[highs.length-2],b=highs[highs.length-1];
-    if(b.p>a.p&&b.r<a.r-1) return 'bear';
-    if(b.p<a.p&&b.r>a.r+1) return 'hbear';
+  for(let k=highs.length-1;k>=1;k--){
+    const a=highs[k-1],b=highs[k];
+    if(b.p>a.p&&b.r<a.r-T) return 'bear';
+    if(b.p<a.p&&b.r>a.r+T) return 'hbear';
   }
   return 'none';
 }
@@ -1423,6 +1433,15 @@ async function fetchDXY() {
         break;
       }
     } catch(e){}
+  }
+  if(!price){
+    try{
+      const yhUrl='/v8/finance/chart/DX-Y.NYB?interval=1d&range=2d';
+      const proxyUrl=`https://corsproxy.io/?url=${encodeURIComponent('https://query1.finance.yahoo.com'+yhUrl)}`;
+      const d=await apiFetch(proxyUrl,9000);
+      const m=d?.chart?.result?.[0]?.meta;
+      if(m?.regularMarketPrice){price=m.regularMarketPrice;const prev=m.chartPreviousClose||m.previousClose||price;chgPct=prev?((price-prev)/prev)*100:0;}
+    }catch(e){}
   }
   if(!price){
     const sq=await stooqCSV('dxy.us');
