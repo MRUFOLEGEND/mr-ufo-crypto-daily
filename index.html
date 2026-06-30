@@ -239,26 +239,27 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
   </div>
 
-  <div class="h-stat">
-    <div class="h-stat-label">Mkt Cap</div>
-    <div class="h-stat-val" id="h-mcap">$—</div>
-  </div>
-  <div class="h-stat">
-    <div class="h-stat-label">BTC.D</div>
-    <div class="h-stat-val" id="h-btcd">—%</div>
-  </div>
-  <div class="h-stat">
-    <div class="h-stat-label">USDT.D</div>
-    <div class="h-stat-val" id="h-usdtd">—%</div>
+  <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+    <div class="h-stat">
+      <div class="h-stat-label">USDT.D</div>
+      <div class="h-stat-val" id="h-usdtd">—%</div>
+    </div>
+    <div class="h-stat">
+      <div class="h-stat-label">BTC.D</div>
+      <div class="h-stat-val" id="h-btcd">—%</div>
+    </div>
+    <div class="h-stat">
+      <div class="h-stat-label">Mkt Cap</div>
+      <div class="h-stat-val" id="h-mcap">$—</div>
+    </div>
   </div>
 
   <!-- FEAR & GREED SPEEDOMETER in header -->
-  <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px">
-    <img src="BASC%20Surfing%20Adjusted.PNG" alt="" style="height:54px;width:auto;border-radius:5px;object-fit:cover">
+  <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;margin-left:14px">
     <div style="font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Fear &amp; Greed</div>
     <div style="display:flex;align-items:center;gap:5px">
       <img src="Annoyed%20BASC.GIF" alt="" style="height:78px;width:auto;border-radius:5px;object-fit:cover">
-      <svg viewBox="0 0 200 145" style="width:152px" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 200 145" style="width:215px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 12.01 118.85 A 88 88 0 0 0 20.22 82.86 L 52.86 98.05 A 52 52 0 0 1 48.00 119.32 Z" fill="#e91e8c"/>
         <text x="31.76" y="104.42" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(-77.1,31.76,104.42)">CAPITULATION</text>
         <path d="M 21.22 80.78 A 88 88 0 0 0 44.24 51.92 L 67.05 79.77 A 52 52 0 0 1 53.45 96.83 Z" fill="#9c27b0"/>
