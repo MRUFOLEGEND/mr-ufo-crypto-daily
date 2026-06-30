@@ -944,7 +944,7 @@ function renderTF(results) {
     // Divergence select — auto-detected or manual override
     const _autoLbl={bull:'🟢Bull',hbull:'🔵HidBull',bear:'🔴Bear',hbear:'🟠HidBear',none:'—'}[r.divAuto||'none'];
     const divSel=`<select class="ms-sm" onchange="setTfState('${id}','div',this.value)">
-      <option value="auto" ${(st.div==='auto'||!st.div)?'selected':''}>🤖 Auto(${_autoLbl})</option>
+      <option value="auto" ${(st.div==='auto'||!st.div)?'selected':''}>🤖 ${_autoLbl}</option>
       <option value="none" ${st.div==='none'?'selected':''}>— None</option>
       <option value="bull" ${st.div==='bull'?'selected':''}>🟢 Bull Div</option>
       <option value="hbull" ${st.div==='hbull'?'selected':''}>🔵 Hid Bull</option>
