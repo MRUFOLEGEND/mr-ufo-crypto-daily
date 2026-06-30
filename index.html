@@ -120,6 +120,7 @@ td:first-child{text-align:left;padding-left:14px;font-weight:700;font-size:12px;
 tr:last-child td{border-bottom:none}
 tr:hover td{background:rgba(255,255,255,.02)}
 .cbull{color:var(--bull)}
+.chbull{color:#86efac}
 .cbear{color:var(--bear)}
 .cneutral{color:var(--neutral)}
 .bias-cell{font-weight:700;padding:3px 9px;border-radius:4px;font-size:10px;letter-spacing:.5px;display:inline-block;white-space:nowrap}
@@ -901,7 +902,7 @@ function drivesScore(d){
 
 function divLabel(d){
   return d==='bull'?'<span class="cbull">🟢 Bull Div</span>':
-         d==='hbull'?'<span class="cbull">🔵 Hid Bull</span>':
+         d==='hbull'?'<span class="chbull">● Hid Bull</span>':
          d==='bear'?'<span class="cbear">🔴 Bear Div</span>':
          d==='hbear'?'<span class="cbear">🟠 Hid Bear</span>':
          '<span style="opacity:.4">—</span>';
@@ -944,7 +945,7 @@ function renderTF(results) {
     // Divergence select — auto-detected or manual override
     const _autoLbl={bull:'🟢Bull',hbull:'🔵HidBull',bear:'🔴Bear',hbear:'🟠HidBear',none:'—'}[r.divAuto||'none'];
     const divSel=`<select class="ms-sm" onchange="setTfState('${id}','div',this.value)">
-      <option value="auto" ${(st.div==='auto'||!st.div)?'selected':''}>🤖 ${_autoLbl}</option>
+      <option value="auto" ${(st.div==='auto'||!st.div)?'selected':''}>${_autoLbl}</option>
       <option value="none" ${st.div==='none'?'selected':''}>— None</option>
       <option value="bull" ${st.div==='bull'?'selected':''}>🟢 Bull Div</option>
       <option value="hbull" ${st.div==='hbull'?'selected':''}>🔵 Hid Bull</option>
