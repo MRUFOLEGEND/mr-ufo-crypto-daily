@@ -253,28 +253,36 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 
   <!-- FEAR & GREED SPEEDOMETER in header -->
-  <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center">
-    <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:0;text-transform:uppercase">Fear &amp; Greed</div>
-    <svg viewBox="0 0 200 145" style="width:155px" xmlns="http://www.w3.org/2000/svg">
-      <path d="M 18 110 A 82 82 0 0 0 33.66 61.80 L 51.46 74.73 A 60 60 0 0 1 40 110 Z" fill="#c0392b"/>
-      <path d="M 33.66 61.80 A 82 82 0 0 0 74.66 32.01 L 81.46 52.94 A 60 60 0 0 1 51.46 74.73 Z" fill="#e67e22"/>
-      <path d="M 74.66 32.01 A 82 82 0 0 0 125.34 32.01 L 118.54 52.94 A 60 60 0 0 1 81.46 52.94 Z" fill="#f5a623"/>
-      <path d="M 125.34 32.01 A 82 82 0 0 0 166.34 61.80 L 148.54 74.73 A 60 60 0 0 1 118.54 52.94 Z" fill="#27ae60"/>
-      <path d="M 166.34 61.80 A 82 82 0 0 0 182 110 L 160 110 A 60 60 0 0 1 148.54 74.73 Z" fill="#00d97e"/>
-      <line x1="33.66" y1="61.80" x2="51.46" y2="74.73" stroke="#0b0d12" stroke-width="1.5"/>
-      <line x1="74.66" y1="32.01" x2="81.46" y2="52.94" stroke="#0b0d12" stroke-width="1.5"/>
-      <line x1="125.34" y1="32.01" x2="118.54" y2="52.94" stroke="#0b0d12" stroke-width="1.5"/>
-      <line x1="166.34" y1="61.80" x2="148.54" y2="74.73" stroke="#0b0d12" stroke-width="1.5"/>
-      <g id="fg-needle-g" transform="rotate(0,100,110)">
-        <polygon points="98.5,107 100,41 101.5,107" fill="rgba(255,255,255,0.95)"/>
-        <circle cx="100" cy="110" r="7" fill="#13161f" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
-        <circle cx="100" cy="110" r="3" fill="white"/>
-      </g>
-      <text x="100" y="128" text-anchor="middle" id="fg-num" fill="white" font-size="26" font-weight="700" font-family="'SF Mono','Fira Code',monospace">—</text>
-      <text x="100" y="142" text-anchor="middle" id="fg-txt" fill="#8891b0" font-size="8" letter-spacing="1.5" font-family="'SF Mono','Fira Code',monospace">LOADING...</text>
-      <text x="8" y="124" fill="#c0392b" font-size="7" font-family="'SF Mono','Fira Code',monospace">FEAR</text>
-      <text x="192" y="124" fill="#00d97e" font-size="7" text-anchor="end" font-family="'SF Mono','Fira Code',monospace">GREED</text>
-    </svg>
+  <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px">
+    <img src="BASC%20Surfing%20Adjusted.PNG" alt="" style="height:54px;width:auto;border-radius:5px;object-fit:cover">
+    <div style="font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Fear &amp; Greed</div>
+    <div style="display:flex;align-items:center;gap:5px">
+      <img src="Annoyed%20BASC.GIF" alt="" style="height:78px;width:auto;border-radius:5px;object-fit:cover">
+      <svg viewBox="0 0 200 145" style="width:152px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 12.01 118.85 A 88 88 0 0 0 20.22 82.86 L 52.86 98.05 A 52 52 0 0 1 48.00 119.32 Z" fill="#e91e8c"/>
+        <text x="31.76" y="104.42" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(-77.1,31.76,104.42)">CAPITULATION</text>
+        <path d="M 21.22 80.78 A 88 88 0 0 0 44.24 51.92 L 67.05 79.77 A 52 52 0 0 1 53.45 96.83 Z" fill="#9c27b0"/>
+        <text x="45.27" y="76.36" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(-51.4,45.27,76.36)">PANIC</text>
+        <path d="M 46.04 50.49 A 88 88 0 0 0 79.30 34.47 L 87.77 69.46 A 52 52 0 0 1 68.11 78.92 Z" fill="#c8960a"/>
+        <text x="69.63" y="56.93" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(-25.7,69.63,56.93)">UNCERTAIN</text>
+        <path d="M 81.54 33.96 A 88 88 0 0 0 118.46 33.96 L 110.91 69.16 A 52 52 0 0 1 89.09 69.16 Z" fill="#d4a800"/>
+        <text x="100.00" y="50.00" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(0.0,100.00,50.00)">BALANCE</text>
+        <path d="M 120.70 34.47 A 88 88 0 0 0 153.96 50.49 L 131.89 78.92 A 52 52 0 0 1 112.23 69.46 Z" fill="#e8cc00"/>
+        <text x="130.37" y="56.93" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(25.7,130.37,56.93)">CANARY</text>
+        <path d="M 155.76 51.92 A 88 88 0 0 0 178.78 80.78 L 146.55 96.83 A 52 52 0 0 1 132.95 79.77 Z" fill="#e04000"/>
+        <text x="154.73" y="76.36" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(51.4,154.73,76.36)">GREED</text>
+        <path d="M 179.78 82.86 A 88 88 0 0 0 187.99 118.85 L 152.00 119.32 A 52 52 0 0 1 147.14 98.05 Z" fill="#c0251a"/>
+        <text x="168.24" y="104.42" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(77.1,168.24,104.42)">FOMO</text>
+        <g id="fg-needle-g" transform="rotate(0,100,110)">
+          <line x1="100" y1="110" x2="100" y2="35" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="100" cy="110" r="8" fill="#0d0f14" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+          <circle cx="100" cy="110" r="3.5" fill="#d0d0d0"/>
+        </g>
+        <text x="100" y="131" text-anchor="middle" id="fg-num" fill="white" font-size="22" font-weight="700" font-family="'SF Mono','Fira Code',monospace">—</text>
+        <text x="100" y="142" text-anchor="middle" id="fg-txt" fill="#8891b0" font-size="7" letter-spacing="1.5" font-family="'SF Mono','Fira Code',monospace">LOADING...</text>
+      </svg>
+      <img src="To%20the%20Moon%20BASC.PNG" alt="" style="height:78px;width:auto;border-radius:5px;object-fit:cover">
+    </div>
   </div>
 
   <div class="master-wrap">
@@ -1172,7 +1180,7 @@ function updateGlobalFromPaprika(global, usdtTicker, ethTicker) {
 
 function updateFG(fg) {
   const val=parseInt(fg.value);
-  const fc=val<=20?'#c0392b':val<=40?'#e67e22':val<=60?'#f5a623':val<=80?'#27ae60':'#00d97e';
+  const fc=val<14?'#e91e8c':val<29?'#9c27b0':val<43?'#c8960a':val<57?'#d4a800':val<71?'#e8cc00':val<86?'#e04000':'#c0251a';
 
   // Speedometer — needle: rotation = (val-50)*1.8 degrees around pivot (100,110)
   document.getElementById('fg-needle-g').setAttribute('transform',`rotate(${(val-50)*1.8},100,110)`);
