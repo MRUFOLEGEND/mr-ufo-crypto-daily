@@ -83,7 +83,8 @@ header{
   padding:7px 0;border-bottom:1px solid var(--border);gap:8px;
 }
 .frow:last-child{border-bottom:none}
-.fname{color:var(--dim);font-size:11px;white-space:nowrap}
+.fname{color:var(--dim);font-size:11px}
+.cbright{color:#00ff55;font-weight:700}
 .fright{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .fval{font-weight:600;font-size:12px}
 
@@ -183,14 +184,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 <!-- ═══════════════════════ HEADER ═══════════════════════ -->
 <header>
-  <div class="brand-block">
-    <div class="logo-square">
-      <img class="logo-sq-ape" src="BASC.png" alt="Mr UFO">
-      <div class="logo-sq-text">MR UFO<br>CRYPTO DAILY</div>
-      <div class="logo-sq-sub">Market Bias</div>
-    </div>
-  </div>
-
   <!-- PRICE TILES — row 1: crypto + QQQ | row 2: indices + macro -->
   <div class="price-rows">
     <div class="price-row">
@@ -256,11 +249,11 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
   <!-- FEAR & GREED SPEEDOMETER in header -->
   <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;margin-left:auto">
-    <div style="display:flex;align-items:center;gap:5px">
-      <img src="Annoyed%20BASC.GIF" alt="" style="height:78px;width:auto;border-radius:5px;object-fit:cover">
-      <svg viewBox="0 0 200 145" style="width:265px" xmlns="http://www.w3.org/2000/svg">
+    <div style="display:flex;align-items:center;gap:14px;padding-left:8px">
+      <img src="To%20the%20Moon%20BASC.PNG" alt="" style="height:88px;width:auto;border-radius:5px;object-fit:cover">
+      <svg viewBox="0 0 200 145" style="width:340px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 12.01 118.85 A 88 88 0 0 0 20.22 82.86 L 52.86 98.05 A 52 52 0 0 1 48.00 119.32 Z" fill="#e91e8c"/>
-        <text x="31.76" y="104.42" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(-77.1,31.76,104.42)">CAPITULATION</text>
+        <text x="31.76" y="104.42" text-anchor="middle" dominant-baseline="middle" fill="#00ff55" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(-77.1,31.76,104.42)">CAPITULATION</text>
         <path d="M 21.22 80.78 A 88 88 0 0 0 44.24 51.92 L 67.05 79.77 A 52 52 0 0 1 53.45 96.83 Z" fill="#9c27b0"/>
         <text x="45.27" y="76.36" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(-51.4,45.27,76.36)">PANIC</text>
         <path d="M 46.04 50.49 A 88 88 0 0 0 79.30 34.47 L 87.77 69.46 A 52 52 0 0 1 68.11 78.92 Z" fill="#c8960a"/>
@@ -281,7 +274,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <text x="100" y="131" text-anchor="middle" id="fg-num" fill="white" font-size="22" font-weight="700" font-family="'SF Mono','Fira Code',monospace">—</text>
         <text x="100" y="142" text-anchor="middle" id="fg-txt" fill="#8891b0" font-size="7" letter-spacing="1.5" font-family="'SF Mono','Fira Code',monospace">LOADING...</text>
       </svg>
-      <img src="To%20the%20Moon%20BASC.PNG" alt="" style="height:78px;width:auto;border-radius:5px;object-fit:cover">
+      <img src="Annoyed%20BASC.GIF" alt="" style="height:110px;width:auto;border-radius:5px;object-fit:cover">
     </div>
   </div>
 
@@ -360,22 +353,24 @@ tr:hover td{background:rgba(255,255,255,.02)}
           <thead>
             <tr>
               <th>Timeframe</th>
+              <th>SIGNAL</th>
               <th>BIAS</th>
               <th>vs EMA 20</th>
               <th>vs EMA 50</th>
               <th>vs EMA 200</th>
               <th>RSI (14)</th>
               <th>MACD</th>
-              <th>EMA Stack</th>
               <th>Volume</th>
               <th>Structure</th>
               <th>Divergence</th>
+              <th>Period Low</th>
+              <th>Period High</th>
+              <th>EMA Stack</th>
               <th>Score</th>
-              <th>SIGNAL</th>
             </tr>
           </thead>
           <tbody id="tf-body">
-            <tr><td colspan="12" style="text-align:center;padding:20px" class="loading">Fetching Binance data...</td></tr>
+            <tr><td colspan="14" style="text-align:center;padding:20px" class="loading">Fetching Binance data...</td></tr>
           </tbody>
         </table>
       </div>
@@ -792,7 +787,7 @@ function analyzeOHLCV(klines) {
   if(volRatio>1.3&&vsE20===1) score+=0.5; else if(volRatio>1.3&&vsE20===-1) score-=0.5;
 
   // RSI label
-  const rsiLbl=rsiVal>70?'OVERBOUGHT':rsiVal>55?'BULLISH':rsiVal<30?'OVERSOLD':rsiVal<45?'BEARISH':'NEUTRAL';
+  const rsiLbl=rsiVal>70?'OVERBOUGHT':rsiVal>55?'BULLISH':rsiVal<30?'CAPITULATION':rsiVal<45?'BEARISH':'NEUTRAL';
   // MACD label
   const macdLbl=macdVal.hist>0&&macdVal.hist>macdVal.prevHist?'↑ BULLISH':
                 macdVal.hist>0?'↑ WEAKENING':
@@ -804,7 +799,7 @@ function analyzeOHLCV(klines) {
 
   const rsiArr=rsiArray(C);
   const divAuto=detectDivergence(C,rsiArr);
-  return {p,vsE20,vsE50,vsE200,ee20,ee50,ee200,rsiVal,rsiLbl,macdLbl,macdHist:macdVal.hist,emaStack,volRatio,volLbl,structLbl,score,divAuto};
+  return {p,vsE20,vsE50,vsE200,ee20,ee50,ee200,rsiVal,rsiLbl,macdLbl,macdHist:macdVal.hist,emaStack,volRatio,volLbl,structLbl,score,divAuto,periodHigh:H[H.length-1],periodLow:L[L.length-1]};
 }
 
 // ─── BIAS HELPERS ─────────────────────────────────────────
@@ -920,7 +915,7 @@ function renderTF(results) {
     const st=tfState[id]||{div:'auto'};
 
     if(!r){
-      html+=`<tr><td>${label}</td><td colspan="12" class="loading">No data</td></tr>`;
+      html+=`<tr><td>${label}</td><td colspan="14" class="loading">No data</td></tr>`;
       continue;
     }
 
@@ -932,7 +927,7 @@ function renderTF(results) {
     const e20c=r.vsE20>0?'cbull':'cbear';
     const e50c=r.vsE50>0?'cbull':'cbear';
     const e200c=r.vsE200>0?'cbull':'cbear';
-    const rsic=r.rsiVal>70?'cbear':r.rsiVal>55?'cbull':r.rsiVal<30?'cneutral':r.rsiVal<45?'cbear':'cneutral';
+    const rsic=r.rsiVal>70?'cbear':r.rsiVal>55?'cbull':r.rsiVal<30?'cbright':r.rsiVal<45?'cbear':'cneutral';
     const macdc=r.macdHist>0?'cbull':'cbear';
     const emasc=r.emaStack.includes('BULL')?'cbull':r.emaStack.includes('BEAR')?'cbear':'cneutral';
     const volc=r.volRatio>1.3?'cbull':r.volRatio<0.7?'cbear':'cneutral';
@@ -953,20 +948,24 @@ function renderTF(results) {
 
 
     const sig=signalOf(rowScore);
+    const pLow=r.periodLow?'$'+Math.round(r.periodLow).toLocaleString('en-US'):'—';
+    const pHigh=r.periodHigh?'$'+Math.round(r.periodHigh).toLocaleString('en-US'):'—';
     html+=`<tr>
       <td>${label}</td>
+      <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;font-weight:700;font-size:11px;letter-spacing:.5px;background:${sig.bg};color:${sig.color};border:1px solid ${sig.border};white-space:nowrap">${sig.text}</span></td>
       <td><span class="bias-cell ${bias.cls}">${bias.text}</span></td>
       <td class="${e20c}">${r.vsE20>0?'▲ Above':'▼ Below'}</td>
       <td class="${e50c}">${r.vsE50>0?'▲ Above':'▼ Below'}</td>
       <td class="${e200c}">${r.vsE200>0?'▲ Above':'▼ Below'}</td>
       <td class="${rsic}">${r.rsiVal.toFixed(1)} <small style="opacity:.6">${r.rsiLbl}</small></td>
       <td class="${macdc}">${r.macdLbl}</td>
-      <td class="${emasc}">${r.emaStack}</td>
       <td class="${volc}">${r.volRatio.toFixed(2)}x</td>
       <td class="${strc}">${r.structLbl}</td>
       <td>${divSel}</td>
-      <td class="${scorec}" style="font-weight:700">${rowScore.toFixed(1)}<small style="opacity:.5;font-size:9px">${manAdj!==0?' ('+(manAdj>0?'+':'')+manAdj.toFixed(1)+')':''}</small></td>
-      <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;font-weight:700;font-size:11px;letter-spacing:.5px;background:${sig.bg};color:${sig.color};border:1px solid ${sig.border};white-space:nowrap">${sig.text}</span></td>
+      <td style="color:var(--bear);font-weight:600">${pLow}</td>
+      <td style="color:var(--bull);font-weight:600">${pHigh}</td>
+      <td class="${emasc}">${r.emaStack}</td>
+      <td class="${scorec}" style="font-weight:700">${rowScore.toFixed(1)}</td>
     </tr>`;
   }
   document.getElementById('tf-body').innerHTML=html;
@@ -1332,7 +1331,7 @@ function setSignalEl(id, cls, text) {
 function setScoreEl(id, val) {
   const el=document.getElementById(id);
   if(!el) return;
-  el.textContent=isNaN(val)?'—':(val>=0?'+':'')+val.toFixed(1);
+  el.textContent=isNaN(val)?'—':val.toFixed(1);
   el.style.color=colorOf(val);
 }
 
