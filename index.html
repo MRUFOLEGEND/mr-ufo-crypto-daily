@@ -344,7 +344,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <div class="card">
     <div class="card-hdr">
       <span class="card-title">⏱ Timeframe Bias Matrix — BTC/USDT</span>
-      <span style="font-size:10px;color:var(--dim)">Live · RSI · MACD · EMA · Structure · Divergence · 1-2-3 Drives</span>
+      <span style="font-size:10px;color:var(--dim)">Live · RSI · MACD · EMA · Structure · Divergence</span>
     </div>
     <div class="card-body" style="padding:0">
       <div class="tf-scroll">
@@ -352,6 +352,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
           <thead>
             <tr>
               <th>Timeframe</th>
+              <th>BIAS</th>
               <th>vs EMA 20</th>
               <th>vs EMA 50</th>
               <th>vs EMA 200</th>
@@ -361,14 +362,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
               <th>Volume</th>
               <th>Structure</th>
               <th>Divergence</th>
-              <th>1-2-3 Drives</th>
               <th>Score</th>
-              <th>BIAS</th>
               <th>SIGNAL</th>
             </tr>
           </thead>
           <tbody id="tf-body">
-            <tr><td colspan="14" style="text-align:center;padding:20px" class="loading">Fetching Binance data...</td></tr>
+            <tr><td colspan="12" style="text-align:center;padding:20px" class="loading">Fetching Binance data...</td></tr>
           </tbody>
         </table>
       </div>
@@ -877,7 +876,7 @@ const tfState=JSON.parse(localStorage.getItem('tfState')||'{}');
 function saveTfState(){localStorage.setItem('tfState',JSON.stringify(tfState));}
 
 function setTfState(id,key,val){
-  if(!tfState[id]) tfState[id]={div:'auto',drives:'none'};
+  if(!tfState[id]) tfState[id]={div:'auto'};
   tfState[id][key]=val;
   saveTfState();
   renderTF(tfResultsCache);
@@ -896,20 +895,11 @@ function signalOf(score) {
 function divScore(d){
   return d==='bull'?1.5:d==='hbull'?1.0:d==='bear'?-1.5:d==='hbear'?-1.0:0;
 }
-function drivesScore(d){
-  return d==='bull'?1.0:d==='bear'?-1.0:0;
-}
-
 function divLabel(d){
   return d==='bull'?'<span class="cbull">🟢 Bull Div</span>':
          d==='hbull'?'<span class="chbull">● Hid Bull</span>':
          d==='bear'?'<span class="cbear">🔴 Bear Div</span>':
          d==='hbear'?'<span class="cbear">🟠 Hid Bear</span>':
-         '<span style="opacity:.4">—</span>';
-}
-function drivesLabel(d){
-  return d==='bull'?'<span class="cbull">🟢 3-Drives ↑</span>':
-         d==='bear'?'<span class="cbear">🔴 3-Drives ↓</span>':
          '<span style="opacity:.4">—</span>';
 }
 
@@ -919,15 +909,15 @@ function renderTF(results) {
 
   for(const {id,label} of TFS) {
     const r=results[id];
-    const st=tfState[id]||{div:'auto',drives:'none'};
+    const st=tfState[id]||{div:'auto'};
 
     if(!r){
-      html+=`<tr><td>${label}</td><td colspan="13" class="loading">No data</td></tr>`;
+      html+=`<tr><td>${label}</td><td colspan="12" class="loading">No data</td></tr>`;
       continue;
     }
 
     const divVal=(st.div==='auto'||!st.div)?(r.divAuto||'none'):st.div;
-    const manAdj=divScore(divVal)+drivesScore(st.drives);
+    const manAdj=divScore(divVal);
     const rowScore=r.score+manAdj;
     totalScore+=rowScore; count++;
 
@@ -953,16 +943,11 @@ function renderTF(results) {
       <option value="hbear" ${st.div==='hbear'?'selected':''}>🟠 Hid Bear</option>
     </select>`;
 
-    // 1-2-3 Drives select
-    const drivesSel=`<select class="ms-sm" onchange="setTfState('${id}','drives',this.value)">
-      <option value="none" ${st.drives==='none'?'selected':''}>— None</option>
-      <option value="bull" ${st.drives==='bull'?'selected':''}>🟢 Bull (3↓→↑)</option>
-      <option value="bear" ${st.drives==='bear'?'selected':''}>🔴 Bear (3↑→↓)</option>
-    </select>`;
 
     const sig=signalOf(rowScore);
     html+=`<tr>
       <td>${label}</td>
+      <td><span class="bias-cell ${bias.cls}">${bias.text}</span></td>
       <td class="${e20c}">${r.vsE20>0?'▲ Above':'▼ Below'}</td>
       <td class="${e50c}">${r.vsE50>0?'▲ Above':'▼ Below'}</td>
       <td class="${e200c}">${r.vsE200>0?'▲ Above':'▼ Below'}</td>
@@ -972,9 +957,7 @@ function renderTF(results) {
       <td class="${volc}">${r.volRatio.toFixed(2)}x</td>
       <td class="${strc}">${r.structLbl}</td>
       <td>${divSel}</td>
-      <td>${drivesSel}</td>
       <td class="${scorec}" style="font-weight:700">${rowScore.toFixed(1)}<small style="opacity:.5;font-size:9px">${manAdj!==0?' ('+(manAdj>0?'+':'')+manAdj.toFixed(1)+')':''}</small></td>
-      <td><span class="bias-cell ${bias.cls}">${bias.text}</span></td>
       <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;font-weight:700;font-size:11px;letter-spacing:.5px;background:${sig.bg};color:${sig.color};border:1px solid ${sig.border};white-space:nowrap">${sig.text}</span></td>
     </tr>`;
   }
@@ -988,10 +971,10 @@ function renderTF(results) {
   let miniHtml='';
   for(const {id,label} of TFS){
     const r=results[id];
-    const st=tfState[id]||{div:'auto',drives:'none'};
+    const st=tfState[id]||{div:'auto'};
     if(!r){ miniHtml+=`<tr><td>${label}</td><td colspan="3" style="opacity:.4">—</td></tr>`; continue; }
     const divVal2=(st.div==='auto'||!st.div)?(r.divAuto||'none'):st.div;
-    const manAdj=divScore(divVal2)+drivesScore(st.drives);
+    const manAdj=divScore(divVal2);
     const rowScore=r.score+manAdj;
     const scorec=rowScore>=1?'cbull':rowScore<=-1?'cbear':'cneutral';
     const bias=biasOf(rowScore);
