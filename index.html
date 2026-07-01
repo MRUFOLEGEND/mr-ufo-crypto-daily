@@ -191,9 +191,10 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .page.active{display:block}
 
 /* ── COIN SEARCH ──────────────────────────────────────── */
-.csearch-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.csearch-input{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 16px;border-radius:6px;font-size:16px;font-family:inherit;width:200px;letter-spacing:2px;text-transform:uppercase}
-.csearch-input::placeholder{text-transform:none;font-size:12px;letter-spacing:.5px;color:var(--dim)}
+.csearch-wrap{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:90}
+.csearch-input{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.75);color:#fff;padding:9px 16px;border-radius:6px;font-size:16px;font-family:inherit;width:200px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
+.csearch-input::placeholder{text-transform:none;font-size:12px;letter-spacing:.5px;color:rgba(255,255,255,.4);font-weight:400}
+.csearch-input:focus{outline:none;border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.12)}
 .csearch-btn{background:var(--accent);border:none;color:#fff;padding:10px 26px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;letter-spacing:.5px;transition:background .15s;box-shadow:0 0 14px rgba(78,127,255,.45)}
 .csearch-btn:hover{background:#3d85ff}
 .csearch-btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
@@ -1707,7 +1708,17 @@ function switchTab(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('tab-active'));
   document.getElementById('page-' + name).classList.add('active');
   el.classList.add('tab-active');
+  setCoinSearchStickyTop();
 }
+
+function setCoinSearchStickyTop() {
+  const hdr = document.querySelector('header');
+  const tb  = document.querySelector('.tab-bar');
+  const sw  = document.querySelector('#page-coin .csearch-wrap');
+  if (hdr && tb && sw) sw.style.top = (hdr.offsetHeight + tb.offsetHeight) + 'px';
+}
+window.addEventListener('resize', setCoinSearchStickyTop);
+setTimeout(setCoinSearchStickyTop, 200);
 
 // ─── COIN ANALYZER ────────────────────────────────────────
 let coinTfResults = {};
@@ -1892,27 +1903,29 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
   const html = `
   <div class="coin-id-card">
     <img class="coin-logo" src="${coin.image?.large||''}" alt="${coin.name}" onerror="this.style.display='none'">
-    <div class="coin-id-body">
-      <div class="coin-id-top">
-        <span class="coin-name">${coin.name}</span>
-        <span class="coin-sym">${(coin.symbol||'').toUpperCase()}</span>
-        ${coin.market_cap_rank?`<span class="coin-rank-badge">RANK #${coin.market_cap_rank}</span>`:''}
+    <div class="coin-id-body" style="display:flex;gap:20px;align-items:flex-start;flex:1">
+      <div style="flex-shrink:0;min-width:210px">
+        <div class="coin-id-top">
+          <span class="coin-name">${coin.name}</span>
+          <span class="coin-sym">${(coin.symbol||'').toUpperCase()}</span>
+          ${coin.market_cap_rank?`<span class="coin-rank-badge">RANK #${coin.market_cap_rank}</span>`:''}
+        </div>
+        <div class="coin-meta-row">
+          ${cats?`<span>${cats}</span>`:''}
+          ${genesis?`<span>${genesis}</span>`:''}
+          ${chainTxt?`<span style="font-size:9px;font-family:monospace">${chainTxt}</span>`:''}
+          ${binanceSym?`<span style="color:var(--bull)">✓ Binance: ${binanceSym}</span>`:`<span style="color:var(--dim)">Not found on Binance</span>`}
+        </div>
+        <div class="coin-links">
+          ${lnk('🌐 Website',website)}
+          ${lnk('𝕏 Twitter',twitter)}
+          ${lnk('✈ Telegram',telegram)}
+          ${lnk('💬 Reddit',reddit)}
+          ${lnk('⌨ GitHub',github)}
+          ${lnk('📄 Whitepaper',whitepaper)}
+        </div>
       </div>
-      <div class="coin-meta-row">
-        ${cats?`<span>${cats}</span>`:''}
-        ${genesis?`<span>${genesis}</span>`:''}
-        ${chainTxt?`<span style="font-size:9px;font-family:monospace">${chainTxt}</span>`:''}
-        ${binanceSym?`<span style="color:var(--bull)">✓ Binance: ${binanceSym}</span>`:`<span style="color:var(--dim)">Not found on Binance</span>`}
-      </div>
-      ${desc?`<div class="coin-desc">${desc}</div>`:''}
-      <div class="coin-links">
-        ${lnk('🌐 Website',website)}
-        ${lnk('𝕏 Twitter',twitter)}
-        ${lnk('✈ Telegram',telegram)}
-        ${lnk('💬 Reddit',reddit)}
-        ${lnk('⌨ GitHub',github)}
-        ${lnk('📄 Whitepaper',whitepaper)}
-      </div>
+      ${desc?`<div style="flex:1;border-left:1px solid var(--border);padding-left:18px;font-size:11px;color:var(--dim);line-height:1.8">${desc}</div>`:''}
     </div>
   </div>
 
