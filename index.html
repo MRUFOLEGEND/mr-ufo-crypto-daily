@@ -181,6 +181,69 @@ tr:hover td{background:rgba(255,255,255,.02)}
   td,th{font-size:10px;padding:5px 6px}
   td:first-child{font-size:11px}
 }
+
+/* ── TABS ─────────────────────────────────────────────── */
+.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 18px;display:flex}
+.tab{padding:10px 22px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;color:var(--dim);text-transform:uppercase;user-select:none}
+.tab:hover{color:var(--text)}
+.tab-active{color:var(--accent);border-bottom-color:var(--accent)}
+.page{display:none}
+.page.active{display:block}
+
+/* ── COIN SEARCH ──────────────────────────────────────── */
+.csearch-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.csearch-input{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 16px;border-radius:6px;font-size:16px;font-family:inherit;width:200px;letter-spacing:2px;text-transform:uppercase}
+.csearch-input::placeholder{text-transform:none;font-size:12px;letter-spacing:.5px;color:var(--dim)}
+.csearch-btn{background:var(--accent);border:none;color:#fff;padding:10px 26px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;letter-spacing:.5px;transition:background .15s;box-shadow:0 0 14px rgba(78,127,255,.45)}
+.csearch-btn:hover{background:#3d85ff}
+.csearch-btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+
+/* ── COIN IDENTITY ────────────────────────────────────── */
+.coin-id-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.coin-logo{width:80px;height:80px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;background:var(--surface2);object-fit:cover}
+.coin-id-body{flex:1;min-width:240px}
+.coin-id-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.coin-name{font-size:22px;font-weight:700;color:#fff}
+.coin-sym{font-size:12px;letter-spacing:2px;color:var(--dim)}
+.coin-rank-badge{font-size:10px;font-weight:700;background:var(--surface2);border:1px solid var(--accent);border-radius:4px;padding:2px 8px;color:var(--accent);letter-spacing:1px}
+.coin-meta-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:10px;color:var(--dim)}
+.coin-desc{font-size:11px;color:var(--dim);margin-top:8px;line-height:1.75;max-width:700px}
+.coin-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.clink{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--dim);font-size:10px;font-weight:700;letter-spacing:.5px;text-decoration:none;transition:all .15s;white-space:nowrap}
+.clink:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── MARKET DATA GRID ─────────────────────────────────── */
+.mdata-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:1200px){.mdata-grid{grid-template-columns:repeat(2,1fr)}}
+.mdata-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.mdata-lbl{font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.mdata-val{font-size:20px;font-weight:700;color:#fff;line-height:1.2}
+.mdata-sub{font-size:10px;color:var(--dim);margin-top:4px}
+.chg-row{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
+.chg-pill{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;background:var(--surface2);border:1px solid var(--border)}
+
+/* ── SUPPLY BAR ───────────────────────────────────────── */
+.sbar-bg{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin:4px 0}
+.sbar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .6s}
+
+/* ── DEV + COMMUNITY GRID ─────────────────────────────── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:800px){.two-col{grid-template-columns:1fr}}
+.stat-frow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px}
+.stat-frow:last-child{border-bottom:none}
+.stat-lbl{color:var(--dim)}
+.stat-val{font-weight:700;color:#fff}
+
+/* ── SENTIMENT BAR ────────────────────────────────────── */
+.sent-bar{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-top:4px;display:flex}
+.sent-bull{height:100%;background:var(--bull);transition:width .6s}
+.sent-bear{height:100%;background:var(--bear);transition:width .6s}
+
+/* ── SCORE MINIS ──────────────────────────────────────── */
+.score-mini-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.score-mini{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;text-align:center}
+.score-mini-lbl{font-size:8px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.score-mini-val{font-size:18px;font-weight:700}
 </style>
 </head>
 <body>
@@ -307,6 +370,14 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </header>
 
+<!-- ═══════════════════════ TAB BAR ═══════════════════════ -->
+<div class="tab-bar">
+  <div class="tab tab-active" onclick="switchTab('market',this)">📊 Market Bias</div>
+  <div class="tab" onclick="switchTab('coin',this)">🔍 Coin Analyzer</div>
+</div>
+
+<!-- ═══════════════════════ PAGE: MARKET ═══════════════════════ -->
+<div id="page-market" class="page active">
 <!-- ═══════════════════════ MAIN ═══════════════════════ -->
 <div class="main">
 
@@ -665,6 +736,32 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 
 </div><!-- /main -->
+</div><!-- /page-market -->
+
+<!-- ═══════════════════════ PAGE: COIN ANALYZER ══════════════════ -->
+<div id="page-coin" class="page">
+<div class="main">
+
+  <!-- SEARCH BAR -->
+  <div class="csearch-wrap">
+    <div>
+      <div style="font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">Enter Ticker Symbol</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input id="coin-input" class="csearch-input" type="text" placeholder="e.g. BTC, ETH, SOL" maxlength="20" onkeydown="if(event.key==='Enter')analyzeCoin()">
+        <button id="coin-analyze-btn" class="csearch-btn" onclick="analyzeCoin()">🔍 Analyze</button>
+        <span id="coin-status" style="font-size:10px;color:var(--dim)"></span>
+      </div>
+    </div>
+    <div style="flex:1;border-left:1px solid var(--border);padding-left:18px;font-size:10px;color:var(--dim);line-height:1.8">
+      Data from <strong style="color:var(--text)">CoinGecko</strong> (identity · market · supply · community · dev) + <strong style="color:var(--text)">Binance</strong> (live price · timeframe analysis · funding · OI)
+    </div>
+  </div>
+
+  <!-- RESULT AREA — populated by JS -->
+  <div id="coin-result"></div>
+
+</div>
+</div><!-- /page-coin -->
 
 <!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
 <script>
@@ -1602,6 +1699,428 @@ async function refreshAll() {
       })
       .catch(e=>{ console.error('klines '+tf, e); loadedTFs++; if(loadedTFs===TF_IDS.length) document.getElementById('last-upd').textContent='Updated (partial): '+new Date().toLocaleTimeString(); });
   });
+}
+
+// ─── TAB SWITCHER ─────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('tab-active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('tab-active');
+}
+
+// ─── COIN ANALYZER ────────────────────────────────────────
+let coinTfResults = {};
+const coinTfSt = {};
+
+function setCoinTfState(id, key, val) {
+  if (!coinTfSt[id]) coinTfSt[id] = {div:'auto'};
+  coinTfSt[id][key] = val;
+  renderCoinTF(coinTfResults);
+}
+
+function smartFmt(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1000) return '$' + Math.round(n).toLocaleString('en-US');
+  if (n >= 1)    return '$' + n.toFixed(2);
+  if (n >= 0.01) return '$' + n.toFixed(4);
+  if (n >= 1e-6) return '$' + n.toFixed(8);
+  return '$' + n.toExponential(2);
+}
+
+function renderCoinTF(results) {
+  coinTfResults = results;
+  let html = '';
+  for (const {id, label} of TFS) {
+    const r = results[id];
+    const st = coinTfSt[id] || {div:'auto'};
+    if (!r) { html += `<tr><td>${label}</td><td colspan="14" class="loading">No data</td></tr>`; continue; }
+
+    const divVal = (st.div==='auto'||!st.div) ? (r.divAuto||'none') : st.div;
+    const rowScore = r.score + divScore(divVal);
+    const e20c=r.vsE20>0?'cbull':'cbear', e50c=r.vsE50>0?'cbull':'cbear', e200c=r.vsE200>0?'cbull':'cbear';
+    const rsic=r.rsiVal>70?'cbear':r.rsiVal>55?'cbull':r.rsiVal<30?'cbright':r.rsiVal<45?'cbear':'cneutral';
+    const macdc=r.macdHist>0?'cbull':'cbear';
+    const emasc=r.emaStack.includes('BULL')?'cbull':r.emaStack.includes('BEAR')?'cbear':'cneutral';
+    const volc=r.volRatio>1.3?'cbull':r.volRatio<0.7?'cbear':'cneutral';
+    const strc=r.structLbl.includes('HH')?'cbull':r.structLbl.includes('LH')?'cbear':'cneutral';
+    const scorec=rowScore>=1?'cbull':rowScore<=-1?'cbear':'cneutral';
+    const bias=biasOf(rowScore), sig=signalOf(rowScore);
+
+    const _autoLbl={bull:'🟢Bull',hbull:'🔵HidBull',bear:'🔴Bear',hbear:'🟠HidBear',none:'—'}[r.divAuto||'none'];
+    const divSel=`<select class="ms-sm" onchange="setCoinTfState('${id}','div',this.value)">
+      <option value="auto" ${(st.div==='auto'||!st.div)?'selected':''}>${_autoLbl}</option>
+      <option value="none" ${st.div==='none'?'selected':''}>— None</option>
+      <option value="bull" ${st.div==='bull'?'selected':''}>🟢 Bull Div</option>
+      <option value="hbull" ${st.div==='hbull'?'selected':''}>🔵 Hid Bull</option>
+      <option value="bear" ${st.div==='bear'?'selected':''}>🔴 Bear Div</option>
+      <option value="hbear" ${st.div==='hbear'?'selected':''}>🟠 Hid Bear</option>
+    </select>`;
+
+    html += `<tr>
+      <td>${label}</td>
+      <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;font-weight:700;font-size:11px;letter-spacing:.5px;background:${sig.bg};color:${sig.color};border:1px solid ${sig.border};white-space:nowrap">${sig.text}</span></td>
+      <td><span class="bias-cell ${bias.cls}">${bias.text}</span></td>
+      <td class="${e20c}">${r.vsE20>0?'▲ Above':'▼ Below'}</td>
+      <td class="${e50c}">${r.vsE50>0?'▲ Above':'▼ Below'}</td>
+      <td class="${e200c}">${r.vsE200>0?'▲ Above':'▼ Below'}</td>
+      <td class="${rsic}">${r.rsiVal.toFixed(1)} <small style="opacity:.6">${r.rsiLbl}</small></td>
+      <td class="${macdc}">${r.macdLbl}</td>
+      <td class="${volc}">${r.volRatio.toFixed(2)}x</td>
+      <td class="${strc}">${r.structLbl}</td>
+      <td>${divSel}</td>
+      <td style="color:var(--bear);font-weight:600">${smartFmt(r.periodLow)}</td>
+      <td style="color:var(--bull);font-weight:600">${smartFmt(r.periodHigh)}</td>
+      <td class="${emasc}">${r.emaStack}</td>
+      <td class="${scorec}" style="font-weight:700">${rowScore.toFixed(1)}</td>
+    </tr>`;
+  }
+  const tb = document.getElementById('coin-tf-body');
+  if (tb) tb.innerHTML = html;
+}
+
+function fmtCoinPrice(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1000) return '$' + n.toLocaleString('en-US', {maximumFractionDigits:0});
+  if (n >= 1)    return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:4});
+  if (n >= 0.01) return '$' + n.toFixed(4);
+  if (n >= 1e-6) return '$' + n.toFixed(8);
+  return '$' + n.toExponential(2);
+}
+function fmtSup(n) {
+  if (!n) return '—';
+  if (n >= 1e12) return (n/1e12).toFixed(2)+'T';
+  if (n >= 1e9)  return (n/1e9).toFixed(2)+'B';
+  if (n >= 1e6)  return (n/1e6).toFixed(2)+'M';
+  if (n >= 1e3)  return (n/1e3).toFixed(2)+'K';
+  return n.toFixed(0);
+}
+function chgTxt(n) {
+  if (n==null||isNaN(n)) return '—';
+  return (n>=0?'+':'')+n.toFixed(2)+'%';
+}
+function chgCol(n) { return n>=0?'var(--bull)':'var(--bear)'; }
+function fmtDt(s) {
+  if (!s) return '—';
+  return new Date(s).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+}
+function cleanDesc(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html || '';
+  const t = (tmp.textContent || '').replace(/\s+/g,' ').trim();
+  const dot = t.indexOf('. ');
+  return dot > 20 && dot < 350 ? t.substring(0, dot+1) : t.substring(0, 280) + (t.length > 280 ? '…' : '');
+}
+function scoreCol(s) {
+  const n = parseFloat(s);
+  if (isNaN(n)) return 'var(--dim)';
+  return n >= 55 ? 'var(--bull)' : n >= 25 ? 'var(--neutral)' : 'var(--bear)';
+}
+
+function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
+  const md = coin.market_data || {};
+  const cd = coin.community_data || {};
+  const dd = coin.developer_data || {};
+  const lk = coin.links || {};
+
+  const price   = md.current_price?.usd || 0;
+  const mcap    = md.market_cap?.usd || 0;
+  const fdv     = md.fully_diluted_valuation?.usd || 0;
+  const vol     = md.total_volume?.usd || 0;
+  const circ    = md.circulating_supply || 0;
+  const total   = md.total_supply || 0;
+  const maxSup  = md.max_supply || 0;
+  const ath     = md.ath?.usd || 0;
+  const athChg  = md.ath_change_percentage?.usd || 0;
+  const athDate = md.ath_date?.usd || '';
+  const atl     = md.atl?.usd || 0;
+  const atlChg  = md.atl_change_percentage?.usd || 0;
+  const atlDate = md.atl_date?.usd || '';
+  const chg1h   = md.price_change_percentage_1h_in_currency?.usd || 0;
+  const chg24h  = md.price_change_percentage_24h || 0;
+  const chg7d   = md.price_change_percentage_7d || 0;
+  const chg30d  = md.price_change_percentage_30d || 0;
+
+  const fdvMc   = mcap>0&&fdv>0 ? fdv/mcap : 0;
+  const volMc   = mcap>0&&vol>0 ? vol/mcap : 0;
+  const circPct = maxSup>0 ? (circ/maxSup)*100 : total>0 ? (circ/total)*100 : 0;
+
+  let fdvRiskCol='var(--bull)', fdvRiskLbl='Low risk';
+  if (fdvMc>10)      { fdvRiskCol='var(--bear)';    fdvRiskLbl='Extreme dilution risk'; }
+  else if (fdvMc>5)  { fdvRiskCol='var(--bear)';    fdvRiskLbl='High dilution risk'; }
+  else if (fdvMc>2)  { fdvRiskCol='var(--neutral)'; fdvRiskLbl='Moderate unlock risk'; }
+  else if (fdvMc>1.5){ fdvRiskCol='var(--neutral)'; fdvRiskLbl='Low-moderate risk'; }
+
+  const cats   = (coin.categories||[]).filter(Boolean).slice(0,3).join(' · ');
+  const plats  = Object.entries(coin.platforms||{}).filter(([k])=>k).slice(0,2);
+  const chainTxt = plats.map(([c,a])=>`${c}${a?': '+a.slice(0,10)+'…':''}`).join(' | ');
+  const genesis  = coin.genesis_date ? 'Since '+fmtDt(coin.genesis_date) : '';
+  const desc     = cleanDesc(coin.description?.en);
+
+  const website   = (lk.homepage||[]).find(l=>l)||'';
+  const twitter   = lk.twitter_screen_name ? `https://x.com/${lk.twitter_screen_name}` : '';
+  const telegram  = lk.telegram_channel_identifier ? `https://t.me/${lk.telegram_channel_identifier}` : '';
+  const reddit    = lk.subreddit_url||'';
+  const github    = (lk.repos_url?.github||[]).find(l=>l)||'';
+  const whitepaper= lk.whitepaper||'';
+
+  function lnk(label, href) {
+    return href ? `<a class="clink" href="${href}" target="_blank" rel="noopener">${label}</a>` : '';
+  }
+
+  const sentUp   = coin.sentiment_votes_up_percentage||0;
+  const sentDown = coin.sentiment_votes_down_percentage||0;
+  const cgScore  = coin.coingecko_score?.toFixed(1)||'—';
+  const devScore = coin.developer_score?.toFixed(1)||'—';
+  const commScore= coin.community_score?.toFixed(1)||'—';
+  const liqScore = coin.liquidity_score?.toFixed(1)||'—';
+
+  const quoteSym = binanceSym ? binanceSym.replace(coin.symbol?.toUpperCase(),'') : 'USDT';
+
+  let fundHtml='', oiHtml='';
+  if (fundingRate!==null) {
+    const fr=(fundingRate*100).toFixed(4);
+    const fc=fundingRate>0.0005?'var(--bear)':fundingRate<-0.0001?'var(--bull)':'var(--neutral)';
+    const fl=fundingRate>0.0005?'Longs overlevered ⚠':fundingRate<-0.0001?'Shorts dominant':'Balanced';
+    fundHtml=`<div class="stat-frow"><span class="stat-lbl">Funding Rate (8h)</span><span class="stat-val" style="color:${fc}">${fr}% <small style="font-weight:400;opacity:.7">${fl}</small></span></div>`;
+  }
+  if (oiUsd!==null&&oiUsd>0) {
+    const oiFmt = oiUsd>=1e9?'$'+(oiUsd/1e9).toFixed(2)+'B':'$'+(oiUsd/1e6).toFixed(1)+'M';
+    oiHtml=`<div class="stat-frow"><span class="stat-lbl">Open Interest (USD)</span><span class="stat-val">${oiFmt}</span></div>`;
+  }
+
+  const html = `
+  <div class="coin-id-card">
+    <img class="coin-logo" src="${coin.image?.large||''}" alt="${coin.name}" onerror="this.style.display='none'">
+    <div class="coin-id-body">
+      <div class="coin-id-top">
+        <span class="coin-name">${coin.name}</span>
+        <span class="coin-sym">${(coin.symbol||'').toUpperCase()}</span>
+        ${coin.market_cap_rank?`<span class="coin-rank-badge">RANK #${coin.market_cap_rank}</span>`:''}
+      </div>
+      <div class="coin-meta-row">
+        ${cats?`<span>${cats}</span>`:''}
+        ${genesis?`<span>${genesis}</span>`:''}
+        ${chainTxt?`<span style="font-size:9px;font-family:monospace">${chainTxt}</span>`:''}
+        ${binanceSym?`<span style="color:var(--bull)">✓ Binance: ${binanceSym}</span>`:`<span style="color:var(--dim)">Not found on Binance</span>`}
+      </div>
+      ${desc?`<div class="coin-desc">${desc}</div>`:''}
+      <div class="coin-links">
+        ${lnk('🌐 Website',website)}
+        ${lnk('𝕏 Twitter',twitter)}
+        ${lnk('✈ Telegram',telegram)}
+        ${lnk('💬 Reddit',reddit)}
+        ${lnk('⌨ GitHub',github)}
+        ${lnk('📄 Whitepaper',whitepaper)}
+      </div>
+    </div>
+  </div>
+
+  <div class="mdata-grid">
+    <div class="mdata-card">
+      <div class="mdata-lbl">Price</div>
+      <div class="mdata-val">${fmtCoinPrice(price)}</div>
+      <div class="chg-row">
+        <span class="chg-pill" style="color:${chgCol(chg1h)}">${chgTxt(chg1h)} 1h</span>
+        <span class="chg-pill" style="color:${chgCol(chg24h)}">${chgTxt(chg24h)} 24h</span>
+        <span class="chg-pill" style="color:${chgCol(chg7d)}">${chgTxt(chg7d)} 7d</span>
+        <span class="chg-pill" style="color:${chgCol(chg30d)}">${chgTxt(chg30d)} 30d</span>
+      </div>
+      <div class="mdata-sub" style="margin-top:6px">24h High: ${fmtCoinPrice(md.high_24h?.usd)} &nbsp;·&nbsp; Low: ${fmtCoinPrice(md.low_24h?.usd)}</div>
+    </div>
+
+    <div class="mdata-card">
+      <div class="mdata-lbl">Market Cap</div>
+      <div class="mdata-val">${fmtMcap(mcap)}</div>
+      <div class="mdata-sub">Rank #${coin.market_cap_rank||'—'}</div>
+      <div style="margin-top:12px">
+        <div class="mdata-lbl">Fully Diluted Value</div>
+        <div style="font-size:17px;font-weight:700">${fdv?fmtMcap(fdv):'—'}</div>
+        ${fdvMc>0?`<div class="mdata-sub">FDV/MC: <strong style="color:${fdvRiskCol}">${fdvMc.toFixed(1)}x — ${fdvRiskLbl}</strong></div>`:''}
+      </div>
+    </div>
+
+    <div class="mdata-card">
+      <div class="mdata-lbl">24h Volume</div>
+      <div class="mdata-val">${fmtMcap(vol)}</div>
+      ${volMc>0?`<div class="mdata-sub">Vol/MC: <strong style="color:${volMc>0.15?'var(--bull)':volMc<0.03?'var(--bear)':'var(--neutral)'}">${(volMc*100).toFixed(1)}% ${volMc>0.15?'— High liquidity':volMc<0.03?'— Low liquidity':''}</strong></div>`:''}
+      <div style="margin-top:12px">
+        <div class="mdata-lbl">All-Time High</div>
+        <div style="font-size:17px;font-weight:700">${fmtCoinPrice(ath)}</div>
+        <div class="mdata-sub"><span style="color:var(--bear)">${chgTxt(athChg)}</span> from ATH &nbsp;·&nbsp; ${fmtDt(athDate)}</div>
+      </div>
+    </div>
+
+    <div class="mdata-card">
+      <div class="mdata-lbl">Supply</div>
+      <div class="mdata-val" style="font-size:17px">${fmtSup(circ)} <small style="font-size:11px;color:var(--dim)">circ.</small></div>
+      <div class="mdata-sub">Total: ${fmtSup(total)} &nbsp;·&nbsp; Max: ${maxSup?fmtSup(maxSup):'∞'}</div>
+      ${circPct>0?`<div style="margin-top:6px">
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--dim)"><span>Circulating %</span><span>${circPct.toFixed(1)}%</span></div>
+        <div class="sbar-bg"><div class="sbar-fill" style="width:${Math.min(circPct,100)}%"></div></div>
+        <div style="font-size:9px;color:${circPct>80?'var(--bull)':circPct>50?'var(--neutral)':'var(--bear)'}">
+          ${circPct>80?'Low inflation risk':circPct>50?'Moderate unlock risk':'High dilution risk'}
+        </div>
+      </div>`:''}
+      <div style="margin-top:8px;font-size:10px;color:var(--dim)">ATL: ${fmtCoinPrice(atl)} <span style="color:var(--bull)">${chgTxt(atlChg)}</span> · ${fmtDt(atlDate)}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">⏱ Timeframe Bias — ${(coin.symbol||'').toUpperCase()}/${quoteSym}</span>
+      <span style="font-size:10px;color:var(--dim)">${binanceSym?'Live Binance · RSI · MACD · EMA · Structure · Divergence':'⚠ No Binance pair found'}</span>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div class="tf-scroll">
+        <table>
+          <thead><tr>
+            <th>Timeframe</th><th>SIGNAL</th><th>BIAS</th><th>vs EMA 20</th><th>vs EMA 50</th>
+            <th>vs EMA 200</th><th>RSI (14)</th><th>MACD</th><th>Volume</th><th>Structure</th>
+            <th>Divergence</th><th>Period Low</th><th>Period High</th><th>EMA Stack</th><th>Score</th>
+          </tr></thead>
+          <tbody id="coin-tf-body">
+            <tr><td colspan="15" style="text-align:center;padding:20px" class="loading">${binanceSym?'Loading timeframe data…':'No Binance pair found for this coin'}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  ${(fundHtml||oiHtml)?`<div class="card">
+    <div class="card-hdr"><span class="card-title">📈 Derivatives — ${(coin.symbol||'').toUpperCase()} Perpetual</span></div>
+    <div class="card-body">${fundHtml}${oiHtml}
+      <div class="tip" style="margin-top:6px">Positive funding >0.05%/8h = longs overlevered = squeeze risk. Negative funding = shorts heavy = potential long squeeze.</div>
+    </div>
+  </div>`:''}
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">⌨ Developer Activity</span></div>
+      <div class="card-body">
+        <div class="stat-frow"><span class="stat-lbl">GitHub Stars</span><span class="stat-val">${(dd.stars||0).toLocaleString()}</span></div>
+        <div class="stat-frow"><span class="stat-lbl">Commits (4 weeks)</span><span class="stat-val" style="color:${(dd.commit_count_4_weeks||0)>=20?'var(--bull)':(dd.commit_count_4_weeks||0)>=5?'var(--neutral)':'var(--bear)'}">${dd.commit_count_4_weeks||0} <small style="font-weight:400;opacity:.6">${(dd.commit_count_4_weeks||0)>=20?'Active':(dd.commit_count_4_weeks||0)>=5?'Moderate':'Low'}</small></span></div>
+        <div class="stat-frow"><span class="stat-lbl">Contributors</span><span class="stat-val">${dd.pull_request_contributors||0}</span></div>
+        <div class="stat-frow"><span class="stat-lbl">PRs Merged (4w)</span><span class="stat-val">${dd.pull_requests_merged||0}</span></div>
+        <div class="stat-frow"><span class="stat-lbl">Open Issues</span><span class="stat-val">${(dd.total_issues||0)-(dd.closed_issues||0)}</span></div>
+        <div class="stat-frow"><span class="stat-lbl">Code Adds (4w)</span><span class="stat-val" style="color:var(--bull)">+${(dd.code_additions_deletions_4_weeks?.additions||0).toLocaleString()}</span></div>
+        <div class="stat-frow"><span class="stat-lbl">Code Dels (4w)</span><span class="stat-val" style="color:var(--bear)">−${(dd.code_additions_deletions_4_weeks?.deletions||0).toLocaleString()}</span></div>
+        <div class="score-mini-grid">
+          <div class="score-mini"><div class="score-mini-lbl">CG Score</div><div class="score-mini-val" style="color:${scoreCol(cgScore)}">${cgScore}</div></div>
+          <div class="score-mini"><div class="score-mini-lbl">Dev Score</div><div class="score-mini-val" style="color:${scoreCol(devScore)}">${devScore}</div></div>
+          <div class="score-mini"><div class="score-mini-lbl">Community</div><div class="score-mini-val" style="color:${scoreCol(commScore)}">${commScore}</div></div>
+          <div class="score-mini"><div class="score-mini-lbl">Liquidity</div><div class="score-mini-val" style="color:${scoreCol(liqScore)}">${liqScore}</div></div>
+        </div>
+        <div class="tip" style="margin-top:8px">≥20 commits/4w = active team. Dead repos (0 commits) are a red flag for long-term holding.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">👥 Community & Social</span></div>
+      <div class="card-body">
+        <div class="stat-frow"><span class="stat-lbl">Twitter Followers</span><span class="stat-val">${(cd.twitter_followers||0).toLocaleString()}</span></div>
+        <div class="stat-frow"><span class="stat-lbl">Reddit Subscribers</span><span class="stat-val">${(cd.reddit_subscribers||0).toLocaleString()}</span></div>
+        <div class="stat-frow"><span class="stat-lbl">Reddit Active (48h)</span><span class="stat-val">${(cd.reddit_active_accounts_48h||0).toLocaleString()}</span></div>
+        <div class="stat-frow"><span class="stat-lbl">Reddit Posts (48h)</span><span class="stat-val">${Number(cd.reddit_average_posts_48h||0).toFixed(1)}</span></div>
+        <div class="stat-frow"><span class="stat-lbl">Telegram Members</span><span class="stat-val">${cd.telegram_channel_user_count?(cd.telegram_channel_user_count).toLocaleString():'—'}</span></div>
+        ${sentUp>0?`<div style="margin-top:10px">
+          <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:4px">COMMUNITY SENTIMENT</div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+            <span style="color:var(--bull)">🟢 ${sentUp.toFixed(0)}% Bullish</span>
+            <span style="color:var(--bear)">🔴 ${sentDown.toFixed(0)}% Bearish</span>
+          </div>
+          <div class="sent-bar">
+            <div class="sent-bull" style="width:${sentUp}%"></div>
+            <div class="sent-bear" style="width:${sentDown}%"></div>
+          </div>
+        </div>`:''}
+        <div class="tip" style="margin-top:8px">Active Reddit/Telegram community = organic demand. Follower growth rate matters more than raw numbers.</div>
+      </div>
+    </div>
+  </div>`;
+
+  const el = document.getElementById('coin-result');
+  if (el) el.innerHTML = html;
+}
+
+async function analyzeCoin() {
+  const input  = document.getElementById('coin-input');
+  const sym    = (input?.value||'').trim().toUpperCase();
+  if (!sym) return;
+
+  const btn    = document.getElementById('coin-analyze-btn');
+  const status = document.getElementById('coin-status');
+  const result = document.getElementById('coin-result');
+
+  btn.disabled = true; btn.textContent = 'Loading…';
+  if (status) status.textContent = 'Searching…';
+  if (result) result.innerHTML = '<div style="padding:50px;text-align:center;color:var(--dim)" class="loading">Fetching coin data…</div>';
+
+  try {
+    // 1. Find CoinGecko ID
+    if (status) status.textContent = 'Looking up coin…';
+    const sr = await apiFetch(`https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(sym)}`, 8000);
+    const coins = sr.coins || [];
+    if (!coins.length) throw new Error(`"${sym}" not found on CoinGecko`);
+    const exact = coins.find(c => c.symbol.toUpperCase() === sym);
+    const coinId = (exact || coins[0]).id;
+
+    // 2. Full coin data
+    if (status) status.textContent = 'Fetching market data…';
+    const coin = await apiFetch(
+      `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&market_data=true&community_data=true&developer_data=true&sparkline=false`,
+      12000
+    );
+
+    // 3. Find Binance spot pair
+    if (status) status.textContent = 'Checking Binance…';
+    let binanceSym = null;
+    for (const q of ['USDT','USDC','BTC','ETH']) {
+      try {
+        await apiFetch(`${BINANCE}/klines?symbol=${sym}${q}&interval=1d&limit=1`, 4000);
+        binanceSym = sym + q; break;
+      } catch(e) {}
+    }
+
+    // 4. Futures: funding rate + OI
+    let fundingRate = null, oiUsd = null;
+    if (binanceSym && binanceSym.endsWith('USDT')) {
+      try {
+        const fd = await apiFetch(`${BINANCE_F}/premiumIndex?symbol=${binanceSym}`, 5000);
+        fundingRate = parseFloat(fd.lastFundingRate);
+      } catch(e) {}
+      try {
+        const oid = await apiFetch(`${BINANCE_F}/openInterest?symbol=${binanceSym}`, 5000);
+        oiUsd = parseFloat(oid.openInterest) * (coin.market_data?.current_price?.usd || 0);
+      } catch(e) {}
+    }
+
+    // 5. Render static sections
+    if (status) status.textContent = 'Rendering…';
+    renderCoinFull(coin, binanceSym, fundingRate, oiUsd);
+
+    // 6. Stream timeframe klines
+    if (binanceSym) {
+      if (status) status.textContent = 'Loading timeframes…';
+      coinTfResults = {};
+      for (const {id} of TFS) {
+        apiFetch(klinesUrl(binanceSym, id, 250))
+          .then(data => { try { coinTfResults[id] = analyzeOHLCV(data); } catch(e) {} renderCoinTF(coinTfResults); })
+          .catch(() => {});
+      }
+    }
+
+    if (status) status.textContent = `✓ ${coin.name} loaded`;
+  } catch(e) {
+    console.error('Coin analyzer', e);
+    if (result) result.innerHTML = `<div class="card"><div class="card-body">
+      <div class="err" style="font-size:12px;padding:4px 0">⚠ ${e.message}</div>
+      <div class="tip" style="margin-top:8px">Try the full name (e.g. "bitcoin") or wait 30s if CoinGecko is rate limiting.</div>
+    </div></div>`;
+    if (status) status.textContent = '✗ Error';
+  }
+
+  btn.disabled = false; btn.textContent = '🔍 Analyze';
 }
 
 // Warn when opened from file:// (APIs will be blocked by browser CORS policy)
