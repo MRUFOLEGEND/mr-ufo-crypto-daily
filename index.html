@@ -1743,7 +1743,7 @@ function _render4HOutlook(sym, tf4h, tf1d, tf1w, tf1h, textEl, levelsEl) {
     {lbl:'EMA 200',        val:above200?null:e200,    t:'r'},
     {lbl:'EMA 50',         val:above50?null:e50,      t:'r'},
     {lbl:'EMA 20',         val:above20?null:e20,      t:'r'},
-    {lbl:`▶ ${sym} PRICE`, val:p,                     t:'c', always:true},
+    {lbl:'▶ ' + sym + ' PRICE', val:p,               t:'c', always:true},
     {lbl:'EMA 20',         val:above20?e20:null,      t:'s'},
     {lbl:'EMA 50',         val:above50?e50:null,      t:'s'},
     {lbl:'EMA 200',        val:above200?e200:null,    t:'s'},
@@ -1752,20 +1752,18 @@ function _render4HOutlook(sym, tf4h, tf1d, tf1w, tf1h, textEl, levelsEl) {
     {lbl:'Weekly Low',     val:l1w,                   t:'s', always:true},
   ].filter(r => r.always || (r.val && r.val > 0));
 
-  let tbl = `<div style="font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Key Levels</div>
-  <table style="width:100%;border-collapse:collapse">`;
-  rows.forEach(r => {
-    const col     = r.t==='r'?'var(--bear)':r.t==='c'?'var(--accent)':'var(--bull)';
-    const bold    = r.t==='c'?'font-weight:700;':'';
-    const valTxt  = r.val ? fmt(r.val) : '—';
-    const dist    = r.val ? (r.val - p) / p * 100 : null;
-    const distTxt = (r.t==='c' || dist===null) ? '' : ` <span style="opacity:.4;font-size:9px">${dist>=0?'+':''}${dist.toFixed(1)}%</span>`;
-    tbl += `<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:5px 6px;font-size:10px;color:${col};${bold}">${r.lbl}</td>
-      <td style="padding:5px 6px;font-size:11px;font-weight:700;color:${col};text-align:right">${valTxt}${distTxt}</td>
-    </tr>`;
+  let tbl = '<div style="font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Key Levels</div>';
+  rows.forEach(function(r) {
+    var col      = r.t==='r' ? 'var(--bear)' : r.t==='c' ? 'var(--accent)' : 'var(--bull)';
+    var fw       = r.t==='c' ? 'font-weight:700;' : '';
+    var dispVal  = (r.val && r.val > 0) ? fmt(r.val) : '&mdash;';
+    var dist     = (r.val && r.val > 0) ? ((r.val - p) / p * 100) : null;
+    var distSpan = (r.t === 'c' || dist === null) ? '' : ' <span style="opacity:.4;font-size:9px">' + (dist >= 0 ? '+' : '') + dist.toFixed(1) + '%</span>';
+    tbl += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 6px;border-bottom:1px solid var(--border)">'
+         + '<span style="font-size:10px;color:' + col + ';' + fw + '">' + r.lbl + '</span>'
+         + '<span style="font-size:11px;font-weight:700;color:' + col + '">' + dispVal + distSpan + '</span>'
+         + '</div>';
   });
-  tbl += '</table>';
   levelsEl.innerHTML = tbl;
 }
 
