@@ -190,8 +190,13 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .page{display:none}
 .page.active{display:block}
 
+/* ── COIN STICKY ZONE ─────────────────────────────────── */
+#coin-sticky-zone{position:sticky;top:0;z-index:89;background:var(--bg)}
 /* ── COIN SEARCH ──────────────────────────────────────── */
-.csearch-wrap{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:90}
+.csearch-wrap{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;overflow:hidden;max-height:120px;transition:max-height .25s ease,padding .25s ease,opacity .2s ease}
+.csearch-wrap.search-hidden{max-height:0;padding-top:0;padding-bottom:0;opacity:0;pointer-events:none}
+/* ── COIN IDENTITY BAR (compact sticky) ───────────────── */
+#coin-id-bar{display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:8px 18px;align-items:center;gap:10px;flex-wrap:wrap}
 .csearch-input{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.75);color:#fff;padding:9px 16px;border-radius:6px;font-size:16px;font-family:inherit;width:200px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
 .csearch-input::placeholder{text-transform:none;font-size:12px;letter-spacing:.5px;color:rgba(255,255,255,.4);font-weight:400}
 .csearch-input:focus{outline:none;border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.12)}
@@ -741,27 +746,31 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 <!-- ═══════════════════════ PAGE: COIN ANALYZER ══════════════════ -->
 <div id="page-coin" class="page">
-<div class="main">
 
-  <!-- SEARCH BAR -->
-  <div class="csearch-wrap">
-    <div>
-      <div style="font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">Enter Ticker Symbol</div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <input id="coin-input" class="csearch-input" type="text" placeholder="e.g. BTC, ETH, SOL" maxlength="20" onkeydown="if(event.key==='Enter')analyzeCoin()">
-        <button id="coin-analyze-btn" class="csearch-btn" onclick="analyzeCoin()">🔍 Analyze</button>
-        <span id="coin-status" style="font-size:10px;color:var(--dim)"></span>
+  <!-- STICKY ZONE: search (smart hide/show) + compact identity bar -->
+  <div id="coin-sticky-zone">
+    <div id="coin-search-bar" class="csearch-wrap">
+      <div>
+        <div style="font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">Enter Ticker Symbol</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input id="coin-input" class="csearch-input" type="text" placeholder="e.g. BTC, ETH, SOL" maxlength="20" onkeydown="if(event.key==='Enter')analyzeCoin()">
+          <button id="coin-analyze-btn" class="csearch-btn" onclick="analyzeCoin()">🔍 Analyze</button>
+          <span id="coin-status" style="font-size:10px;color:var(--dim)"></span>
+        </div>
+      </div>
+      <div style="flex:1;border-left:1px solid var(--border);padding-left:18px;font-size:10px;color:var(--dim);line-height:1.8">
+        Data from <strong style="color:var(--text)">CoinGecko</strong> (identity · market · supply · community · dev) + <strong style="color:var(--text)">Binance</strong> (live price · timeframe analysis · funding · OI)
       </div>
     </div>
-    <div style="flex:1;border-left:1px solid var(--border);padding-left:18px;font-size:10px;color:var(--dim);line-height:1.8">
-      Data from <strong style="color:var(--text)">CoinGecko</strong> (identity · market · supply · community · dev) + <strong style="color:var(--text)">Binance</strong> (live price · timeframe analysis · funding · OI)
-    </div>
+    <!-- Compact identity bar: visible while scrolling once a coin is loaded -->
+    <div id="coin-id-bar"></div>
   </div>
 
-  <!-- RESULT AREA — populated by JS -->
-  <div id="coin-result"></div>
+  <!-- SCROLLABLE CONTENT -->
+  <div class="main">
+    <div id="coin-result"></div>
+  </div>
 
-</div>
 </div><!-- /page-coin -->
 
 <!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
@@ -1714,11 +1723,24 @@ function switchTab(name, el) {
 function setCoinSearchStickyTop() {
   const hdr = document.querySelector('header');
   const tb  = document.querySelector('.tab-bar');
-  const sw  = document.querySelector('#page-coin .csearch-wrap');
-  if (hdr && tb && sw) sw.style.top = (hdr.offsetHeight + tb.offsetHeight) + 'px';
+  const sz  = document.getElementById('coin-sticky-zone');
+  if (hdr && tb && sz) sz.style.top = (hdr.offsetHeight + tb.offsetHeight) + 'px';
 }
 window.addEventListener('resize', setCoinSearchStickyTop);
 setTimeout(setCoinSearchStickyTop, 200);
+
+// ── Smart search bar: hide on scroll down, show on scroll up ──
+let _lastScrollY = 0;
+window.addEventListener('scroll', () => {
+  const page = document.getElementById('page-coin');
+  if (!page || !page.classList.contains('active')) return;
+  const bar = document.getElementById('coin-search-bar');
+  if (!bar) return;
+  const y = window.scrollY;
+  if (y > _lastScrollY && y > 80) bar.classList.add('search-hidden');
+  else bar.classList.remove('search-hidden');
+  _lastScrollY = y;
+}, {passive:true});
 
 // ─── COIN ANALYZER ────────────────────────────────────────
 let coinTfResults = {};
@@ -1900,6 +1922,20 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
     oiHtml=`<div class="stat-frow"><span class="stat-lbl">Open Interest (USD)</span><span class="stat-val">${oiFmt}</span></div>`;
   }
 
+  // Populate compact sticky identity bar
+  const idBar = document.getElementById('coin-id-bar');
+  if (idBar) {
+    idBar.style.display = 'flex';
+    idBar.innerHTML = `
+      <img src="${coin.image?.thumb||''}" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--border);flex-shrink:0" onerror="this.style.display='none'">
+      <span style="font-size:15px;font-weight:700;color:#fff">${coin.name}</span>
+      <span style="font-size:11px;color:var(--dim);letter-spacing:2px;text-transform:uppercase">${(coin.symbol||'').toUpperCase()}</span>
+      ${coin.market_cap_rank?`<span class="coin-rank-badge">RANK #${coin.market_cap_rank}</span>`:''}
+      <span style="margin-left:auto;font-size:14px;font-weight:700;color:#fff">${fmtCoinPrice(price)}</span>
+      <span style="font-size:11px;font-weight:600;color:${chgCol(chg24h)}">${chgTxt(chg24h)} 24h</span>
+    `;
+  }
+
   const html = `
   <div class="coin-id-card">
     <img class="coin-logo" src="${coin.image?.large||''}" alt="${coin.name}" onerror="this.style.display='none'">
@@ -2068,6 +2104,8 @@ async function analyzeCoin() {
   btn.disabled = true; btn.textContent = 'Loading…';
   if (status) status.textContent = 'Searching…';
   if (result) result.innerHTML = '<div style="padding:50px;text-align:center;color:var(--dim)" class="loading">Fetching coin data…</div>';
+  const idBar = document.getElementById('coin-id-bar');
+  if (idBar) idBar.style.display = 'none';
 
   try {
     // 1. Find CoinGecko ID
