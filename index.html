@@ -195,8 +195,11 @@ tr:hover td{background:rgba(255,255,255,.02)}
 /* ── COIN SEARCH ──────────────────────────────────────── */
 .csearch-wrap{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;overflow:hidden;max-height:120px;transition:max-height .25s ease,padding .25s ease,opacity .2s ease}
 .csearch-wrap.search-hidden{max-height:0;padding-top:0;padding-bottom:0;opacity:0;pointer-events:none}
-/* ── COIN IDENTITY BAR (compact sticky) ───────────────── */
-#coin-id-bar{display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:8px 18px;align-items:center;gap:10px;flex-wrap:wrap}
+/* ── COIN IDENTITY STICKY ─────────────────────────────── */
+#coin-id-full{display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:12px 18px}
+.coin-id-full-inner{display:flex;gap:16px;align-items:center}
+.coin-refresh-btn{margin-left:auto;flex-shrink:0;align-self:center;background:var(--surface2);border:1px solid var(--border);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.5px;padding:8px 16px;border-radius:6px;cursor:pointer;transition:background .15s,color .15s}
+.coin-refresh-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 .csearch-input{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.75);color:#fff;padding:9px 16px;border-radius:6px;font-size:16px;font-family:inherit;width:200px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
 .csearch-input::placeholder{text-transform:none;font-size:12px;letter-spacing:.5px;color:rgba(255,255,255,.4);font-weight:400}
 .csearch-input:focus{outline:none;border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.12)}
@@ -762,8 +765,8 @@ tr:hover td{background:rgba(255,255,255,.02)}
         Data from <strong style="color:var(--text)">CoinGecko</strong> (identity · market · supply · community · dev) + <strong style="color:var(--text)">Binance</strong> (live price · timeframe analysis · funding · OI)
       </div>
     </div>
-    <!-- Compact identity bar: visible while scrolling once a coin is loaded -->
-    <div id="coin-id-bar"></div>
+    <!-- Full identity card: sticky while scrolling once a coin is loaded -->
+    <div id="coin-id-full"></div>
   </div>
 
   <!-- SCROLLABLE CONTENT -->
@@ -1731,6 +1734,7 @@ setTimeout(setCoinSearchStickyTop, 200);
 
 // ── Smart search bar: hide on scroll down, show on scroll up ──
 let _lastScrollY = 0;
+let _lastCoinSym = '';
 window.addEventListener('scroll', () => {
   const page = document.getElementById('page-coin');
   if (!page || !page.classList.contains('active')) return;
@@ -1922,49 +1926,41 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
     oiHtml=`<div class="stat-frow"><span class="stat-lbl">Open Interest (USD)</span><span class="stat-val">${oiFmt}</span></div>`;
   }
 
-  // Populate compact sticky identity bar
-  const idBar = document.getElementById('coin-id-bar');
-  if (idBar) {
-    idBar.style.display = 'flex';
-    idBar.innerHTML = `
-      <img src="${coin.image?.thumb||''}" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--border);flex-shrink:0" onerror="this.style.display='none'">
-      <span style="font-size:15px;font-weight:700;color:#fff">${coin.name}</span>
-      <span style="font-size:11px;color:var(--dim);letter-spacing:2px;text-transform:uppercase">${(coin.symbol||'').toUpperCase()}</span>
-      ${coin.market_cap_rank?`<span class="coin-rank-badge">RANK #${coin.market_cap_rank}</span>`:''}
-      <span style="margin-left:auto;font-size:14px;font-weight:700;color:#fff">${fmtCoinPrice(price)}</span>
-      <span style="font-size:11px;font-weight:600;color:${chgCol(chg24h)}">${chgTxt(chg24h)} 24h</span>
-    `;
+  // Populate sticky full identity card
+  const idFull = document.getElementById('coin-id-full');
+  if (idFull) {
+    idFull.style.display = 'block';
+    idFull.innerHTML = `<div class="coin-id-full-inner">
+      <img class="coin-logo" src="${coin.image?.large||''}" alt="${coin.name}" onerror="this.style.display='none'">
+      <div class="coin-id-body" style="display:flex;gap:20px;align-items:flex-start;flex:1;min-width:0">
+        <div style="flex-shrink:0;min-width:210px">
+          <div class="coin-id-top">
+            <span class="coin-name">${coin.name}</span>
+            <span class="coin-sym">${(coin.symbol||'').toUpperCase()}</span>
+            ${coin.market_cap_rank?`<span class="coin-rank-badge">RANK #${coin.market_cap_rank}</span>`:''}
+          </div>
+          <div class="coin-meta-row">
+            ${cats?`<span>${cats}</span>`:''}
+            ${genesis?`<span>${genesis}</span>`:''}
+            ${chainTxt?`<span style="font-size:9px;font-family:monospace">${chainTxt}</span>`:''}
+            ${binanceSym?`<span style="color:var(--bull)">✓ Binance: ${binanceSym}</span>`:`<span style="color:var(--dim)">Not found on Binance</span>`}
+          </div>
+          <div class="coin-links">
+            ${lnk('🌐 Website',website)}
+            ${lnk('𝕏 Twitter',twitter)}
+            ${lnk('✈ Telegram',telegram)}
+            ${lnk('💬 Reddit',reddit)}
+            ${lnk('⌨ GitHub',github)}
+            ${lnk('📄 Whitepaper',whitepaper)}
+          </div>
+        </div>
+        ${desc?`<div style="flex:1;border-left:1px solid var(--border);padding-left:18px;font-size:11px;color:var(--dim);line-height:1.8;max-height:110px;overflow-y:auto">${desc}</div>`:''}
+      </div>
+      <button class="coin-refresh-btn" onclick="refreshCoin()">↻ Refresh</button>
+    </div>`;
   }
 
   const html = `
-  <div class="coin-id-card">
-    <img class="coin-logo" src="${coin.image?.large||''}" alt="${coin.name}" onerror="this.style.display='none'">
-    <div class="coin-id-body" style="display:flex;gap:20px;align-items:flex-start;flex:1">
-      <div style="flex-shrink:0;min-width:210px">
-        <div class="coin-id-top">
-          <span class="coin-name">${coin.name}</span>
-          <span class="coin-sym">${(coin.symbol||'').toUpperCase()}</span>
-          ${coin.market_cap_rank?`<span class="coin-rank-badge">RANK #${coin.market_cap_rank}</span>`:''}
-        </div>
-        <div class="coin-meta-row">
-          ${cats?`<span>${cats}</span>`:''}
-          ${genesis?`<span>${genesis}</span>`:''}
-          ${chainTxt?`<span style="font-size:9px;font-family:monospace">${chainTxt}</span>`:''}
-          ${binanceSym?`<span style="color:var(--bull)">✓ Binance: ${binanceSym}</span>`:`<span style="color:var(--dim)">Not found on Binance</span>`}
-        </div>
-        <div class="coin-links">
-          ${lnk('🌐 Website',website)}
-          ${lnk('𝕏 Twitter',twitter)}
-          ${lnk('✈ Telegram',telegram)}
-          ${lnk('💬 Reddit',reddit)}
-          ${lnk('⌨ GitHub',github)}
-          ${lnk('📄 Whitepaper',whitepaper)}
-        </div>
-      </div>
-      ${desc?`<div style="flex:1;border-left:1px solid var(--border);padding-left:18px;font-size:11px;color:var(--dim);line-height:1.8">${desc}</div>`:''}
-    </div>
-  </div>
-
   <div class="mdata-grid">
     <div class="mdata-card">
       <div class="mdata-lbl">Price</div>
@@ -2092,10 +2088,17 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
   if (el) el.innerHTML = html;
 }
 
+function refreshCoin() {
+  if (!_lastCoinSym) return;
+  document.getElementById('coin-input').value = _lastCoinSym;
+  analyzeCoin();
+}
+
 async function analyzeCoin() {
   const input  = document.getElementById('coin-input');
   const sym    = (input?.value||'').trim().toUpperCase();
   if (!sym) return;
+  _lastCoinSym = sym;
 
   const btn    = document.getElementById('coin-analyze-btn');
   const status = document.getElementById('coin-status');
@@ -2104,8 +2107,8 @@ async function analyzeCoin() {
   btn.disabled = true; btn.textContent = 'Loading…';
   if (status) status.textContent = 'Searching…';
   if (result) result.innerHTML = '<div style="padding:50px;text-align:center;color:var(--dim)" class="loading">Fetching coin data…</div>';
-  const idBar = document.getElementById('coin-id-bar');
-  if (idBar) idBar.style.display = 'none';
+  const idFull = document.getElementById('coin-id-full');
+  if (idFull) { idFull.style.display = 'none'; idFull.innerHTML = ''; }
 
   try {
     // 1. Find CoinGecko ID
