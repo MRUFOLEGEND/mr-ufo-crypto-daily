@@ -1817,6 +1817,24 @@ function renderCoinTF(results) {
   if (tb) tb.innerHTML = html;
 }
 
+function sparklineSVG(prices, w=120, h=42) {
+  if (!prices || prices.length < 2) return '';
+  const mn = Math.min(...prices), mx = Math.max(...prices);
+  const range = mx - mn || 1;
+  const pts = prices.map((p, i) => {
+    const x = (i / (prices.length - 1)) * w;
+    const y = h - 2 - ((p - mn) / range) * (h - 4);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const isUp = prices[prices.length - 1] >= prices[0];
+  const col = isUp ? 'var(--bull)' : 'var(--bear)';
+  const lastPt = pts.split(' ').pop().split(',');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="flex-shrink:0;overflow:visible">
+    <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
+    <circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="3" fill="${col}"/>
+  </svg>`;
+}
+
 function fmtCoinPrice(n) {
   if (!n && n !== 0) return '—';
   if (n >= 1000) return '$' + n.toLocaleString('en-US', {maximumFractionDigits:0});
@@ -1965,7 +1983,13 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
   <div class="mdata-grid">
     <div class="mdata-card">
       <div class="mdata-lbl">Price</div>
-      <div class="mdata-val">${fmtCoinPrice(price)}</div>
+      <div style="display:flex;align-items:center;gap:12px;justify-content:space-between">
+        <div class="mdata-val">${fmtCoinPrice(price)}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+          ${sparklineSVG(coin.market_data?.sparkline_7d?.price||[], 110, 42)}
+          <span style="font-size:9px;color:var(--dim);letter-spacing:.5px">7D</span>
+        </div>
+      </div>
       <div class="chg-row">
         <span class="chg-pill" style="color:${chgCol(chg1h)}">${chgTxt(chg1h)} 1h</span>
         <span class="chg-pill" style="color:${chgCol(chg24h)}">${chgTxt(chg24h)} 24h</span>
@@ -2123,7 +2147,7 @@ async function analyzeCoin() {
     // 2. Full coin data
     if (status) status.textContent = 'Fetching market data…';
     const coin = await apiFetch(
-      `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&market_data=true&community_data=true&developer_data=true&sparkline=false`,
+      `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&market_data=true&community_data=true&developer_data=true&sparkline=true`,
       12000
     );
 
