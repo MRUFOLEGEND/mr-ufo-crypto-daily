@@ -255,6 +255,109 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .score-mini{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;text-align:center}
 .score-mini-lbl{font-size:8px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
 .score-mini-val{font-size:18px;font-weight:700}
+
+/* ── CHART MASTER ─────────────────────────────────────── */
+.cm-main{padding:14px;display:flex;flex-direction:column;gap:14px}
+.cm-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.cm-grid{grid-template-columns:1fr}}
+.cm-coin-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px}
+.cm-coin-bar label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);white-space:nowrap}
+.cm-input{background:var(--surface2);border:1px solid var(--border);color:#fff;padding:6px 12px;border-radius:6px;font-size:13px;font-family:inherit;font-weight:700;letter-spacing:2px;text-transform:uppercase;width:120px}
+.cm-tf-select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:11px;font-family:inherit;cursor:pointer}
+.cm-btn{background:var(--accent);border:none;color:#fff;padding:7px 18px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:1px;font-family:inherit;cursor:pointer;transition:opacity .2s;text-transform:uppercase}
+.cm-btn:hover{opacity:.85}
+.cm-btn-copy{background:var(--surface2);border:1px solid var(--border);color:var(--dim);padding:5px 12px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px;font-family:inherit;cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap}
+.cm-btn-copy:hover{border-color:var(--accent);color:var(--accent)}
+.cm-btn-copy.copied{border-color:var(--bull);color:var(--bull)}
+.prompt-box{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-size:11px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-break:break-word;max-height:260px;overflow-y:auto;font-family:'SF Mono','Fira Code','Courier New',monospace}
+.prompt-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.social-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:1100px){.social-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.social-grid{grid-template-columns:repeat(2,1fr)}}
+.social-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;transition:border-color .2s}
+.social-card:hover{border-color:var(--accent)}
+.social-top{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.social-icon{font-size:20px;line-height:1}
+.social-name{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.social-tag{font-size:10px;color:var(--accent);font-weight:600;letter-spacing:.5px;word-break:break-all}
+.social-desc{font-size:9px;color:var(--dim);line-height:1.5}
+.social-tags-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.stag{background:rgba(78,127,255,.12);color:var(--accent);border:1px solid rgba(78,127,255,.25);font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.5px}
+.stag-green{background:rgba(0,217,126,.1);color:var(--bull);border-color:rgba(0,217,126,.25)}
+.stag-purple{background:rgba(155,89,245,.1);color:#9b59f5;border-color:rgba(155,89,245,.25)}
+.stag-orange{background:rgba(245,166,35,.1);color:var(--neutral);border-color:rgba(245,166,35,.25)}
+.stag-red{background:rgba(255,61,90,.1);color:var(--bear);border-color:rgba(255,61,90,.25)}
+.tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:900px){.tool-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.tool-grid{grid-template-columns:1fr}}
+.tool-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.tool-card-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;color:var(--text)}
+.tool-card-body{font-size:10px;color:var(--dim);line-height:1.7}
+.tool-card-body li{margin-left:12px;margin-bottom:2px}
+.rr-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.rr-mini-input{background:var(--surface);border:1px solid var(--border);color:#fff;padding:4px 8px;border-radius:4px;font-size:11px;font-family:inherit;width:90px}
+.rr-result{padding:8px 12px;background:var(--surface);border-radius:6px;font-size:12px;font-weight:700;text-align:center;margin-top:4px}
+
+/* ── HYPERLIQUID WHALES ─────────────────────────────────── */
+.hl-main{padding:14px;display:flex;flex-direction:column;gap:14px}
+.hl-stat-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+@media(max-width:900px){.hl-stat-bar{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.hl-stat-bar{grid-template-columns:repeat(2,1fr)}}
+.hl-stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center}
+.hl-stat-label{font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.hl-stat-val{font-size:18px;font-weight:700;color:#fff}
+.hl-stat-sub{font-size:9px;color:var(--dim);margin-top:2px}
+.hl-filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px}
+.hl-filter-label{font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.hl-select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:11px;font-family:inherit;cursor:pointer}
+.hl-live-dot{width:8px;height:8px;border-radius:50%;background:var(--bull);animation:hlpulse 1.5s ease-in-out infinite;flex-shrink:0}
+.hl-live-dot.paused{background:var(--dim);animation:none}
+@keyframes hlpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.hl-two-col{display:grid;grid-template-columns:1fr 1.6fr;gap:14px}
+@media(max-width:1100px){.hl-two-col{grid-template-columns:1fr}}
+.whale-feed{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.whale-feed-hdr{padding:9px 13px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0}
+.whale-feed-body{flex:1;overflow-y:auto;max-height:480px;min-height:200px}
+.wt-row{display:grid;grid-template-columns:52px 64px 52px 80px 90px 1fr;gap:6px;align-items:center;padding:7px 13px;border-bottom:1px solid var(--border);font-size:11px;transition:background .15s}
+.wt-row:hover{background:rgba(255,255,255,.025)}
+.wt-row:last-child{border-bottom:none}
+.wt-row.buy{border-left:2px solid var(--bull)}
+.wt-row.sell{border-left:2px solid var(--bear)}
+.wt-time{color:var(--dim);font-size:10px}
+.wt-coin{font-weight:700;color:var(--accent)}
+.wt-side-buy{color:var(--bull);font-weight:700;font-size:10px}
+.wt-side-sell{color:var(--bear);font-weight:700;font-size:10px}
+.wt-sz{color:var(--text);text-align:right}
+.wt-notional{font-weight:700;text-align:right}
+.wt-notional.big{color:#fff}
+.wt-notional.whale{color:var(--neutral)}
+.wt-notional.mega{color:#ff9f00;text-shadow:0 0 8px rgba(255,159,0,.4)}
+.wt-px{color:var(--dim);text-align:right;font-size:10px}
+.wt-hdr{display:grid;grid-template-columns:52px 64px 52px 80px 90px 1fr;gap:6px;padding:6px 13px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;position:sticky;top:0;z-index:2}
+.oi-table-wrap{overflow-x:auto}
+.oi-table{width:100%;border-collapse:collapse;min-width:520px}
+.oi-table th{background:var(--surface2);color:var(--dim);font-size:9px;letter-spacing:1.2px;text-transform:uppercase;padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}
+.oi-table th:first-child{text-align:left;padding-left:12px}
+.oi-table td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-size:11px;vertical-align:middle}
+.oi-table td:first-child{text-align:left;padding-left:12px;font-weight:700;color:var(--accent)}
+.oi-table tr:last-child td{border-bottom:none}
+.oi-table tr:hover td{background:rgba(255,255,255,.018)}
+.oi-rank{color:var(--dim);font-size:10px;font-weight:400;margin-right:4px}
+.fund-pos{color:var(--bull);font-weight:600}
+.fund-neg{color:var(--bear);font-weight:600}
+.fund-neu{color:var(--dim)}
+.fund-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.fund-grid{grid-template-columns:1fr}}
+.fund-row{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--border);font-size:11px}
+.fund-row:last-child{border-bottom:none}
+.fund-coin{font-weight:700;color:var(--accent);width:56px}
+.fund-rate{font-weight:700;font-size:13px}
+.fund-bar-wrap{flex:1;margin:0 10px;background:var(--surface);border-radius:3px;height:4px;overflow:hidden}
+.fund-bar-fill{height:100%;border-radius:3px;transition:width .5s}
+.fund-oi{font-size:10px;color:var(--dim);text-align:right;min-width:60px}
+.squeeze-badge{font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;letter-spacing:.5px;white-space:nowrap}
+.squeeze-long{background:rgba(255,61,90,.12);color:var(--bear);border:1px solid rgba(255,61,90,.3)}
+.squeeze-short{background:rgba(0,217,126,.12);color:var(--bull);border:1px solid rgba(0,217,126,.3)}
 </style>
 </head>
 <body>
@@ -374,6 +477,8 @@ tr:hover td{background:rgba(255,255,255,.02)}
 <div class="tab-bar">
   <div class="tab tab-active" onclick="switchTab('market',this)">📊 Market Bias</div>
   <div class="tab" onclick="switchTab('coin',this)">🔍 Coin Analyzer</div>
+  <div class="tab" onclick="switchTab('chartmaster',this);cmUpdate()">📈 Chart Master</div>
+  <div class="tab" onclick="switchTab('hyperliquid',this);hlInit()">🐋 HL Whales</div>
 </div>
 
 <!-- ═══════════════════════ PAGE: MARKET ═══════════════════════ -->
@@ -789,6 +894,258 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 
 </div><!-- /page-coin -->
+
+<!-- ═══════════════════════ PAGE: CHART MASTER ═══════════════════════ -->
+<div id="page-chartmaster" class="page">
+<div class="cm-main">
+
+  <div class="cm-coin-bar">
+    <label>Token / Pair</label>
+    <input class="cm-input" id="cm-token" type="text" placeholder="BTC" value="BTC" oninput="cmUpdate()">
+    <select class="cm-tf-select" id="cm-timeframe" onchange="cmUpdate()">
+      <option value="1W">Weekly</option>
+      <option value="1D" selected>Daily</option>
+      <option value="4H">4 Hour</option>
+      <option value="1H">1 Hour</option>
+      <option value="15m">15 Min</option>
+      <option value="5m">5 Min</option>
+    </select>
+    <select class="cm-tf-select" id="cm-exchange" onchange="cmUpdate()">
+      <option>Binance</option>
+      <option>Bybit</option>
+      <option>Coinbase</option>
+      <option>OKX</option>
+      <option>Kraken</option>
+      <option>DEX / DexScreener</option>
+    </select>
+    <button class="cm-btn" onclick="cmUpdate()">⚡ Generate Prompts</button>
+    <span style="margin-left:auto;font-size:10px;color:var(--dim)">All prompts update automatically · Click copy to grab</span>
+  </div>
+
+  <div class="cm-grid">
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">🧠 Chart Master — AI Prompt</span>
+        <button class="cm-btn-copy" onclick="copyPrompt('cm-prompt-text',this)">⎘ Copy</button>
+      </div>
+      <div class="card-body">
+        <div class="prompt-label">Paste into Claude / ChatGPT / Grok + attach chart screenshot</div>
+        <div class="prompt-box" id="cm-prompt-text"></div>
+        <div class="tip" style="margin-top:8px">Attach a TradingView screenshot or paste the chart URL. Works with Claude, ChatGPT-4o, and Grok-2 Vision.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">🤖 Grok — Bullish Sentiment Prompt</span>
+        <button class="cm-btn-copy" onclick="copyPrompt('grok-prompt-text',this)">⎘ Copy</button>
+      </div>
+      <div class="card-body">
+        <div class="prompt-label">Paste into Grok (grok.com) — searches X/Twitter in real-time</div>
+        <div class="prompt-box" id="grok-prompt-text"></div>
+        <div class="tip" style="margin-top:8px">Use Grok DeepSearch mode for best results. Also works with Grok API <code>search_enabled: true</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">📡 Social Research Hub</span>
+      <span style="font-size:10px;color:var(--dim)">Where to find alpha for <span id="cm-social-token">BTC</span></span>
+    </div>
+    <div class="card-body" style="padding:12px">
+      <div class="social-grid" id="social-grid-container"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">⚙️ Chart Master Toolkit</span>
+      <span style="font-size:10px;color:var(--dim)">Pro concepts every chart master tracks</span>
+    </div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card">
+          <div class="tool-card-title">📐 Risk / Reward Calculator</div>
+          <div class="rr-row"><span style="font-size:10px;color:var(--dim);width:48px">Entry $</span><input class="rr-mini-input" id="rr-entry" type="number" placeholder="60000" oninput="calcRR()"></div>
+          <div class="rr-row"><span style="font-size:10px;color:var(--dim);width:48px">Stop $</span><input class="rr-mini-input" id="rr-stop" type="number" placeholder="58000" oninput="calcRR()"></div>
+          <div class="rr-row"><span style="font-size:10px;color:var(--dim);width:48px">Target $</span><input class="rr-mini-input" id="rr-target" type="number" placeholder="65000" oninput="calcRR()"></div>
+          <div class="rr-result" id="rr-result" style="color:var(--dim)">Enter values above</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-title">🔍 Smart Money Concepts</div>
+          <div class="tool-card-body"><ul>
+            <li><strong style="color:var(--accent)">Order Blocks</strong> — last bearish/bullish candle before impulse move</li>
+            <li><strong style="color:var(--bull)">FVG / Imbalance</strong> — gap between candle wicks (magnet zones)</li>
+            <li><strong style="color:var(--neutral)">Liquidity Sweep</strong> — stop hunt above highs / below lows before reversal</li>
+            <li><strong style="color:var(--bear)">BOS / CHOCH</strong> — break of structure = trend confirmation</li>
+            <li><strong style="color:#9b59f5">Premium / Discount</strong> — above/below 50% of last swing = value zone</li>
+          </ul></div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-title">📊 Hidden Divergences</div>
+          <div class="tool-card-body"><ul>
+            <li><strong style="color:var(--bull)">Regular Bull Div</strong> — price LL, RSI HL → reversal up</li>
+            <li><strong style="color:var(--bear)">Regular Bear Div</strong> — price HH, RSI LH → reversal down</li>
+            <li><strong style="color:var(--accent)">Hidden Bull Div</strong> — price HL, RSI LL → continuation up</li>
+            <li><strong style="color:var(--neutral)">Hidden Bear Div</strong> — price LH, RSI HH → continuation down</li>
+            <li><strong style="color:#9b59f5">MACD Divergence</strong> — histogram diverging = early warning</li>
+          </ul></div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-title">🎯 Key Level Types</div>
+          <div class="tool-card-body"><ul>
+            <li><strong style="color:var(--bull)">Weekly / Monthly S/R</strong> — highest TF = strongest levels</li>
+            <li><strong style="color:var(--accent)">Round Numbers</strong> — $10k, $50k, $100k act as psychological magnets</li>
+            <li><strong style="color:var(--neutral)">Previous ATH / ATL</strong> — often become strong S/R after breach</li>
+            <li><strong style="color:#9b59f5">0.618 / 0.786 Fib</strong> — golden pocket = prime retracement buy zone</li>
+            <li><strong style="color:var(--bear)">Anchored VWAP</strong> — institutions use AVWAP from major swing points</li>
+          </ul></div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-title">📈 Volume Profile</div>
+          <div class="tool-card-body"><ul>
+            <li><strong style="color:var(--bull)">POC</strong> — most traded price = magnet zone</li>
+            <li><strong style="color:var(--accent)">VAH / VAL</strong> — 70% of volume traded within this range</li>
+            <li><strong style="color:var(--neutral)">Low Volume Node</strong> — thin areas = price moves fast through</li>
+            <li><strong style="color:#9b59f5">High Volume Node</strong> — thick areas = price finds S/R</li>
+            <li><strong style="color:var(--bear)">Volume Delta</strong> — buy vs sell pressure per candle</li>
+          </ul></div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-title">⏰ Multi-Timeframe Checklist</div>
+          <div class="tool-card-body"><ul>
+            <li><strong style="color:var(--bull)">Monthly / Weekly</strong> — macro trend & major S/R zones</li>
+            <li><strong style="color:var(--accent)">Daily</strong> — directional bias, confirm structure</li>
+            <li><strong style="color:var(--neutral)">4H</strong> — entry model zone, OB + FVG</li>
+            <li><strong style="color:#9b59f5">1H / 15m</strong> — fine-tune entry, look for CHOCH</li>
+            <li><strong style="color:var(--dim)">Rule: trade WITH higher TF, enter on lower TF</strong></li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">🔭 Pattern Scanner — AI Prompt</span>
+      <button class="cm-btn-copy" onclick="copyPrompt('pattern-prompt-text',this)">⎘ Copy</button>
+    </div>
+    <div class="card-body">
+      <div class="prompt-label">Scan for chart patterns, divergences & liquidity sweeps</div>
+      <div class="prompt-box" id="pattern-prompt-text"></div>
+    </div>
+  </div>
+
+</div>
+</div><!-- /page-chartmaster -->
+
+<!-- ═══════════════════════ PAGE: HL WHALES ═══════════════════════ -->
+<div id="page-hyperliquid" class="page">
+<div class="hl-main">
+
+  <div class="hl-stat-bar">
+    <div class="hl-stat"><div class="hl-stat-label">Total OI</div><div class="hl-stat-val" id="hl-total-oi">—</div><div class="hl-stat-sub">All HL Perps</div></div>
+    <div class="hl-stat"><div class="hl-stat-label">24h Volume</div><div class="hl-stat-val" id="hl-total-vol">—</div><div class="hl-stat-sub">Notional USD</div></div>
+    <div class="hl-stat"><div class="hl-stat-label">Markets</div><div class="hl-stat-val" id="hl-num-markets">—</div><div class="hl-stat-sub">Active Perps</div></div>
+    <div class="hl-stat"><div class="hl-stat-label">🔥 Highest Funding</div><div class="hl-stat-val fund-pos" id="hl-top-fund-bull">—</div><div class="hl-stat-sub" id="hl-top-fund-bull-rate">Longs paying</div></div>
+    <div class="hl-stat"><div class="hl-stat-label">🧊 Lowest Funding</div><div class="hl-stat-val fund-neg" id="hl-top-fund-bear">—</div><div class="hl-stat-sub" id="hl-top-fund-bear-rate">Shorts paying</div></div>
+  </div>
+
+  <div class="hl-filter-bar">
+    <div class="hl-live-dot" id="hl-live-dot"></div>
+    <span style="font-size:10px;color:var(--dim)" id="hl-last-upd">Click the tab to load...</span>
+    <span class="hl-filter-label" style="margin-left:10px">Min trade size</span>
+    <select class="hl-select" id="hl-min-size" onchange="hlApplyFilter()">
+      <option value="10000">$10,000+</option>
+      <option value="50000" selected>$50,000+</option>
+      <option value="100000">$100,000+</option>
+      <option value="250000">$250,000+</option>
+      <option value="500000">$500,000+ 🐳</option>
+      <option value="1000000">$1,000,000+ 🐋</option>
+    </select>
+    <span class="hl-filter-label">Coin</span>
+    <select class="hl-select" id="hl-coin-filter" onchange="hlApplyFilter()">
+      <option value="ALL">All Top Coins</option>
+      <option value="BTC">BTC only</option>
+      <option value="ETH">ETH only</option>
+      <option value="SOL">SOL only</option>
+    </select>
+    <span class="hl-filter-label">Auto-refresh</span>
+    <select class="hl-select" id="hl-refresh-rate" onchange="hlSetRefresh()">
+      <option value="15">Every 15s</option>
+      <option value="30" selected>Every 30s</option>
+      <option value="60">Every 60s</option>
+      <option value="0">Manual only</option>
+    </select>
+    <button class="refresh-btn" onclick="hlRefresh()" style="margin-left:auto;padding:6px 14px;font-size:11px;box-shadow:none">↻ Refresh Now</button>
+    <button class="cm-btn-copy" id="hl-pause-btn" onclick="hlTogglePause()" style="min-width:70px">⏸ Pause</button>
+  </div>
+
+  <div class="hl-two-col">
+    <div class="whale-feed">
+      <div class="whale-feed-hdr">
+        <span class="card-title">🐋 Whale Trades Feed</span>
+        <span id="hl-feed-count" style="font-size:10px;color:var(--dim)">0 trades</span>
+      </div>
+      <div class="whale-feed-body" id="hl-feed-body">
+        <div class="wt-hdr"><span>Time</span><span>Coin</span><span>Side</span><span style="text-align:right">Size</span><span style="text-align:right">Notional</span><span style="text-align:right">Price</span></div>
+        <div style="padding:30px;text-align:center;color:var(--dim)">Click the tab to load whale data...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">📊 Open Interest Leaderboard</span>
+        <span style="font-size:10px;color:var(--dim)">Sorted by OI · Hyperliquid Perps</span>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div class="oi-table-wrap">
+          <table class="oi-table">
+            <thead><tr>
+              <th style="text-align:left;padding-left:12px">#&nbsp; Coin</th>
+              <th>Mark Price</th><th>OI (USD)</th><th>24h Volume</th><th>Funding / 8h</th><th>24h Chg</th>
+            </tr></thead>
+            <tbody id="hl-oi-body"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--dim)">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fund-grid">
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">🔥 Highest Funding — Long Squeeze Risk</span>
+        <span class="squeeze-badge squeeze-long">SHORTS PROFITABLE</span>
+      </div>
+      <div class="card-body" style="padding:0" id="hl-fund-high-body">
+        <div style="padding:16px;color:var(--dim);text-align:center">Loading...</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">🧊 Lowest Funding — Short Squeeze Risk</span>
+        <span class="squeeze-badge squeeze-short">LONGS PROFITABLE</span>
+      </div>
+      <div class="card-body" style="padding:0" id="hl-fund-low-body">
+        <div style="padding:16px;color:var(--dim);text-align:center">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">⚡ 24h Volume Leaders — Where Whales Are Trading</span>
+      <span style="font-size:10px;color:var(--dim)">Hyperliquid perpetuals · notional USD</span>
+    </div>
+    <div class="card-body" style="padding:10px 14px" id="hl-vol-leaders">
+      <div style="color:var(--dim);text-align:center">Loading...</div>
+    </div>
+  </div>
+
+</div>
+</div><!-- /page-hyperliquid -->
 
 <!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
 <script>
@@ -2357,6 +2714,392 @@ async function analyzeCoin() {
   }
 
   btn.disabled = false; btn.textContent = '🔍 Analyze';
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHART MASTER
+// ═══════════════════════════════════════════════════════════
+function cmToken(){ return (document.getElementById('cm-token').value||'BTC').toUpperCase().trim(); }
+function cmTF()   { return document.getElementById('cm-timeframe').value; }
+function cmEx()   { return document.getElementById('cm-exchange').value; }
+
+function cmUpdate(){
+  const tok=cmToken(), tf=cmTF(), ex=cmEx();
+  const st=document.getElementById('cm-social-token');
+  if(st) st.textContent=tok;
+
+  const cmp=document.getElementById('cm-prompt-text');
+  if(cmp) cmp.textContent=
+`Act as a battle-tested technical analyst with 15+ years of experience reading crypto market structure across multiple cycles.
+
+Examine the ${tok}/USDT chart on the ${tf} timeframe (${ex}).
+
+Break down the following in detail:
+
+1. OVERALL TREND
+   — Primary trend direction (bull/bear/ranging)
+   — Market structure: Higher Highs/Lows or Lower Highs/Lows?
+   — Are we in markup, distribution, re-accumulation, or markdown?
+
+2. KEY SUPPORT & RESISTANCE ZONES
+   — Identify the 3 most critical support levels with price
+   — Identify the 3 most critical resistance levels with price
+   — Note any confluence zones (S/R + fib + VWAP overlap)
+
+3. MOMENTUM INDICATORS
+   — RSI (14): reading, divergences, hidden divergences
+   — MACD: histogram trend, signal line crossover status
+   — Stoch RSI: overbought/oversold, K/D cross
+
+4. VOLUME PROFILE
+   — Is volume confirming or diverging from price?
+   — POC zone, Value Area High/Low
+   — Volume spikes at key levels
+
+5. HIDDEN PATTERNS
+   — Order blocks, Fair Value Gaps (FVG/imbalances)
+   — Liquidity sweeps or stop hunts visible?
+   — Any chart patterns: H&S, wedge, triangle, double top/bottom?
+   — Fibonacci retracement levels from last major swing
+
+6. SCENARIOS & TRADE PLAN
+   — BULL CASE (probability %): trigger, target levels, invalidation
+   — BEAR CASE (probability %): trigger, target levels, invalidation
+   — RANGE CASE: key levels to watch
+
+7. PRECISE ENTRY & EXIT LEVELS
+   — Ideal entry zone with reasoning
+   — Stop loss placement (with reasoning)
+   — Take profit targets: TP1, TP2, TP3
+   — Risk/Reward ratio
+
+Be specific with price levels. Label each section clearly.`;
+
+  const gp=document.getElementById('grok-prompt-text');
+  if(gp) gp.textContent=
+`Use your real-time X/Twitter search to deeply analyze the current market sentiment and momentum around ${tok}.
+
+Answer ALL of the following:
+
+1. WHY IS ${tok} BULLISH RIGHT NOW?
+   — What fundamental, narrative, or macro catalysts are driving it?
+   — Any recent protocol upgrades, partnerships, listings, or news?
+   — Is there an upcoming catalyst (token unlock, mainnet, airdrop)?
+
+2. SENTIMENT ANALYSIS
+   — What is the overall X/Twitter sentiment score (bullish/neutral/bearish)?
+   — Are major CT (Crypto Twitter) influencers bullish or bearish on it?
+   — Is the narrative gaining or losing steam?
+   — Any FUD circulating that could be a risk?
+
+3. WHY HAS IT PUMPED? (price action explanation)
+   — What triggered the most recent pump?
+   — Was it organic (news/fundamentals) or speculative (whale buy/coordinated)?
+   — Who are the big wallets / whales accumulating?
+   — Is there evidence of insider accumulation before the pump?
+
+4. COMMUNITY & SOCIAL STRENGTH
+   — Telegram / Discord activity trend
+   — Reddit posts & engagement trend
+   — YouTube content creators covering it recently?
+   — Any viral posts or trending hashtags?
+
+5. RISK FACTORS
+   — What could cause a dump? (profit taking, unlock, macro risk)
+   — Any negative dev activity or on-chain red flags?
+   — Bearish counterarguments to the bull thesis?
+
+6. VERDICT
+   — Is the pump likely to continue or is it a dead-cat bounce?
+   — Short-term (24-48h), Mid-term (1-2 weeks), Long-term outlook?
+
+Be specific. Cite real posts/accounts where possible. Use DeepSearch.`;
+
+  const pp=document.getElementById('pattern-prompt-text');
+  if(pp) pp.textContent=
+`Act as an expert chart pattern recognition system. Analyze the ${tok}/USDT ${tf} chart on ${ex}.
+
+Scan for and identify ALL of the following:
+
+CLASSIC PATTERNS:
+□ Head & Shoulders / Inverse H&S
+□ Double Top / Double Bottom
+□ Ascending / Descending / Symmetrical Triangle
+□ Rising / Falling Wedge
+□ Bull / Bear Flag or Pennant
+□ Cup & Handle
+
+SMART MONEY / ICT CONCEPTS:
+□ Order Blocks (bullish & bearish) — mark exact price zones
+□ Fair Value Gaps / Imbalances — note if filled or unfilled
+□ Liquidity sweeps — any recent stop hunts above highs/below lows?
+□ Change of Character (CHOCH) or Break of Structure (BOS)?
+□ Premium / Discount zones (50% of last swing)
+
+DIVERGENCES (RSI & MACD):
+□ Regular Bullish / Bearish Divergence
+□ Hidden Bullish / Bearish Divergence
+
+FIBONACCI:
+□ Key retracement levels from last major high/low
+□ Golden pocket (0.618–0.65) acting as S/R?
+□ Extension targets: 1.272, 1.618, 2.618
+
+For each pattern: name it, mark the exact price zone, give a probability (High/Med/Low), and state the trade implication.`;
+
+  renderSocialCards(tok);
+}
+
+function renderSocialCards(tok){
+  const container=document.getElementById('social-grid-container');
+  if(!container) return;
+  const t=tok.toLowerCase();
+  const tagColors=['stag','stag-green','stag-purple','stag-orange','stag-red'];
+  const socials=[
+    {icon:'𝕏',name:'X / Twitter',color:'#e7e9ea',tag:'$'+tok,desc:'Real-time price talk, alpha leaks, CT influencers, news first',tags:['$'+tok,'#'+tok,'#crypto','#altcoins','#Web3'],search:'https://twitter.com/search?q=%24'+tok+'&f=live'},
+    {icon:'📱',name:'Telegram',color:'#2aabee',tag:'t.me/'+t,desc:'Official announcements, community groups, alpha groups',tags:['Official Channel','Community Chat','Announcements'],search:'https://t.me/s/'+t},
+    {icon:'🎮',name:'Discord',color:'#5865f2',tag:'discord.gg/'+t,desc:'Dev discussions, governance, community signals',tags:['#general','#price-talk','#alpha'],search:'https://discord.com/invite/'+t},
+    {icon:'👽',name:'Reddit',color:'#ff4500',tag:'r/'+t,desc:'Long-form analysis, DD posts, retail sentiment gauge',tags:['r/'+tok,'r/CryptoCurrency','r/CryptoMarkets'],search:'https://www.reddit.com/search/?q='+tok+'&sort=new'},
+    {icon:'📺',name:'YouTube',color:'#ff0000',tag:tok+' crypto',desc:'TA videos, project reviews, news recaps',tags:['TA Videos','Fundamentals','News'],search:'https://www.youtube.com/results?search_query='+tok+'+crypto+analysis'},
+    {icon:'📊',name:'TradingView',color:'#2196f3',tag:tok+'USDT',desc:'Charts, published ideas, community scripts & alerts',tags:['Scripts','Ideas','Alerts','Screener'],search:'https://www.tradingview.com/symbols/'+tok+'USDT/'},
+    {icon:'🦎',name:'CoinGecko',color:'#8bc34a',tag:'/en/coins/'+t,desc:'Price data, market cap, tokenomics, exchange listings',tags:['Market Data','Tokenomics','Team','Socials'],search:'https://www.coingecko.com/en/search?query='+tok},
+    {icon:'🌐',name:'CoinMarketCap',color:'#3861fb',tag:'/currencies/'+t,desc:'Rankings, market cap, volume, historical data',tags:['Rankings','Markets','Holders','Historical'],search:'https://coinmarketcap.com/currencies/'+t+'/'},
+    {icon:'🔬',name:'DexScreener',color:'#00d97e',tag:'dexscreener.com',desc:'DEX pair data, new pairs, volume spikes, trending tokens',tags:['DEX Pairs','Volume','Trending','New Pairs'],search:'https://dexscreener.com/search?q='+tok},
+    {icon:'🦅',name:'Birdeye',color:'#9b59f5',tag:'birdeye.so',desc:'Solana / multi-chain DeFi analytics, wallet tracking',tags:['Solana','Multi-chain','Wallets','DEX'],search:'https://birdeye.so/token/'+tok},
+    {icon:'🔗',name:'Nansen',color:'#f5a623',tag:'nansen.ai',desc:'Smart money wallet tracking, whale movements, hot contracts',tags:['Smart Money','Whales','On-Chain','Alerts'],search:'https://app.nansen.ai/'},
+    {icon:'⛓',name:'Etherscan',color:'#21325b',tag:'etherscan.io',desc:'Token contract, holder distribution, tx history',tags:['Contract','Holders','Transactions','Events'],search:'https://etherscan.io/search?f=0&term='+tok}
+  ];
+  let html='';
+  socials.forEach((s,i)=>{
+    const tcls=tagColors[i%tagColors.length];
+    const tagsHtml=s.tags.map(tg=>`<span class="stag ${tcls}">${tg}</span>`).join('');
+    html+=`<div class="social-card">
+      <div class="social-top"><span class="social-icon">${s.icon}</span><div><div class="social-name" style="color:${s.color}">${s.name}</div><div class="social-tag">${s.tag}</div></div></div>
+      <div class="social-desc">${s.desc}</div>
+      <div class="social-tags-row">${tagsHtml}</div>
+      <a href="${s.search}" target="_blank" rel="noopener" style="font-size:9px;color:var(--accent);text-decoration:none;margin-top:4px;display:block">→ Search ${s.name}</a>
+    </div>`;
+  });
+  container.innerHTML=html;
+}
+
+function copyPrompt(id,btn){
+  const el=document.getElementById(id);
+  if(!el) return;
+  navigator.clipboard.writeText(el.textContent).then(()=>{
+    btn.textContent='✓ Copied!'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='⎘ Copy'; btn.classList.remove('copied'); },2000);
+  });
+}
+
+function calcRR(){
+  const entry=parseFloat(document.getElementById('rr-entry').value);
+  const stop =parseFloat(document.getElementById('rr-stop').value);
+  const tgt  =parseFloat(document.getElementById('rr-target').value);
+  const el   =document.getElementById('rr-result');
+  if(!entry||!stop||!tgt){el.textContent='Enter values above';el.style.color='var(--dim)';return;}
+  const risk=Math.abs(entry-stop), reward=Math.abs(tgt-entry), rr=reward/risk;
+  el.innerHTML=`R:R <strong style="color:${rr>=2?'var(--bull)':rr>=1?'var(--neutral)':'var(--bear)'}">${rr.toFixed(2)}:1</strong> &nbsp;·&nbsp; Risk <span style="color:var(--bear)">${((risk/entry)*100).toFixed(2)}%</span> &nbsp;·&nbsp; Reward <span style="color:var(--bull)">${((reward/entry)*100).toFixed(2)}%</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// HYPERLIQUID WHALE TRACKER
+// Public API — no key needed
+// ═══════════════════════════════════════════════════════════
+const HL_API='https://api.hyperliquid.xyz/info';
+let hlAllTrades=[], hlAssets=[], hlPaused=false, hlRefreshTimer=null, hlInited=false;
+
+async function hlPost(body){
+  const r=await fetch(HL_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok) throw new Error('HL '+r.status);
+  return r.json();
+}
+
+function hlFmtUsd(n){
+  if(n>=1e9) return '$'+(n/1e9).toFixed(2)+'B';
+  if(n>=1e6) return '$'+(n/1e6).toFixed(2)+'M';
+  if(n>=1e3) return '$'+(n/1e3).toFixed(1)+'K';
+  return '$'+n.toFixed(0);
+}
+function hlFmtPx(n){
+  if(n>=1000) return '$'+n.toLocaleString('en-US',{maximumFractionDigits:1});
+  if(n>=1)    return '$'+n.toFixed(3);
+  return '$'+n.toFixed(6);
+}
+function hlFmtTime(ms){
+  return new Date(ms).toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function hlFundColor(f){ const p=f*100; return p>0.05?'fund-pos':p<-0.05?'fund-neg':'fund-neu'; }
+
+async function hlFetchMeta(){
+  const data=await hlPost({type:'metaAndAssetCtxs'});
+  const universe=data[0].universe, ctxs=data[1];
+  hlAssets=universe.map((u,i)=>{
+    const c=ctxs[i]||{};
+    const markPx=parseFloat(c.markPx||0);
+    const prevDayPx=parseFloat(c.prevDayPx||markPx);
+    const oi=parseFloat(c.openInterest||0)*markPx;
+    const vol=parseFloat(c.dayNtlVlm||0);
+    const funding=parseFloat(c.funding||0);
+    return {name:u.name,markPx,prevDayPx,oi,vol,funding,chg24:prevDayPx>0?((markPx-prevDayPx)/prevDayPx)*100:0};
+  }).filter(a=>a.oi>0||a.vol>0);
+}
+
+async function hlFetchTrades(coin){
+  try{
+    const minSize=parseInt(document.getElementById('hl-min-size').value)||50000;
+    const trades=await hlPost({type:'recentTrades',coin});
+    return trades.map(t=>{
+      const px=parseFloat(t.px), sz=parseFloat(t.sz);
+      return {coin,side:t.side==='B'?'buy':'sell',px,sz,notional:px*sz,time:t.time,tid:t.tid};
+    }).filter(t=>t.notional>=minSize);
+  }catch(e){return [];}
+}
+
+function hlRenderOI(){
+  const sorted=[...hlAssets].sort((a,b)=>b.oi-a.oi).slice(0,30);
+  let html='';
+  sorted.forEach((a,i)=>{
+    const chgCls=a.chg24>=0?'cbull':'cbear';
+    const fCls=hlFundColor(a.funding);
+    html+=`<tr>
+      <td><span class="oi-rank">${i+1}</span>${a.name}</td>
+      <td>${hlFmtPx(a.markPx)}</td>
+      <td style="font-weight:700;color:#fff">${hlFmtUsd(a.oi)}</td>
+      <td style="color:var(--dim)">${hlFmtUsd(a.vol)}</td>
+      <td class="${fCls}" title="${(a.funding*3*365*100).toFixed(1)}% ann.">${(a.funding*100).toFixed(4)}%</td>
+      <td class="${chgCls}">${a.chg24>=0?'+':''}${a.chg24.toFixed(2)}%</td>
+    </tr>`;
+  });
+  document.getElementById('hl-oi-body').innerHTML=html||'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--dim)">No data</td></tr>';
+}
+
+function hlRenderFunding(){
+  const sorted=[...hlAssets].sort((a,b)=>b.funding-a.funding);
+  const top8=sorted.slice(0,8), bot8=sorted.slice(-8).reverse();
+  const maxF=Math.abs(sorted[0]?.funding||1);
+  function rows(list,dir){
+    return list.map(a=>{
+      const pct=(a.funding*100).toFixed(4);
+      const ann=(a.funding*3*365*100).toFixed(0);
+      const fill=Math.abs(a.funding)/maxF*100;
+      const color=dir==='high'?'var(--bear)':'var(--bull)';
+      return `<div class="fund-row">
+        <span class="fund-coin">${a.name}</span>
+        <span class="fund-rate" style="color:${color}">${pct}%</span>
+        <div class="fund-bar-wrap"><div class="fund-bar-fill" style="width:${fill}%;background:${color}"></div></div>
+        <span style="font-size:9px;color:var(--dim);white-space:nowrap">${ann}%/yr</span>
+        <span class="fund-oi">${hlFmtUsd(a.oi)}</span>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('hl-fund-high-body').innerHTML=rows(top8,'high');
+  document.getElementById('hl-fund-low-body').innerHTML=rows(bot8,'low');
+}
+
+function hlRenderVolLeaders(){
+  const sorted=[...hlAssets].sort((a,b)=>b.vol-a.vol).slice(0,15);
+  const maxVol=sorted[0]?.vol||1;
+  let html='<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+  sorted.forEach(a=>{
+    const pct=(a.vol/maxVol*100).toFixed(0);
+    const chgC=a.chg24>=0?'var(--bull)':'var(--bear)';
+    html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;min-width:130px;flex:1">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <span style="font-weight:700;color:var(--accent);font-size:12px">${a.name}</span>
+        <span style="font-size:10px;color:${chgC}">${a.chg24>=0?'+':''}${a.chg24.toFixed(2)}%</span>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:4px">${hlFmtUsd(a.vol)}</div>
+      <div style="background:var(--surface);border-radius:2px;height:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--accent);border-radius:2px"></div></div>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('hl-vol-leaders').innerHTML=html;
+}
+
+function hlRenderStats(){
+  const totalOI=hlAssets.reduce((s,a)=>s+a.oi,0);
+  const totalVol=hlAssets.reduce((s,a)=>s+a.vol,0);
+  document.getElementById('hl-total-oi').textContent=hlFmtUsd(totalOI);
+  document.getElementById('hl-total-vol').textContent=hlFmtUsd(totalVol);
+  document.getElementById('hl-num-markets').textContent=hlAssets.length;
+  const sorted=[...hlAssets].sort((a,b)=>b.funding-a.funding);
+  const bull=sorted[0], bear=sorted[sorted.length-1];
+  if(bull){ document.getElementById('hl-top-fund-bull').textContent=bull.name; document.getElementById('hl-top-fund-bull-rate').textContent='+'+(bull.funding*100).toFixed(4)+'% / 8h'; }
+  if(bear){ document.getElementById('hl-top-fund-bear').textContent=bear.name; document.getElementById('hl-top-fund-bear-rate').textContent=(bear.funding*100).toFixed(4)+'% / 8h'; }
+}
+
+function hlRenderFeed(){
+  const minSize=parseInt(document.getElementById('hl-min-size').value)||50000;
+  const coinF=document.getElementById('hl-coin-filter').value;
+  let filtered=hlAllTrades.filter(t=>t.notional>=minSize&&(coinF==='ALL'||t.coin===coinF));
+  filtered.sort((a,b)=>b.time-a.time);
+  filtered=filtered.slice(0,150);
+  document.getElementById('hl-feed-count').textContent=filtered.length+' trades';
+  const hdrHtml='<div class="wt-hdr"><span>Time</span><span>Coin</span><span>Side</span><span style="text-align:right">Size</span><span style="text-align:right">Notional</span><span style="text-align:right">Price</span></div>';
+  if(!filtered.length){
+    document.getElementById('hl-feed-body').innerHTML=hdrHtml+'<div style="padding:30px;text-align:center;color:var(--dim)">No trades above threshold · try a lower min size</div>';
+    return;
+  }
+  let html=hdrHtml;
+  filtered.forEach(t=>{
+    const notCls=t.notional>=1e6?'wt-notional mega':t.notional>=250000?'wt-notional whale':'wt-notional big';
+    const badge=t.notional>=1e6?' 🐋':t.notional>=250000?' 🐳':'';
+    html+=`<div class="wt-row ${t.side}">
+      <span class="wt-time">${hlFmtTime(t.time)}</span>
+      <span class="wt-coin">${t.coin}</span>
+      <span class="${t.side==='buy'?'wt-side-buy':'wt-side-sell'}">${t.side==='buy'?'▲ LONG':'▼ SHORT'}</span>
+      <span class="wt-sz">${t.sz.toFixed(3)}</span>
+      <span class="${notCls}">${hlFmtUsd(t.notional)}${badge}</span>
+      <span class="wt-px">${hlFmtPx(t.px)}</span>
+    </div>`;
+  });
+  document.getElementById('hl-feed-body').innerHTML=html;
+}
+
+function hlApplyFilter(){ hlRenderFeed(); }
+
+async function hlRefresh(){
+  if(hlPaused) return;
+  const dot=document.getElementById('hl-live-dot');
+  dot.style.background='var(--neutral)';
+  try{
+    await hlFetchMeta();
+    const topByOI=[...hlAssets].sort((a,b)=>b.oi-a.oi).slice(0,20).map(a=>a.name);
+    const scanSet=[...new Set(['BTC','ETH','SOL',...topByOI])].slice(0,22);
+    const results=await Promise.allSettled(scanSet.map(c=>hlFetchTrades(c)));
+    const newTrades=results.flatMap(r=>r.status==='fulfilled'?r.value:[]);
+    const existingTids=new Set(hlAllTrades.map(t=>t.coin+'_'+t.tid));
+    const fresh=newTrades.filter(t=>!existingTids.has(t.coin+'_'+t.tid));
+    hlAllTrades=[...fresh,...hlAllTrades].slice(0,2000);
+    hlRenderStats(); hlRenderOI(); hlRenderFunding(); hlRenderVolLeaders(); hlRenderFeed();
+    document.getElementById('hl-last-upd').textContent='Updated: '+new Date().toLocaleTimeString();
+    dot.style.background='var(--bull)';
+  }catch(err){
+    console.error('HL:',err);
+    document.getElementById('hl-last-upd').textContent='Error: '+err.message;
+    dot.style.background='var(--bear)';
+  }
+}
+
+function hlTogglePause(){
+  hlPaused=!hlPaused;
+  const btn=document.getElementById('hl-pause-btn'), dot=document.getElementById('hl-live-dot');
+  if(hlPaused){ btn.textContent='▶ Resume'; dot.classList.add('paused'); }
+  else{ btn.textContent='⏸ Pause'; dot.classList.remove('paused'); hlRefresh(); }
+}
+
+function hlSetRefresh(){
+  if(hlRefreshTimer) clearInterval(hlRefreshTimer);
+  const sec=parseInt(document.getElementById('hl-refresh-rate').value);
+  if(sec>0) hlRefreshTimer=setInterval(()=>{ if(!hlPaused) hlRefresh(); },sec*1000);
+}
+
+function hlInit(){
+  if(hlInited) return;
+  hlInited=true;
+  hlRefresh();
+  hlSetRefresh();
 }
 
 // Warn when opened from file:// (APIs will be blocked by browser CORS policy)
