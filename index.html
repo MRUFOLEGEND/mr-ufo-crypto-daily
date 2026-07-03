@@ -358,6 +358,39 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .squeeze-badge{font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;letter-spacing:.5px;white-space:nowrap}
 .squeeze-long{background:rgba(255,61,90,.12);color:var(--bear);border:1px solid rgba(255,61,90,.3)}
 .squeeze-short{background:rgba(0,217,126,.12);color:var(--bull);border:1px solid rgba(0,217,126,.3)}
+
+/* ── HL SENTIMENT SECTION ─────────────────────────────── */
+.hl-sentiment-grid{display:grid;grid-template-columns:220px 1fr 1fr;gap:14px}
+@media(max-width:1100px){.hl-sentiment-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.hl-sentiment-grid{grid-template-columns:1fr}}
+
+/* speedometer */
+.speedo-wrap{display:flex;flex-direction:column;align-items:center;padding:10px 6px 6px}
+.speedo-svg{width:100%;max-width:200px}
+.speedo-ratio{font-size:22px;font-weight:700;margin-top:2px;text-align:center}
+.speedo-sub{font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;text-align:center;margin-top:2px}
+.speedo-labels{display:flex;justify-content:space-between;width:100%;max-width:200px;font-size:9px;font-weight:700;letter-spacing:1px;margin-top:2px}
+.speedo-total{font-size:10px;color:var(--dim);text-align:center;margin-top:6px}
+
+/* per-coin L/S bars */
+.lsbar-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px}
+.lsbar-row:last-child{border-bottom:none}
+.lsbar-coin{font-weight:700;color:var(--accent);width:40px;flex-shrink:0}
+.lsbar-track{flex:1;height:8px;background:var(--surface);border-radius:4px;overflow:hidden;display:flex}
+.lsbar-long{height:100%;background:var(--bull);border-radius:4px 0 0 4px;transition:width .5s}
+.lsbar-short{height:100%;background:var(--bear);border-radius:0 4px 4px 0;transition:width .5s}
+.lsbar-pct{font-size:10px;font-weight:700;width:36px;text-align:right;flex-shrink:0}
+
+/* funding mini cards */
+.fund-mini-grid{display:flex;flex-direction:column;gap:6px}
+.fund-mini-row{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px}
+.fund-mini-coin{font-weight:700;color:var(--accent);font-size:12px;width:44px;flex-shrink:0}
+.fund-mini-rate{font-size:14px;font-weight:700;width:72px;flex-shrink:0}
+.fund-mini-ann{font-size:9px;color:var(--dim);flex:1}
+.fund-mini-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+.fmb-pos{background:rgba(255,61,90,.12);color:var(--bear);border:1px solid rgba(255,61,90,.3)}
+.fmb-neg{background:rgba(0,217,126,.12);color:var(--bull);border:1px solid rgba(0,217,126,.3)}
+.fmb-neu{background:var(--surface);color:var(--dim);border:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -1057,9 +1090,70 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <div class="hl-stat"><div class="hl-stat-label">🧊 Lowest Funding</div><div class="hl-stat-val fund-neg" id="hl-top-fund-bear">—</div><div class="hl-stat-sub" id="hl-top-fund-bear-rate">Shorts paying</div></div>
   </div>
 
+  <!-- SENTIMENT: Speedometer + L/S bars + Funding rates -->
+  <div class="hl-sentiment-grid">
+
+    <!-- SPEEDOMETER -->
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">🎯 Whale Pressure Gauge</span></div>
+      <div class="card-body" style="padding:8px 12px">
+        <div class="speedo-wrap">
+          <svg class="speedo-svg" viewBox="0 0 200 110">
+            <!-- background track -->
+            <path d="M 18 100 A 82 82 0 0 1 182 100" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="20" stroke-linecap="round"/>
+            <!-- colored zones: red | yellow | green -->
+            <path d="M 18 100 A 82 82 0 0 1 59 31.6"  fill="none" stroke="rgba(255,61,90,.55)"  stroke-width="20"/>
+            <path d="M 59 31.6 A 82 82 0 0 1 141 31.6" fill="none" stroke="rgba(245,166,35,.55)" stroke-width="20"/>
+            <path d="M 141 31.6 A 82 82 0 0 1 182 100" fill="none" stroke="rgba(0,217,126,.55)"  stroke-width="20"/>
+            <!-- needle -->
+            <line id="hl-speedo-needle" x1="100" y1="100" x2="100" y2="26"
+              stroke="#fff" stroke-width="2.5" stroke-linecap="round"
+              transform="rotate(-90,100,100)" style="transition:transform .6s ease"/>
+            <!-- center cap -->
+            <circle cx="100" cy="100" r="5" fill="var(--surface2)" stroke="#fff" stroke-width="1.5"/>
+          </svg>
+          <div class="speedo-labels">
+            <span style="color:var(--bear)">SHORT</span>
+            <span style="color:var(--neutral)">50/50</span>
+            <span style="color:var(--bull)">LONG</span>
+          </div>
+          <div class="speedo-ratio" id="hl-ls-ratio">—</div>
+          <div class="speedo-sub" id="hl-ls-label">Whale volume pressure</div>
+          <div class="speedo-total" id="hl-ls-total">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PER-COIN L/S BARS -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">📊 Long / Short by Coin</span>
+        <span style="font-size:10px;color:var(--dim)">From recent whale trades</span>
+      </div>
+      <div class="card-body" id="hl-lsbar-body">
+        <div style="color:var(--dim);text-align:center;padding:20px">Load data to see breakdown</div>
+      </div>
+    </div>
+
+    <!-- FUNDING RATES -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">💸 Funding Rates — Live</span>
+        <span style="font-size:10px;color:var(--dim)">8h rate · + = longs pay · − = shorts pay</span>
+      </div>
+      <div class="card-body" style="padding:8px 12px">
+        <div class="fund-mini-grid" id="hl-fund-mini-body">
+          <div style="color:var(--dim);text-align:center;padding:20px">Load data to see rates</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /sentiment grid -->
+
+  <!-- FILTER BAR -->
   <div class="hl-filter-bar">
     <div class="hl-live-dot" id="hl-live-dot"></div>
-    <span style="font-size:10px;color:var(--dim)" id="hl-last-upd">Click the tab to load...</span>
+    <span style="font-size:10px;color:var(--dim)" id="hl-last-upd">Click ↻ to load data</span>
     <span class="hl-filter-label" style="margin-left:10px">Min trade size</span>
     <select class="hl-select" id="hl-min-size" onchange="hlApplyFilter()">
       <option value="10000">$10,000+</option>
@@ -1076,15 +1170,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <option value="ETH">ETH only</option>
       <option value="SOL">SOL only</option>
     </select>
-    <span class="hl-filter-label">Auto-refresh</span>
-    <select class="hl-select" id="hl-refresh-rate" onchange="hlSetRefresh()">
-      <option value="15">Every 15s</option>
-      <option value="30" selected>Every 30s</option>
-      <option value="60">Every 60s</option>
-      <option value="0">Manual only</option>
-    </select>
-    <button class="refresh-btn" onclick="hlRefresh()" style="margin-left:auto;padding:6px 14px;font-size:11px;box-shadow:none">↻ Refresh Now</button>
-    <button class="cm-btn-copy" id="hl-pause-btn" onclick="hlTogglePause()" style="min-width:70px">⏸ Pause</button>
+    <button class="refresh-btn" onclick="hlRefresh()" style="margin-left:auto;padding:6px 18px;font-size:12px;font-weight:700">↻ Refresh</button>
   </div>
 
   <div class="hl-two-col">
@@ -2908,11 +2994,11 @@ function calcRR(){
 }
 
 // ═══════════════════════════════════════════════════════════
-// HYPERLIQUID WHALE TRACKER
+// HYPERLIQUID WHALE TRACKER — manual refresh only
 // Public API — no key needed
 // ═══════════════════════════════════════════════════════════
 const HL_API='https://api.hyperliquid.xyz/info';
-let hlAllTrades=[], hlAssets=[], hlPaused=false, hlRefreshTimer=null, hlInited=false;
+let hlAllTrades=[], hlAssets=[], hlInited=false;
 
 async function hlPost(body){
   const r=await fetch(HL_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -2952,13 +3038,102 @@ async function hlFetchMeta(){
 
 async function hlFetchTrades(coin){
   try{
-    const minSize=parseInt(document.getElementById('hl-min-size').value)||50000;
     const trades=await hlPost({type:'recentTrades',coin});
     return trades.map(t=>{
       const px=parseFloat(t.px), sz=parseFloat(t.sz);
       return {coin,side:t.side==='B'?'buy':'sell',px,sz,notional:px*sz,time:t.time,tid:t.tid};
-    }).filter(t=>t.notional>=minSize);
+    });
   }catch(e){return [];}
+}
+
+// ── SENTIMENT: speedometer + per-coin L/S + funding mini ──
+function hlRenderSentiment(){
+  const minSize=parseInt(document.getElementById('hl-min-size').value)||50000;
+  const coinF=document.getElementById('hl-coin-filter').value;
+  const trades=hlAllTrades.filter(t=>t.notional>=minSize&&(coinF==='ALL'||t.coin===coinF));
+
+  // Overall buy/sell volume
+  let buyVol=0, sellVol=0;
+  trades.forEach(t=>{ if(t.side==='buy') buyVol+=t.notional; else sellVol+=t.notional; });
+  const totalVol=buyVol+sellVol;
+  const longPct=totalVol>0 ? (buyVol/totalVol)*100 : 50;
+
+  // Needle rotation: -90° = all shorts, 0° = 50/50, +90° = all longs
+  const needle=document.getElementById('hl-speedo-needle');
+  if(needle){
+    const deg=-90+(longPct*1.8);
+    needle.setAttribute('transform',`rotate(${deg.toFixed(1)},100,100)`);
+  }
+
+  // Ratio text
+  const ratioEl=document.getElementById('hl-ls-ratio');
+  const labelEl=document.getElementById('hl-ls-label');
+  const totalEl=document.getElementById('hl-ls-total');
+  if(ratioEl){
+    const color=longPct>=60?'var(--bull)':longPct<=40?'var(--bear)':'var(--neutral)';
+    ratioEl.style.color=color;
+    ratioEl.textContent=longPct.toFixed(1)+'% L / '+(100-longPct).toFixed(1)+'% S';
+    const label=longPct>=65?'🐂 Whales are LONGING':longPct>=55?'Slight long bias':longPct<=35?'🐻 Whales are SHORTING':longPct<=45?'Slight short bias':'Balanced pressure';
+    if(labelEl) labelEl.textContent=label;
+    if(totalEl) totalEl.textContent=trades.length+' whale trades · '+hlFmtUsd(totalVol)+' volume';
+  }
+
+  // Per-coin L/S bars (top 10 coins by trade count)
+  const coinMap={};
+  hlAllTrades.filter(t=>t.notional>=minSize).forEach(t=>{
+    if(!coinMap[t.coin]) coinMap[t.coin]={buy:0,sell:0,count:0};
+    if(t.side==='buy') coinMap[t.coin].buy+=t.notional;
+    else coinMap[t.coin].sell+=t.notional;
+    coinMap[t.coin].count++;
+  });
+  const coinList=Object.entries(coinMap)
+    .map(([name,d])=>({name,buy:d.buy,sell:d.sell,total:d.buy+d.sell,count:d.count,lp:d.buy/(d.buy+d.sell)*100}))
+    .sort((a,b)=>b.total-a.total).slice(0,10);
+
+  const lsBody=document.getElementById('hl-lsbar-body');
+  if(lsBody){
+    if(!coinList.length){
+      lsBody.innerHTML='<div style="color:var(--dim);text-align:center;padding:16px">No data — click Refresh</div>';
+    } else {
+      let html='';
+      coinList.forEach(c=>{
+        const lp=c.lp.toFixed(0), sp=(100-c.lp).toFixed(0);
+        const col=c.lp>=60?'var(--bull)':c.lp<=40?'var(--bear)':'var(--neutral)';
+        html+=`<div class="lsbar-row">
+          <span class="lsbar-coin">${c.name}</span>
+          <div class="lsbar-track">
+            <div class="lsbar-long" style="width:${c.lp.toFixed(1)}%"></div>
+            <div class="lsbar-short" style="width:${(100-c.lp).toFixed(1)}%"></div>
+          </div>
+          <span class="lsbar-pct" style="color:${col}">${lp}%L</span>
+        </div>`;
+      });
+      lsBody.innerHTML=html;
+    }
+  }
+
+  // Funding mini cards — top 12 by OI
+  const fundMini=document.getElementById('hl-fund-mini-body');
+  if(fundMini && hlAssets.length){
+    const top12=[...hlAssets].sort((a,b)=>b.oi-a.oi).slice(0,12);
+    let html='';
+    top12.forEach(a=>{
+      const pct=(a.funding*100).toFixed(4);
+      const ann=(a.funding*3*365*100).toFixed(0);
+      const isPos=a.funding>0.0005, isNeg=a.funding<-0.0005;
+      const color=isPos?'var(--bear)':isNeg?'var(--bull)':'var(--dim)';
+      const badgeCls=isPos?'fmb-pos':isNeg?'fmb-neg':'fmb-neu';
+      const badgeTxt=isPos?'LONGS PAY':isNeg?'SHORTS PAY':'NEUTRAL';
+      const sign=a.funding>=0?'+':'';
+      html+=`<div class="fund-mini-row">
+        <span class="fund-mini-coin">${a.name}</span>
+        <span class="fund-mini-rate" style="color:${color}">${sign}${pct}%</span>
+        <span class="fund-mini-ann">${sign}${ann}% / yr</span>
+        <span class="fund-mini-badge ${badgeCls}">${badgeTxt}</span>
+      </div>`;
+    });
+    fundMini.innerHTML=html;
+  }
 }
 
 function hlRenderOI(){
@@ -2967,12 +3142,13 @@ function hlRenderOI(){
   sorted.forEach((a,i)=>{
     const chgCls=a.chg24>=0?'cbull':'cbear';
     const fCls=hlFundColor(a.funding);
+    const sign=a.funding>=0?'+':'';
     html+=`<tr>
       <td><span class="oi-rank">${i+1}</span>${a.name}</td>
       <td>${hlFmtPx(a.markPx)}</td>
       <td style="font-weight:700;color:#fff">${hlFmtUsd(a.oi)}</td>
       <td style="color:var(--dim)">${hlFmtUsd(a.vol)}</td>
-      <td class="${fCls}" title="${(a.funding*3*365*100).toFixed(1)}% ann.">${(a.funding*100).toFixed(4)}%</td>
+      <td class="${fCls}" title="${(a.funding*3*365*100).toFixed(1)}% ann.">${sign}${(a.funding*100).toFixed(4)}%</td>
       <td class="${chgCls}">${a.chg24>=0?'+':''}${a.chg24.toFixed(2)}%</td>
     </tr>`;
   });
@@ -2982,18 +3158,19 @@ function hlRenderOI(){
 function hlRenderFunding(){
   const sorted=[...hlAssets].sort((a,b)=>b.funding-a.funding);
   const top8=sorted.slice(0,8), bot8=sorted.slice(-8).reverse();
-  const maxF=Math.abs(sorted[0]?.funding||1);
+  const maxF=Math.max(...sorted.map(a=>Math.abs(a.funding)))||1;
   function rows(list,dir){
     return list.map(a=>{
+      const sign=a.funding>=0?'+':'';
       const pct=(a.funding*100).toFixed(4);
       const ann=(a.funding*3*365*100).toFixed(0);
       const fill=Math.abs(a.funding)/maxF*100;
       const color=dir==='high'?'var(--bear)':'var(--bull)';
       return `<div class="fund-row">
         <span class="fund-coin">${a.name}</span>
-        <span class="fund-rate" style="color:${color}">${pct}%</span>
+        <span class="fund-rate" style="color:${color}">${sign}${pct}%</span>
         <div class="fund-bar-wrap"><div class="fund-bar-fill" style="width:${fill}%;background:${color}"></div></div>
-        <span style="font-size:9px;color:var(--dim);white-space:nowrap">${ann}%/yr</span>
+        <span style="font-size:9px;color:var(--dim);white-space:nowrap">${sign}${ann}%/yr</span>
         <span class="fund-oi">${hlFmtUsd(a.oi)}</span>
       </div>`;
     }).join('');
@@ -3044,6 +3221,7 @@ function hlRenderFeed(){
   const hdrHtml='<div class="wt-hdr"><span>Time</span><span>Coin</span><span>Side</span><span style="text-align:right">Size</span><span style="text-align:right">Notional</span><span style="text-align:right">Price</span></div>';
   if(!filtered.length){
     document.getElementById('hl-feed-body').innerHTML=hdrHtml+'<div style="padding:30px;text-align:center;color:var(--dim)">No trades above threshold · try a lower min size</div>';
+    hlRenderSentiment();
     return;
   }
   let html=hdrHtml;
@@ -3060,51 +3238,40 @@ function hlRenderFeed(){
     </div>`;
   });
   document.getElementById('hl-feed-body').innerHTML=html;
+  hlRenderSentiment();
 }
 
 function hlApplyFilter(){ hlRenderFeed(); }
 
 async function hlRefresh(){
-  if(hlPaused) return;
   const dot=document.getElementById('hl-live-dot');
+  const upd=document.getElementById('hl-last-upd');
   dot.style.background='var(--neutral)';
+  upd.textContent='Loading…';
   try{
     await hlFetchMeta();
     const topByOI=[...hlAssets].sort((a,b)=>b.oi-a.oi).slice(0,20).map(a=>a.name);
     const scanSet=[...new Set(['BTC','ETH','SOL',...topByOI])].slice(0,22);
     const results=await Promise.allSettled(scanSet.map(c=>hlFetchTrades(c)));
     const newTrades=results.flatMap(r=>r.status==='fulfilled'?r.value:[]);
+    // Always keep all trades (no min-size filter here — filter happens at render time)
     const existingTids=new Set(hlAllTrades.map(t=>t.coin+'_'+t.tid));
     const fresh=newTrades.filter(t=>!existingTids.has(t.coin+'_'+t.tid));
-    hlAllTrades=[...fresh,...hlAllTrades].slice(0,2000);
+    hlAllTrades=[...fresh,...hlAllTrades].slice(0,5000);
     hlRenderStats(); hlRenderOI(); hlRenderFunding(); hlRenderVolLeaders(); hlRenderFeed();
-    document.getElementById('hl-last-upd').textContent='Updated: '+new Date().toLocaleTimeString();
+    upd.textContent='Updated: '+new Date().toLocaleTimeString()+' · '+hlAllTrades.length+' trades cached';
     dot.style.background='var(--bull)';
   }catch(err){
     console.error('HL:',err);
-    document.getElementById('hl-last-upd').textContent='Error: '+err.message;
+    upd.textContent='Error: '+err.message;
     dot.style.background='var(--bear)';
   }
-}
-
-function hlTogglePause(){
-  hlPaused=!hlPaused;
-  const btn=document.getElementById('hl-pause-btn'), dot=document.getElementById('hl-live-dot');
-  if(hlPaused){ btn.textContent='▶ Resume'; dot.classList.add('paused'); }
-  else{ btn.textContent='⏸ Pause'; dot.classList.remove('paused'); hlRefresh(); }
-}
-
-function hlSetRefresh(){
-  if(hlRefreshTimer) clearInterval(hlRefreshTimer);
-  const sec=parseInt(document.getElementById('hl-refresh-rate').value);
-  if(sec>0) hlRefreshTimer=setInterval(()=>{ if(!hlPaused) hlRefresh(); },sec*1000);
 }
 
 function hlInit(){
   if(hlInited) return;
   hlInited=true;
   hlRefresh();
-  hlSetRefresh();
 }
 
 // Warn when opened from file:// (APIs will be blocked by browser CORS policy)
