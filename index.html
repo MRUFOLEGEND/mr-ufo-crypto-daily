@@ -172,7 +172,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 /* MOBILE */
 /* ── F&G APE WRAP ─── */
-.fg-ape-wrap{display:flex;align-items:center;gap:14px;padding-left:8px}
+.fg-ape-wrap{display:flex;flex-direction:row-reverse;align-items:center;gap:14px;padding-left:8px}
 
 @media(max-width:768px){
   header{position:relative;flex-wrap:wrap}
@@ -184,9 +184,10 @@ tr:hover td{background:rgba(255,255,255,.02)}
   td,th{font-size:10px;padding:5px 6px}
   td:first-child{font-size:11px}
   /* F&G gauge: ape above on mobile */
-  .fg-ape-wrap{flex-direction:column;align-items:center;padding-left:0;gap:6px;margin-left:auto;margin-right:auto}
+  .fg-ape-outer{margin-left:0 !important}
+  .fg-ape-wrap{flex-direction:column !important;align-items:center;padding-left:0;gap:6px}
   .fg-ape-wrap svg{width:220px !important}
-  .fg-ape-img{order:-1;height:80px !important;margin-left:0 !important}
+  .fg-ape-img{height:80px !important;margin-left:0 !important}
   /* tab bar: horizontal scroll on small screens */
   .tab-bar{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 8px}
   .tab{flex-shrink:0;padding:10px 14px;font-size:10px}
@@ -495,8 +496,9 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 
   <!-- FEAR & GREED SPEEDOMETER in header -->
-  <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;margin-left:auto">
+  <div class="fg-ape-outer" style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;margin-left:auto">
     <div class="fg-ape-wrap">
+      <img class="fg-ape-img" src="Annoyed%20BASC.GIF" alt="" style="height:140px;width:auto;border-radius:5px;object-fit:cover">
       <svg viewBox="0 0 200 145" style="width:300px" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <!-- Arc paths at r=70, center (100,110), one per segment, CCW through top -->
@@ -547,7 +549,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <text x="100" y="131" text-anchor="middle" id="fg-num" fill="white" font-size="22" font-weight="700" font-family="'SF Mono','Fira Code',monospace">—</text>
         <text x="100" y="142" text-anchor="middle" id="fg-txt" fill="#8891b0" font-size="7" letter-spacing="1.5" font-family="'SF Mono','Fira Code',monospace">LOADING...</text>
       </svg>
-      <img class="fg-ape-img" src="Annoyed%20BASC.GIF" alt="" style="height:140px;width:auto;border-radius:5px;object-fit:cover;margin-left:18px">
     </div>
   </div>
 
