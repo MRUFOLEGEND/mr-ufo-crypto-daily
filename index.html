@@ -2717,6 +2717,17 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
     </div>
   </div>
 
+  ${binanceSym?`<div class="card">
+    <div class="card-hdr">
+      <span class="card-title">🔮 4H Outlook — ${(coin.symbol||'').toUpperCase()}</span>
+      <span style="font-size:10px;color:var(--dim)">Live · Binance klines · EMA · RSI · MACD · Structure</span>
+    </div>
+    <div class="card-body" style="gap:12px;padding:14px">
+      <div id="coin-4h-text" class="loading" style="color:var(--dim);font-size:12px">Loading 4H kline data…</div>
+      <div id="coin-4h-levels"></div>
+    </div>
+  </div>`:''}
+
   ${(fundHtml||oiHtml)?`<div class="card">
     <div class="card-hdr"><span class="card-title">📈 Derivatives — ${(coin.symbol||'').toUpperCase()} Perpetual</span></div>
     <div class="card-body">${fundHtml}${oiHtml}
@@ -2810,9 +2821,20 @@ async function analyzeCoin() {
     if (binanceSym) {
       if (status) status.textContent = 'Loading timeframes…';
       coinTfResults = {};
+      const COIN_OUTLOOK_TFS = ['4h','1d','1w','1h'];
+      let coin4hRendered = false;
       for (const {id} of TFS) {
         apiFetch(klinesUrl(binanceSym, id, 250))
-          .then(data => { try { coinTfResults[id] = analyzeOHLCV(data); } catch(e) {} renderCoinTF(coinTfResults); })
+          .then(data => {
+            try { coinTfResults[id] = analyzeOHLCV(data); } catch(e) {}
+            renderCoinTF(coinTfResults);
+            if (!coin4hRendered && COIN_OUTLOOK_TFS.every(t => coinTfResults[t])) {
+              coin4hRendered = true;
+              const textEl = document.getElementById('coin-4h-text');
+              const levelsEl = document.getElementById('coin-4h-levels');
+              if (textEl) _render4HOutlook(sym, coinTfResults['4h'], coinTfResults['1d'], coinTfResults['1w'], coinTfResults['1h'], textEl, levelsEl);
+            }
+          })
           .catch(() => {});
       }
     }
