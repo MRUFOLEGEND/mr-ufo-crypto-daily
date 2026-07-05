@@ -2723,53 +2723,21 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
     </div>
   </div>`:''}
 
-  <div class="two-col">
-    <div class="card">
-      <div class="card-hdr"><span class="card-title">⌨ Developer Activity</span></div>
-      <div class="card-body">
-        <div class="stat-frow"><span class="stat-lbl">GitHub Stars</span><span class="stat-val">${(dd.stars||0).toLocaleString()}</span></div>
-        <div class="stat-frow"><span class="stat-lbl">Commits (4 weeks)</span><span class="stat-val" style="color:${(dd.commit_count_4_weeks||0)>=20?'var(--bull)':(dd.commit_count_4_weeks||0)>=5?'var(--neutral)':'var(--bear)'}">${dd.commit_count_4_weeks||0} <small style="font-weight:400;opacity:.6">${(dd.commit_count_4_weeks||0)>=20?'Active':(dd.commit_count_4_weeks||0)>=5?'Moderate':'Low'}</small></span></div>
-        <div class="stat-frow"><span class="stat-lbl">Contributors</span><span class="stat-val">${dd.pull_request_contributors||0}</span></div>
-        <div class="stat-frow"><span class="stat-lbl">PRs Merged (4w)</span><span class="stat-val">${dd.pull_requests_merged||0}</span></div>
-        <div class="stat-frow"><span class="stat-lbl">Open Issues</span><span class="stat-val">${(dd.total_issues||0)-(dd.closed_issues||0)}</span></div>
-        <div class="stat-frow"><span class="stat-lbl">Code Adds (4w)</span><span class="stat-val" style="color:var(--bull)">+${(dd.code_additions_deletions_4_weeks?.additions||0).toLocaleString()}</span></div>
-        <div class="stat-frow"><span class="stat-lbl">Code Dels (4w)</span><span class="stat-val" style="color:var(--bear)">−${(dd.code_additions_deletions_4_weeks?.deletions||0).toLocaleString()}</span></div>
-        <div class="score-mini-grid">
-          <div class="score-mini"><div class="score-mini-lbl">CG Score</div><div class="score-mini-val" style="color:${scoreCol(cgScore)}">${cgScore}</div></div>
-          <div class="score-mini"><div class="score-mini-lbl">Dev Score</div><div class="score-mini-val" style="color:${scoreCol(devScore)}">${devScore}</div></div>
-          <div class="score-mini"><div class="score-mini-lbl">Community</div><div class="score-mini-val" style="color:${scoreCol(commScore)}">${commScore}</div></div>
-          <div class="score-mini"><div class="score-mini-lbl">Liquidity</div><div class="score-mini-val" style="color:${scoreCol(liqScore)}">${liqScore}</div></div>
-        </div>
-        <div class="tip" style="margin-top:8px">≥20 commits/4w = active team. Dead repos (0 commits) are a red flag for long-term holding.</div>
-      </div>
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">📡 Social Research Hub</span>
+      <span style="font-size:10px;color:var(--dim)">Where to find alpha for ${(coin.symbol||'').toUpperCase()}</span>
     </div>
-
-    <div class="card">
-      <div class="card-hdr"><span class="card-title">👥 Community & Social</span></div>
-      <div class="card-body">
-        <div class="stat-frow"><span class="stat-lbl">Twitter Followers</span><span class="stat-val">${(cd.twitter_followers||0).toLocaleString()}</span></div>
-        <div class="stat-frow"><span class="stat-lbl">Reddit Subscribers</span><span class="stat-val">${(cd.reddit_subscribers||0).toLocaleString()}</span></div>
-        <div class="stat-frow"><span class="stat-lbl">Reddit Active (48h)</span><span class="stat-val">${(cd.reddit_active_accounts_48h||0).toLocaleString()}</span></div>
-        <div class="stat-frow"><span class="stat-lbl">Reddit Posts (48h)</span><span class="stat-val">${Number(cd.reddit_average_posts_48h||0).toFixed(1)}</span></div>
-        <div class="stat-frow"><span class="stat-lbl">Telegram Members</span><span class="stat-val">${cd.telegram_channel_user_count?(cd.telegram_channel_user_count).toLocaleString():'—'}</span></div>
-        ${sentUp>0?`<div style="margin-top:10px">
-          <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:4px">COMMUNITY SENTIMENT</div>
-          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
-            <span style="color:var(--bull)">🟢 ${sentUp.toFixed(0)}% Bullish</span>
-            <span style="color:var(--bear)">🔴 ${sentDown.toFixed(0)}% Bearish</span>
-          </div>
-          <div class="sent-bar">
-            <div class="sent-bull" style="width:${sentUp}%"></div>
-            <div class="sent-bear" style="width:${sentDown}%"></div>
-          </div>
-        </div>`:''}
-        <div class="tip" style="margin-top:8px">Active Reddit/Telegram community = organic demand. Follower growth rate matters more than raw numbers.</div>
-      </div>
+    <div class="card-body" style="padding:12px">
+      <div class="social-grid" id="coin-social-grid"></div>
     </div>
   </div>`;
 
   const el = document.getElementById('coin-result');
-  if (el) el.innerHTML = html;
+  if (el) {
+    el.innerHTML = html;
+    renderSocialCards((coin.symbol||'').toUpperCase(), 'coin-social-grid');
+  }
 }
 
 function refreshCoin() {
@@ -2995,8 +2963,8 @@ For each pattern: name it, mark the exact price zone, give a probability (High/M
   renderSocialCards(tok);
 }
 
-function renderSocialCards(tok){
-  const container=document.getElementById('social-grid-container');
+function renderSocialCards(tok, containerId){
+  const container=document.getElementById(containerId||'social-grid-container');
   if(!container) return;
   const t=tok.toLowerCase();
   const tagColors=['stag','stag-green','stag-purple','stag-orange','stag-red'];
