@@ -171,8 +171,11 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .mini-tf tr:last-child td{border-bottom:none}
 
 /* MOBILE */
+/* ── F&G APE WRAP ─── */
+.fg-ape-wrap{display:flex;align-items:center;gap:14px;padding-left:8px}
+
 @media(max-width:768px){
-  header{position:relative}
+  header{position:relative;flex-wrap:wrap}
   .main{padding:10px}
   .factor-grid{grid-template-columns:1fr}
   #alt-grid{grid-template-columns:1fr 1fr!important}
@@ -180,6 +183,28 @@ tr:hover td{background:rgba(255,255,255,.02)}
   .price-tile-price{font-size:15px}
   td,th{font-size:10px;padding:5px 6px}
   td:first-child{font-size:11px}
+  /* F&G gauge: ape above on mobile */
+  .fg-ape-wrap{flex-direction:column;align-items:center;padding-left:0;gap:6px;margin-left:auto;margin-right:auto}
+  .fg-ape-wrap svg{width:220px !important}
+  .fg-ape-img{order:-1;height:80px !important;margin-left:0 !important}
+  /* tab bar: horizontal scroll on small screens */
+  .tab-bar{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 8px}
+  .tab{flex-shrink:0;padding:10px 14px;font-size:10px}
+  /* coin ID strip: column on mobile so logo stays on top */
+  .coin-id-full-inner{flex-direction:column;gap:10px;align-items:flex-start}
+  .coin-logo{width:52px !important;height:52px !important}
+  .coin-id-body{min-width:0 !important;width:100%}
+  .coin-refresh-btn{width:100%;text-align:center}
+}
+
+@media(max-width:600px){
+  /* coin search: full width, no jitter */
+  .csearch-wrap{padding:10px 12px;gap:8px;flex-direction:column;align-items:stretch}
+  .csearch-wrap > div{width:100%}
+  .csearch-input{width:100%;box-sizing:border-box;font-size:18px}
+  .csearch-btn{width:100%;padding:12px;font-size:14px}
+  /* coin ID body: description hidden on mobile to save space */
+  .coin-desc-mobile-hide{display:none}
 }
 
 /* ── TABS ─────────────────────────────────────────────── */
@@ -471,22 +496,49 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
   <!-- FEAR & GREED SPEEDOMETER in header -->
   <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;margin-left:auto">
-    <div style="display:flex;align-items:center;gap:14px;padding-left:8px">
+    <div class="fg-ape-wrap">
       <svg viewBox="0 0 200 145" style="width:300px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Arc paths at r=70, center (100,110), one per segment, CCW through top -->
+          <path id="fgtxt1" d="M 30.00 110.00 A 70 70 0 0 0 36.94 79.63"/>
+          <path id="fgtxt2" d="M 36.94 79.63 A 70 70 0 0 0 56.36 55.27"/>
+          <path id="fgtxt3" d="M 56.36 55.27 A 70 70 0 0 0 84.43 41.76"/>
+          <path id="fgtxt4" d="M 84.43 41.76 A 70 70 0 0 0 115.57 41.76"/>
+          <path id="fgtxt5" d="M 115.57 41.76 A 70 70 0 0 0 143.64 55.27"/>
+          <path id="fgtxt6" d="M 143.64 55.27 A 70 70 0 0 0 163.06 79.63"/>
+          <path id="fgtxt7" d="M 163.06 79.63 A 70 70 0 0 0 170.00 110.00"/>
+        </defs>
+        <!-- Segment fills -->
         <path d="M 12.01 118.85 A 88 88 0 0 0 20.22 82.86 L 52.86 98.05 A 52 52 0 0 1 48.00 119.32 Z" fill="#00c853"/>
-        <text x="31.76" y="104.42" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(-77.1,31.76,104.42)">CAPITULATION</text>
         <path d="M 21.22 80.78 A 88 88 0 0 0 44.24 51.92 L 67.05 79.77 A 52 52 0 0 1 53.45 96.83 Z" fill="#9c27b0"/>
-        <text x="45.27" y="76.36" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(-51.4,45.27,76.36)">PANIC</text>
         <path d="M 46.04 50.49 A 88 88 0 0 0 79.30 34.47 L 87.77 69.46 A 52 52 0 0 1 68.11 78.92 Z" fill="#c8960a"/>
-        <text x="69.63" y="56.93" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(-25.7,69.63,56.93)">UNCERTAIN</text>
         <path d="M 81.54 33.96 A 88 88 0 0 0 118.46 33.96 L 110.91 69.16 A 52 52 0 0 1 89.09 69.16 Z" fill="#d4a800"/>
-        <text x="100.00" y="50.00" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(0.0,100.00,50.00)">BALANCE</text>
         <path d="M 120.70 34.47 A 88 88 0 0 0 153.96 50.49 L 131.89 78.92 A 52 52 0 0 1 112.23 69.46 Z" fill="#e8cc00"/>
-        <text x="130.37" y="56.93" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(25.7,130.37,56.93)">CANARY</text>
         <path d="M 155.76 51.92 A 88 88 0 0 0 178.78 80.78 L 146.55 96.83 A 52 52 0 0 1 132.95 79.77 Z" fill="#e04000"/>
-        <text x="154.73" y="76.36" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(51.4,154.73,76.36)">GREED</text>
         <path d="M 179.78 82.86 A 88 88 0 0 0 187.99 118.85 L 152.00 119.32 A 52 52 0 0 1 147.14 98.05 Z" fill="#c0251a"/>
-        <text x="168.24" y="104.42" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="4.8" font-weight="700" letter-spacing="0.5" font-family="Arial,sans-serif" transform="rotate(77.1,168.24,104.42)">FOMO</text>
+        <!-- Labels curved along each segment arc -->
+        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
+          <textPath href="#fgtxt1" startOffset="50%" text-anchor="middle" textLength="27" lengthAdjust="spacingAndGlyphs">CAPITULATION</textPath>
+        </text>
+        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
+          <textPath href="#fgtxt2" startOffset="50%" text-anchor="middle">PANIC</textPath>
+        </text>
+        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
+          <textPath href="#fgtxt3" startOffset="50%" text-anchor="middle" textLength="25" lengthAdjust="spacingAndGlyphs">UNCERTAIN</textPath>
+        </text>
+        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
+          <textPath href="#fgtxt4" startOffset="50%" text-anchor="middle">BALANCE</textPath>
+        </text>
+        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
+          <textPath href="#fgtxt5" startOffset="50%" text-anchor="middle">CANARY</textPath>
+        </text>
+        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
+          <textPath href="#fgtxt6" startOffset="50%" text-anchor="middle">GREED</textPath>
+        </text>
+        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
+          <textPath href="#fgtxt7" startOffset="50%" text-anchor="middle">FOMO</textPath>
+        </text>
+        <!-- Needle -->
         <g id="fg-needle-g" transform="rotate(0,100,110)">
           <line x1="100" y1="110" x2="100" y2="35" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
           <circle cx="100" cy="110" r="8" fill="#0d0f14" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
@@ -495,7 +547,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <text x="100" y="131" text-anchor="middle" id="fg-num" fill="white" font-size="22" font-weight="700" font-family="'SF Mono','Fira Code',monospace">—</text>
         <text x="100" y="142" text-anchor="middle" id="fg-txt" fill="#8891b0" font-size="7" letter-spacing="1.5" font-family="'SF Mono','Fira Code',monospace">LOADING...</text>
       </svg>
-      <img src="Annoyed%20BASC.GIF" alt="" style="height:140px;width:auto;border-radius:5px;object-fit:cover;margin-left:18px">
+      <img class="fg-ape-img" src="Annoyed%20BASC.GIF" alt="" style="height:140px;width:auto;border-radius:5px;object-fit:cover;margin-left:18px">
     </div>
   </div>
 
@@ -2342,6 +2394,8 @@ setTimeout(setCoinSearchStickyTop, 200);
 let _lastScrollY = 0;
 let _lastCoinSym = '';
 window.addEventListener('scroll', () => {
+  // On mobile the virtual keyboard triggers scroll events — never hide the search bar
+  if (window.innerWidth <= 768) return;
   const page = document.getElementById('page-coin');
   if (!page || !page.classList.contains('active')) return;
   const bar = document.getElementById('coin-search-bar');
@@ -2578,7 +2632,7 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
             ${lnk('📄 Whitepaper',whitepaper)}
           </div>
         </div>
-        ${desc?`<div style="flex:1;border-left:1px solid var(--border);padding-left:18px;font-size:11px;color:var(--dim);line-height:1.8;max-height:110px;overflow-y:auto">${desc}</div>`:''}
+        ${desc?`<div class="coin-desc-mobile-hide" style="flex:1;border-left:1px solid var(--border);padding-left:18px;font-size:11px;color:var(--dim);line-height:1.8;max-height:110px;overflow-y:auto">${desc}</div>`:''}
       </div>
       <button class="coin-refresh-btn" onclick="refreshCoin()">↻ Refresh</button>
     </div>`;
