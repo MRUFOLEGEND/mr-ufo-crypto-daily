@@ -2163,7 +2163,7 @@ async function fetchOITrend() {
 // ─── 4H OUTLOOK ENGINE ───────────────────────────────────
 function _render4HOutlook(sym, tf4h, tf1d, tf1w, tf1h, textEl, levelsEl) {
   const p   = tf4h.p;
-  const fmt = n => '$' + Math.round(n).toLocaleString('en-US');
+  const fmt = fmtCoinPrice;
   const e20 = tf4h.ee20, e50 = tf4h.ee50, e200 = tf4h.ee200;
   const rsi4h = tf4h.rsiVal, score4h = tf4h.score;
   const h4h = tf4h.periodHigh, l4h = tf4h.periodLow;
