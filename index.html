@@ -2344,7 +2344,7 @@ async function fetchMarketMetrics() {
     ...SYMS.map(s => apiFetch(`${BINANCE_F}/premiumIndex?symbol=${s}`, 4000)),
     apiFetch('https://api.bybit.com/v5/market/open-interest?category=linear&symbol=BTCUSDT&intervalTime=5min&limit=1', 4000),
     apiFetch('https://api.bybit.com/v5/market/tickers?category=linear&symbol=BTCUSDT', 4000),
-    ...SYMS.map(s => apiFetch(`${BINANCE_F}/forceOrders?symbol=${s}&limit=200`, 5000)),
+    ...SYMS.map(s => apiFetch(`${BINANCE_F}/allForceOrders?symbol=${s}&limit=200`, 5000)),
   ]);
 
   // ── L/S Ratio ──
