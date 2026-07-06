@@ -598,11 +598,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <div class="mm-sub" id="mm-ls-sub">BTC · Loading exchanges…</div>
     </div>
     <div class="mm-card">
-      <div class="mm-lbl">Market Liquidations (24H)</div>
-      <div class="mm-big" id="mm-liq">—</div>
-      <div class="mm-sub" id="mm-liq-sub">Binance · BTC ETH SOL BNB XRP</div>
-    </div>
-    <div class="mm-card">
       <div class="mm-lbl">Open Interest</div>
       <div class="mm-big" id="mm-oi">—</div>
       <div class="mm-sub" id="mm-oi-sub">Binance Perps · BTC ETH SOL BNB XRP</div>
@@ -2335,7 +2330,6 @@ async function fetchMarketMetrics() {
   //  [8-12] Binance premiumIndex / mark price (5 syms)
   //  [13]   Bybit   openInterest BTCUSDT  (OI fallback)
   //  [14]   Bybit   tickers      BTCUSDT  (price for OI fallback)
-  //  [15-19] Binance allForceOrders (5 syms, public — no auth)
   const all = await Promise.allSettled([
     apiFetch('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=BTCUSDT&period=5m&limit=1', 5000),
     apiFetch('https://www.okx.com/api/v5/rubik/stat/contracts/long-short-account-ratio?ccy=BTC&period=5m&limit=1', 5000),
@@ -2344,7 +2338,6 @@ async function fetchMarketMetrics() {
     ...SYMS.map(s => apiFetch(`${BINANCE_F}/premiumIndex?symbol=${s}`, 4000)),
     apiFetch('https://api.bybit.com/v5/market/open-interest?category=linear&symbol=BTCUSDT&intervalTime=5min&limit=1', 4000),
     apiFetch('https://api.bybit.com/v5/market/tickers?category=linear&symbol=BTCUSDT', 4000),
-    ...SYMS.map(s => apiFetch(`${BINANCE_F}/allForceOrders?symbol=${s}&limit=200`, 5000)),
   ]);
 
   // ── L/S Ratio ──
@@ -2415,26 +2408,6 @@ async function fetchMarketMetrics() {
     }
   }
 
-  // ── Liquidations — Binance allForceOrders (public endpoint, no auth) ──
-  // Value = executedQty × averagePrice per force order
-  let totalLiq = 0;
-  const liqArr = all.slice(15, 20);
-  liqArr.forEach(r => {
-    if (r.status !== 'fulfilled' || !Array.isArray(r.value)) return;
-    r.value.forEach(o => { totalLiq += parseFloat(o.cumQuote || 0); });
-  });
-  const liqEl    = document.getElementById('mm-liq');
-  const liqSubEl = document.getElementById('mm-liq-sub');
-  if (liqEl && totalLiq > 0) {
-    liqEl.textContent = fmtMcap(totalLiq);
-    if (liqSubEl) liqSubEl.textContent = 'Binance · BTC ETH SOL BNB XRP';
-  } else {
-    // Show first call's error code so we can diagnose
-    const r0 = liqArr[0];
-    if (liqSubEl) liqSubEl.textContent = r0
-      ? (r0.status === 'fulfilled' ? `ok (${Array.isArray(r0.value) ? r0.value.length : '?'} orders, sum:${totalLiq})` : 'err:' + (r0.reason?.message || '?'))
-      : 'no data';
-  }
 }
 
 async function refreshAll() {
