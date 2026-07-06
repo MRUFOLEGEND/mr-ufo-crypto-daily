@@ -208,6 +208,19 @@ tr:hover td{background:rgba(255,255,255,.02)}
   .coin-desc-mobile-hide{display:none}
 }
 
+/* ── MARKET METRICS BAR ─────────────────────────────── */
+.mm-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mm-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.mm-lbl{font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+.mm-big{font-size:22px;font-weight:700;margin-bottom:4px;letter-spacing:-.5px}
+.mm-ls-row{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+.mm-ls-long{font-size:20px;font-weight:700;color:var(--bull)}
+.mm-ls-short{font-size:20px;font-weight:700;color:var(--bear)}
+.mm-ls-sep{font-size:14px;color:var(--dim)}
+.mm-ls-skew{font-size:10px;font-weight:700;letter-spacing:.5px}
+.mm-sub{font-size:9px;color:var(--dim);margin-top:2px}
+@media(max-width:600px){.mm-bar{grid-template-columns:1fr}}
+
 /* ── TABS ─────────────────────────────────────────────── */
 .tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 18px;display:flex}
 .tab{padding:10px 22px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;color:var(--dim);text-transform:uppercase;user-select:none}
@@ -571,6 +584,30 @@ tr:hover td{background:rgba(255,255,255,.02)}
 <div id="page-market" class="page active">
 <!-- ═══════════════════════ MAIN ═══════════════════════ -->
 <div class="main">
+
+  <!-- ── MARKET METRICS ── -->
+  <div class="mm-bar">
+    <div class="mm-card">
+      <div class="mm-lbl">Long / Short Ratio</div>
+      <div class="mm-ls-row">
+        <span class="mm-ls-long" id="mm-long">—</span>
+        <span class="mm-ls-sep">|</span>
+        <span class="mm-ls-short" id="mm-short">—</span>
+        <span class="mm-ls-skew" id="mm-skew"></span>
+      </div>
+      <div class="mm-sub">BTC · Binance Futures · Global Accounts</div>
+    </div>
+    <div class="mm-card">
+      <div class="mm-lbl">Market Liquidations (24H)</div>
+      <div class="mm-big" id="mm-liq">—</div>
+      <div class="mm-sub">Binance · BTC ETH SOL BNB XRP</div>
+    </div>
+    <div class="mm-card">
+      <div class="mm-lbl">Open Interest</div>
+      <div class="mm-big" id="mm-oi">—</div>
+      <div class="mm-sub">Binance Perps · BTC ETH SOL BNB XRP</div>
+    </div>
+  </div>
 
   <!-- ── OVERALL SUMMARY (TOP) ── -->
   <div class="summary-card">
@@ -2286,6 +2323,59 @@ function update4HEthOutlook(tfResults) {
   _render4HOutlook('ETH', tf4h, tf1d, tf1w, tf1h, textEl, levelsEl);
 }
 
+async function fetchMarketMetrics() {
+  const SYMS = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT'];
+  const startTime = Date.now() - 86400000;
+
+  const all = await Promise.allSettled([
+    apiFetch(`${BINANCE_F}/globalLongShortAccountRatio?symbol=BTCUSDT&period=5m&limit=1`, 5000),
+    ...SYMS.map(s => apiFetch(`${BINANCE_F}/openInterest?symbol=${s}`, 4000)),
+    ...SYMS.map(s => apiFetch(`${BINANCE_F}/premiumIndex?symbol=${s}`, 4000)),
+    ...SYMS.map(s => apiFetch(`${BINANCE_F}/forceOrders?symbol=${s}&startTime=${startTime}&limit=100`, 5000)),
+  ]);
+
+  const lsRes      = all[0];
+  const oiArr      = all.slice(1, 6);
+  const priceArr   = all.slice(6, 11);
+  const liqArr     = all.slice(11, 16);
+
+  // L/S Ratio
+  if (lsRes.status === 'fulfilled' && lsRes.value?.[0]) {
+    const lPct = parseFloat(lsRes.value[0].longAccount) * 100;
+    const sPct = parseFloat(lsRes.value[0].shortAccount) * 100;
+    const skew = lPct - sPct;
+    const longEl  = document.getElementById('mm-long');
+    const shortEl = document.getElementById('mm-short');
+    const skewEl  = document.getElementById('mm-skew');
+    if (longEl)  longEl.textContent  = lPct.toFixed(2) + '%';
+    if (shortEl) shortEl.textContent = sPct.toFixed(2) + '%';
+    if (skewEl)  {
+      skewEl.textContent = (skew >= 0 ? '+' : '') + skew.toFixed(2) + '% Skew';
+      skewEl.style.color = skew >= 0 ? 'var(--bull)' : 'var(--bear)';
+    }
+  }
+
+  // Open Interest
+  let totalOI = 0;
+  oiArr.forEach((r, i) => {
+    if (r.status !== 'fulfilled' || !r.value) return;
+    const pr = priceArr[i];
+    const markPx = pr.status === 'fulfilled' ? parseFloat(pr.value?.markPrice || 0) : 0;
+    if (markPx > 0) totalOI += parseFloat(r.value.openInterest) * markPx;
+  });
+  const oiEl = document.getElementById('mm-oi');
+  if (oiEl && totalOI > 0) oiEl.textContent = fmtMcap(totalOI);
+
+  // Liquidations
+  let totalLiq = 0;
+  liqArr.forEach(r => {
+    if (r.status !== 'fulfilled' || !Array.isArray(r.value)) return;
+    r.value.forEach(o => { totalLiq += parseFloat(o.cumQuote || 0); });
+  });
+  const liqEl = document.getElementById('mm-liq');
+  if (liqEl && totalLiq > 0) liqEl.textContent = fmtMcap(totalLiq);
+}
+
 async function refreshAll() {
   document.getElementById('last-upd').textContent='Refreshing…';
   setStatus('');
@@ -2319,6 +2409,9 @@ async function refreshAll() {
       });
     })
     .catch(e=>{ console.error('paprika',e); setStatus('✗ Global (offline?)'); });
+
+  // Market metrics (L/S ratio, OI, liquidations)
+  fetchMarketMetrics().catch(e => console.warn('market metrics', e));
 
   // Stocks / Indices + DXY macro
   fetchStocks();
