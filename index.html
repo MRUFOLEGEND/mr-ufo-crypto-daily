@@ -531,26 +531,26 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <path d="M 120.70 34.47 A 88 88 0 0 0 153.96 50.49 L 131.89 78.92 A 52 52 0 0 1 112.23 69.46 Z" fill="#e8cc00"/>
         <path d="M 155.76 51.92 A 88 88 0 0 0 178.78 80.78 L 146.55 96.83 A 52 52 0 0 1 132.95 79.77 Z" fill="#e04000"/>
         <path d="M 179.78 82.86 A 88 88 0 0 0 187.99 118.85 L 152.00 119.32 A 52 52 0 0 1 147.14 98.05 Z" fill="#c0251a"/>
-        <!-- Labels curved along each segment arc -->
-        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
-          <textPath href="#fgtxt1" startOffset="50%" text-anchor="middle" textLength="27" lengthAdjust="spacingAndGlyphs">CAPITULATION</textPath>
+        <!-- Labels curved along each segment arc — font-size scales inversely with char count so each label fills its arc -->
+        <text fill="white" font-size="4" font-weight="700" font-family="Arial,sans-serif">
+          <textPath href="#fgtxt1" startOffset="50%" text-anchor="middle">CAPITULATION</textPath>
         </text>
-        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
+        <text fill="white" font-size="7.5" font-weight="700" font-family="Arial,sans-serif">
           <textPath href="#fgtxt2" startOffset="50%" text-anchor="middle">PANIC</textPath>
         </text>
-        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
-          <textPath href="#fgtxt3" startOffset="50%" text-anchor="middle" textLength="25" lengthAdjust="spacingAndGlyphs">UNCERTAIN</textPath>
+        <text fill="white" font-size="5.5" font-weight="700" font-family="Arial,sans-serif">
+          <textPath href="#fgtxt3" startOffset="50%" text-anchor="middle">UNCERTAIN</textPath>
         </text>
-        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
+        <text fill="white" font-size="6.5" font-weight="700" font-family="Arial,sans-serif">
           <textPath href="#fgtxt4" startOffset="50%" text-anchor="middle">BALANCE</textPath>
         </text>
-        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
+        <text fill="white" font-size="7" font-weight="700" font-family="Arial,sans-serif">
           <textPath href="#fgtxt5" startOffset="50%" text-anchor="middle">CANARY</textPath>
         </text>
-        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
+        <text fill="white" font-size="7.5" font-weight="700" font-family="Arial,sans-serif">
           <textPath href="#fgtxt6" startOffset="50%" text-anchor="middle">GREED</textPath>
         </text>
-        <text fill="white" font-size="5" font-weight="700" font-family="Arial,sans-serif">
+        <text fill="white" font-size="8.5" font-weight="700" font-family="Arial,sans-serif">
           <textPath href="#fgtxt7" startOffset="50%" text-anchor="middle">FOMO</textPath>
         </text>
         <!-- Needle -->
@@ -595,17 +595,17 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <span class="mm-ls-short" id="mm-short">—</span>
         <span class="mm-ls-skew" id="mm-skew"></span>
       </div>
-      <div class="mm-sub">BTC · Binance Futures · Global Accounts</div>
+      <div class="mm-sub" id="mm-ls-sub">BTC · Loading exchanges…</div>
     </div>
     <div class="mm-card">
       <div class="mm-lbl">Market Liquidations (24H)</div>
       <div class="mm-big" id="mm-liq">—</div>
-      <div class="mm-sub">Binance · BTC ETH SOL BNB XRP</div>
+      <div class="mm-sub" id="mm-liq-sub">Binance · BTC ETH SOL BNB XRP</div>
     </div>
     <div class="mm-card">
       <div class="mm-lbl">Open Interest</div>
       <div class="mm-big" id="mm-oi">—</div>
-      <div class="mm-sub">Binance Perps · BTC ETH SOL BNB XRP</div>
+      <div class="mm-sub" id="mm-oi-sub">Binance Perps · BTC ETH SOL BNB XRP</div>
     </div>
   </div>
 
@@ -2327,22 +2327,45 @@ async function fetchMarketMetrics() {
   const SYMS = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT'];
   const startTime = Date.now() - 86400000;
 
+  // Array layout:
+  //  [0]    Binance L/S ratio
+  //  [1]    OKX     L/S ratio
+  //  [2]    Bybit   L/S ratio
+  //  [3-7]  Binance openInterest (5 syms)
+  //  [8-12] Binance premiumIndex / mark price (5 syms)
+  //  [13]   Bybit   openInterest BTCUSDT  (OI fallback)
+  //  [14]   Bybit   tickers      BTCUSDT  (price for OI fallback)
+  //  [15-19] Binance allForceOrders (5 syms, public — no auth)
   const all = await Promise.allSettled([
-    apiFetch(`${BINANCE_F}/globalLongShortAccountRatio?symbol=BTCUSDT&period=5m&limit=1`, 5000),
+    apiFetch('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=BTCUSDT&period=5m&limit=1', 5000),
+    apiFetch('https://www.okx.com/api/v5/rubik/stat/contracts/long-short-account-ratio?ccy=BTC&period=5m&limit=1', 5000),
+    apiFetch('https://api.bybit.com/v5/market/account-ratio?category=linear&symbol=BTCUSDT&period=1h&limit=1', 5000),
     ...SYMS.map(s => apiFetch(`${BINANCE_F}/openInterest?symbol=${s}`, 4000)),
     ...SYMS.map(s => apiFetch(`${BINANCE_F}/premiumIndex?symbol=${s}`, 4000)),
-    ...SYMS.map(s => apiFetch(`${BINANCE_F}/forceOrders?symbol=${s}&startTime=${startTime}&limit=100`, 5000)),
+    apiFetch('https://api.bybit.com/v5/market/open-interest?category=linear&symbol=BTCUSDT&intervalTime=5min&limit=1', 4000),
+    apiFetch('https://api.bybit.com/v5/market/tickers?category=linear&symbol=BTCUSDT', 4000),
+    ...SYMS.map(s => apiFetch(`${BINANCE_F}/forceOrders?symbol=${s}&limit=200`, 5000)),
   ]);
 
-  const lsRes      = all[0];
-  const oiArr      = all.slice(1, 6);
-  const priceArr   = all.slice(6, 11);
-  const liqArr     = all.slice(11, 16);
-
-  // L/S Ratio
-  if (lsRes.status === 'fulfilled' && lsRes.value?.[0]) {
-    const lPct = parseFloat(lsRes.value[0].longAccount) * 100;
-    const sPct = parseFloat(lsRes.value[0].shortAccount) * 100;
+  // ── L/S Ratio ──
+  const lsSources = [];
+  if (all[0].status === 'fulfilled' && all[0].value?.[0]) {
+    const v = parseFloat(all[0].value[0].longAccount);
+    if (!isNaN(v)) lsSources.push({ name: 'Binance', long: v });
+  }
+  if (all[1].status === 'fulfilled' && all[1].value?.data?.[0]) {
+    const d = all[1].value.data[0];
+    const ratio = parseFloat(Array.isArray(d) ? d[1] : d.longShortRatio);
+    if (!isNaN(ratio) && ratio > 0) lsSources.push({ name: 'OKX', long: ratio / (1 + ratio) });
+  }
+  if (all[2].status === 'fulfilled' && all[2].value?.result?.list?.[0]) {
+    const v = parseFloat(all[2].value.result.list[0].buyRatio);
+    if (!isNaN(v)) lsSources.push({ name: 'Bybit', long: v });
+  }
+  const lsSubEl = document.getElementById('mm-ls-sub');
+  if (lsSources.length > 0) {
+    const lPct = lsSources.reduce((s, x) => s + x.long, 0) / lsSources.length * 100;
+    const sPct = 100 - lPct;
     const skew = lPct - sPct;
     const longEl  = document.getElementById('mm-long');
     const shortEl = document.getElementById('mm-short');
@@ -2353,27 +2376,65 @@ async function fetchMarketMetrics() {
       skewEl.textContent = (skew >= 0 ? '+' : '') + skew.toFixed(2) + '% Skew';
       skewEl.style.color = skew >= 0 ? 'var(--bull)' : 'var(--bear)';
     }
+    if (lsSubEl) lsSubEl.textContent = 'BTC · ' + lsSources.map(x => x.name).join(' + ') + ' · Avg';
+  } else {
+    // Show per-source error codes so we can diagnose which API is failing
+    const dbg = [all[0], all[1], all[2]].map((r, i) => {
+      const tag = ['BIN','OKX','BYB'][i];
+      return tag + ':' + (r.status === 'fulfilled' ? 'ok?' : (r.reason?.message || 'err'));
+    }).join(' · ');
+    if (lsSubEl) lsSubEl.textContent = dbg;
   }
 
-  // Open Interest
+  // ── Open Interest — Binance primary, Bybit BTC fallback ──
   let totalOI = 0;
+  const oiArr    = all.slice(3, 8);
+  const priceArr = all.slice(8, 13);
   oiArr.forEach((r, i) => {
     if (r.status !== 'fulfilled' || !r.value) return;
     const pr = priceArr[i];
     const markPx = pr.status === 'fulfilled' ? parseFloat(pr.value?.markPrice || 0) : 0;
     if (markPx > 0) totalOI += parseFloat(r.value.openInterest) * markPx;
   });
-  const oiEl = document.getElementById('mm-oi');
-  if (oiEl && totalOI > 0) oiEl.textContent = fmtMcap(totalOI);
+  const oiEl    = document.getElementById('mm-oi');
+  const oiSubEl = document.getElementById('mm-oi-sub');
+  if (totalOI > 0) {
+    if (oiEl) oiEl.textContent = fmtMcap(totalOI);
+    if (oiSubEl) oiSubEl.textContent = 'Binance Perps · BTC ETH SOL BNB XRP';
+  } else {
+    // Binance Futures unreachable — fall back to Bybit BTC only
+    const bybitOiR  = all[13];
+    const bybitTkR  = all[14];
+    if (bybitOiR.status === 'fulfilled' && bybitTkR.status === 'fulfilled') {
+      const btcOI = parseFloat(bybitOiR.value?.result?.list?.[0]?.openInterest || 0);
+      const btcPx = parseFloat(bybitTkR.value?.result?.list?.[0]?.markPrice || 0);
+      if (btcOI > 0 && btcPx > 0) {
+        if (oiEl) oiEl.textContent = fmtMcap(btcOI * btcPx);
+        if (oiSubEl) oiSubEl.textContent = 'Bybit · BTC only';
+      }
+    }
+  }
 
-  // Liquidations
+  // ── Liquidations — Binance allForceOrders (public endpoint, no auth) ──
+  // Value = executedQty × averagePrice per force order
   let totalLiq = 0;
+  const liqArr = all.slice(15, 20);
   liqArr.forEach(r => {
     if (r.status !== 'fulfilled' || !Array.isArray(r.value)) return;
     r.value.forEach(o => { totalLiq += parseFloat(o.cumQuote || 0); });
   });
-  const liqEl = document.getElementById('mm-liq');
-  if (liqEl && totalLiq > 0) liqEl.textContent = fmtMcap(totalLiq);
+  const liqEl    = document.getElementById('mm-liq');
+  const liqSubEl = document.getElementById('mm-liq-sub');
+  if (liqEl && totalLiq > 0) {
+    liqEl.textContent = fmtMcap(totalLiq);
+    if (liqSubEl) liqSubEl.textContent = 'Binance · BTC ETH SOL BNB XRP';
+  } else {
+    // Show first call's error code so we can diagnose
+    const r0 = liqArr[0];
+    if (liqSubEl) liqSubEl.textContent = r0
+      ? (r0.status === 'fulfilled' ? `ok (${Array.isArray(r0.value) ? r0.value.length : '?'} orders, sum:${totalLiq})` : 'err:' + (r0.reason?.message || '?'))
+      : 'no data';
+  }
 }
 
 async function refreshAll() {
