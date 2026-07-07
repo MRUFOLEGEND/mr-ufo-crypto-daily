@@ -573,7 +573,25 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
   </div>
 
-<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+<!-- ALTSEASON SCORE (compact header widget) -->
+  <div style="flex-shrink:0;min-width:140px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
+    <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:5px">ALTSEASON SCORE</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:9px;color:var(--dim)">BTC</span>
+      <span style="font-size:22px;font-weight:700" id="h-alt-score">—</span>
+      <span style="font-size:9px;color:var(--dim)">ALT</span>
+    </div>
+    <div style="height:7px;background:var(--surface);border-radius:4px;overflow:hidden">
+      <div id="h-alt-bar" style="height:100%;width:0%;background:var(--accent);border-radius:4px;transition:width .6s ease"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:3px">
+      <span style="font-size:8px;color:var(--dim)">0</span>
+      <span style="font-size:8px;color:var(--dim)">50</span>
+      <span style="font-size:8px;color:var(--dim)">100</span>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
     <button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
     <div class="last-upd" id="last-upd">Not loaded</div>
     <div id="api-status" style="font-size:9px;color:var(--dim);text-align:right"></div>
@@ -1758,6 +1776,10 @@ function updateAltseason(btcD, usdtD, total3, total3Chg24h) {
   el('alt-score').style.color=barCol;
   el('alt-bar').style.width=score+'%';
   el('alt-bar').style.background=barCol;
+  el('h-alt-score').textContent=score;
+  el('h-alt-score').style.color=barCol;
+  el('h-alt-bar').style.width=score+'%';
+  el('h-alt-bar').style.background=barCol;
 
   setSignalEl('sig-altseason',sigCls,label);
 
