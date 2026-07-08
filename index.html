@@ -2537,6 +2537,8 @@ function switchTab(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('tab-active'));
   document.getElementById('page-' + name).classList.add('active');
   el.classList.add('tab-active');
+  const brandSub = document.querySelector('.brand-sub');
+  if (brandSub) brandSub.textContent = name === 'coin' ? 'Coin Analysis' : 'Market Bias';
   setCoinSearchStickyTop();
 }
 
