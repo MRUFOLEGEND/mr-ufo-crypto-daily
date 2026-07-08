@@ -227,7 +227,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 @media(max-width:600px){.mm-bar{grid-template-columns:1fr}}
 
 /* ── TABS ─────────────────────────────────────────────── */
-.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 18px;display:flex}
+.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 18px;display:flex;position:sticky;z-index:95}
 .tab{padding:10px 22px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;color:var(--dim);text-transform:uppercase;user-select:none}
 .tab:hover{color:var(--text)}
 .tab-active{color:var(--accent);border-bottom-color:var(--accent)}
@@ -264,6 +264,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .coin-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .clink{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--dim);font-size:10px;font-weight:700;letter-spacing:.5px;text-decoration:none;transition:all .15s;white-space:nowrap}
 .clink:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Compact sizing for sticky identity bar */
+#coin-id-full .coin-logo{width:50px;height:50px}
+#coin-id-full .coin-name{font-size:16px}
+#coin-id-full .coin-sym{font-size:10px}
+#coin-id-full .coin-rank-badge{font-size:9px;padding:1px 6px}
 
 /* ── MARKET DATA GRID ─────────────────────────────────── */
 .mdata-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -2297,7 +2303,7 @@ function _render4HOutlook(sym, tf4h, tf1d, tf1w, tf1h, textEl, levelsEl) {
   paras.push(score4h >= 3 ? bullMsg : score4h >= 1 ? slBullMsg : score4h <= -3 ? bearMsg : score4h <= -1 ? slBearMsg : neutMsg);
 
   textEl.className = '';
-  textEl.innerHTML = paras.map(t => `<p style="margin-bottom:13px;line-height:1.85;font-size:12px;color:var(--dim)">${t}</p>`).join('');
+  textEl.innerHTML = paras.map(t => `<p style="margin-bottom:13px;line-height:1.85;font-size:12px;color:var(--text)">${t}</p>`).join('');
 
   if (!levelsEl) return;
   const rows = [
@@ -2543,9 +2549,13 @@ function switchTab(name, el) {
 }
 
 function setCoinSearchStickyTop() {
-  const brand = document.querySelector('.brand-sticky');
-  const sz    = document.getElementById('coin-sticky-zone');
-  if (brand && sz) sz.style.top = brand.offsetHeight + 'px';
+  const brand  = document.querySelector('.brand-sticky');
+  const tabBar = document.querySelector('.tab-bar');
+  const sz     = document.getElementById('coin-sticky-zone');
+  if (!brand) return;
+  const brandH = brand.offsetHeight;
+  if (tabBar) tabBar.style.top = brandH + 'px';
+  if (sz) sz.style.top = (brandH + (tabBar ? tabBar.offsetHeight : 0)) + 'px';
 }
 window.addEventListener('resize', setCoinSearchStickyTop);
 setTimeout(setCoinSearchStickyTop, 200);
@@ -2554,15 +2564,13 @@ setTimeout(setCoinSearchStickyTop, 200);
 let _lastScrollY = 0;
 let _lastCoinSym = '';
 window.addEventListener('scroll', () => {
-  // On mobile the virtual keyboard triggers scroll events — never hide the search bar
-  if (window.innerWidth <= 768) return;
   const page = document.getElementById('page-coin');
   if (!page || !page.classList.contains('active')) return;
   const bar = document.getElementById('coin-search-bar');
   if (!bar) return;
   const y = window.scrollY;
-  if (y > _lastScrollY && y > 80) bar.classList.add('search-hidden');
-  else bar.classList.remove('search-hidden');
+  if (y > _lastScrollY && y > 100) bar.classList.add('search-hidden');
+  else if (y < _lastScrollY) bar.classList.remove('search-hidden');
   _lastScrollY = y;
 }, {passive:true});
 
