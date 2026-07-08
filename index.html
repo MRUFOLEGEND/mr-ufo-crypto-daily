@@ -2541,10 +2541,9 @@ function switchTab(name, el) {
 }
 
 function setCoinSearchStickyTop() {
-  const hdr = document.querySelector('header');
-  const tb  = document.querySelector('.tab-bar');
-  const sz  = document.getElementById('coin-sticky-zone');
-  if (hdr && tb && sz) sz.style.top = (hdr.offsetHeight + tb.offsetHeight) + 'px';
+  const brand = document.querySelector('.brand-sticky');
+  const sz    = document.getElementById('coin-sticky-zone');
+  if (brand && sz) sz.style.top = brand.offsetHeight + 'px';
 }
 window.addEventListener('resize', setCoinSearchStickyTop);
 setTimeout(setCoinSearchStickyTop, 200);
