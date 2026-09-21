@@ -259,7 +259,7 @@ let equity = 10000;
 const points = [{ label: 'Start', equity: 10000, status: null, date: new Date(trades[0].iso) }];
 trades.forEach(t => {
   equity += equity * 0.01 * t.R;
-  points.push({ label: t.sym.replace(' #1','â‚').replace(' #2','â‚‚'), equity, status: t.status, date: new Date(t.iso) });
+  points.push({ label: t.sym.replace(' #1','₁').replace(' #2','₂'), equity, status: t.status, date: new Date(t.iso) });
 });
 
 const svg = document.getElementById('curveChart');
@@ -375,11 +375,11 @@ function renderBars(mode) {
 }
 
 const chartMeta = {
-  overall: { title: 'Account Equity â€” If Every Call Was Taken', desc: '$10,000 start, risking 1% of current equity per trade, compounded sequentially in call order.' },
-  day: { title: 'Account Growth â€” Per Day', desc: 'Percent change in equity for each calendar day a call was made (or held).' },
-  week: { title: 'Account Growth â€” Per Week', desc: 'Percent change in equity for each calendar week (Monâ€“Sun).' },
-  month: { title: 'Account Growth â€” Per Month', desc: 'Percent change in equity for each calendar month.' },
-  year: { title: 'Account Growth â€” Per Year', desc: 'Percent change in equity for each calendar year.' },
+  overall: { title: 'Account Equity — If Every Call Was Taken', desc: '$10,000 start, risking 1% of current equity per trade, compounded sequentially in call order.' },
+  day: { title: 'Account Growth — Per Day', desc: 'Percent change in equity for each calendar day a call was made (or held).' },
+  week: { title: 'Account Growth — Per Week', desc: 'Percent change in equity for each calendar week (Mon–Sun).' },
+  month: { title: 'Account Growth — Per Month', desc: 'Percent change in equity for each calendar month.' },
+  year: { title: 'Account Growth — Per Year', desc: 'Percent change in equity for each calendar year.' },
 };
 
 function renderChart(mode) {
@@ -396,7 +396,7 @@ function renderChart(mode) {
     legend.style.display = 'none';
     if (n <= 2) {
       note.style.display = 'block';
-      note.textContent = `Only ${n} ${mode}${n === 1 ? '' : 's'} of calls tracked so far â€” this view fills in as more trading days accumulate.`;
+      note.textContent = `Only ${n} ${mode}${n === 1 ? '' : 's'} of calls tracked so far — this view fills in as more trading days accumulate.`;
     } else {
       note.style.display = 'none';
     }
