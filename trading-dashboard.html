@@ -332,7 +332,9 @@ function renderOverall() {
 
   points.forEach((p, i) => {
     const cls = p.status === 'loss' ? 'loss' : '';
-    html += `<circle class="curve-dot ${cls}" cx="${x(i)}" cy="${y(p.equity)}" r="4.5"/>`;
+    const tip = `${p.label}${i === 0 ? '' : ' (' + p.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ')'}\nEquity: $${p.equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    html += `<circle class="curve-dot ${cls}" cx="${x(i)}" cy="${y(p.equity)}" r="4.5"><title>${tip}</title></circle>`;
+    html += `<circle cx="${x(i)}" cy="${y(p.equity)}" r="11" fill="transparent" style="cursor:pointer"><title>${tip}</title></circle>`;
     html += `<text x="${x(i)}" y="${H - 12}" text-anchor="middle" style="font-size:9px;">${p.label}</text>`;
   });
   const last = points[points.length - 1];
