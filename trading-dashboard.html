@@ -63,6 +63,9 @@
   .tile .value.glow{ color:var(--accent); text-shadow:0 0 18px var(--accent-glow); }
   .tile .unit{ font-size:1rem; color:var(--text-3); font-weight:500; }
   .tile .sub{ font-size:0.78rem; color:var(--text-2); margin-top:8px; }
+  .tile.hero{ grid-column:1/-1; padding:22px 24px; }
+  .tile.hero .value{ font-size:3.4rem; letter-spacing:-0.01em; }
+  .tile.hero .sub{ font-size:0.86rem; }
 
   .panel{
     background:linear-gradient(180deg, var(--surface) 0%, var(--bg-2) 130%);
@@ -133,6 +136,24 @@
     tbody td::before{ content:attr(data-label); font-size:0.68rem; text-transform:uppercase; color:var(--text-3); letter-spacing:0.04em; }
     .r-cell{ width:auto; flex:1; }
   }
+  @media (max-width:600px){
+    body{ padding-inline:14px; padding-block:24px 50px; }
+    header{ margin-bottom:20px; }
+    .kicker{ font-size:1.05rem; gap:10px; }
+    .kicker .badge-icon{ width:44px; height:44px; }
+    h1{ font-size:1.55rem; }
+    .period{ text-align:left; }
+    .tiles{ gap:10px; margin-bottom:16px; }
+    .tile{ padding:14px 14px; }
+    .tile .value{ font-size:1.45rem; }
+    .tile.hero{ padding:18px 16px; }
+    .tile.hero .value{ font-size:2.8rem; }
+    .panel{ padding:16px; }
+    .tabs{ width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .tabs{ gap:2px; padding:3px; }
+    .tab{ flex:1 1 auto; padding:8px 6px; font-size:0.68rem; }
+    .legend{ gap:12px; }
+  }
 </style>
 
 <div class="wrap">
@@ -146,6 +167,11 @@
   </header>
 
   <div class="tiles">
+    <div class="tile good hero">
+      <div class="label">Account Equity</div>
+      <div class="value glow" id="heroEquity">$10,857</div>
+      <div class="sub" id="heroSub">+8.6% from $10,000 start</div>
+    </div>
     <div class="tile">
       <div class="label">Win Rate</div>
       <div class="value">31.3<span class="unit">%</span></div>
@@ -263,8 +289,23 @@ trades.forEach(t => {
 });
 
 const svg = document.getElementById('curveChart');
-const W = 1100, H = 340, padL = 66, padR = 20, padT = 24, padB = 40;
-const plotW = W - padL - padR, plotH = H - padT - padB;
+let W, H, padL, padR, padT, padB, plotW, plotH, compact;
+function setDims() {
+  compact = window.innerWidth < 600;
+  if (compact) { W = 380; H = 300; padL = 54; padR = 14; padT = 24; padB = 34; }
+  else { W = 1100; H = 340; padL = 66; padR = 20; padT = 24; padB = 40; }
+  plotW = W - padL - padR; plotH = H - padT - padB;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+}
+setDims();
+
+// ---- hero equity tile (always in sync with the curve) ----
+(function () {
+  const end = points[points.length - 1].equity;
+  const pct = (end - 10000) / 10000 * 100;
+  document.getElementById('heroEquity').textContent = '$' + Math.round(end).toLocaleString('en-US');
+  document.getElementById('heroSub').textContent = `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}% from $10,000 start · ${trades.length} calls`;
+})();
 
 // ---- period bucketing: returns [{label, startEq, endEq, pct}] ----
 function isoWeekKey(d) {
@@ -335,10 +376,11 @@ function renderOverall() {
     const tip = `${p.label}${i === 0 ? '' : ' (' + p.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ')'}\nEquity: $${p.equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     html += `<circle class="curve-dot ${cls}" cx="${x(i)}" cy="${y(p.equity)}" r="4.5"><title>${tip}</title></circle>`;
     html += `<circle cx="${x(i)}" cy="${y(p.equity)}" r="11" fill="transparent" style="cursor:pointer"><title>${tip}</title></circle>`;
-    html += `<text x="${x(i)}" y="${H - 12}" text-anchor="middle" style="font-size:9px;">${p.label}</text>`;
+    const step = compact ? Math.ceil(points.length / 5) : 1;
+    if (i % step === 0) html += `<text x="${x(i)}" y="${H - 12}" text-anchor="middle" style="font-size:9px;">${p.label}</text>`;
   });
   const last = points[points.length - 1];
-  html += `<text x="${x(points.length - 1) - 8}" y="${y(last.equity) - 14}" text-anchor="end" style="font-size:13px;font-weight:700;fill:#3FFFA0;">$${Math.round(last.equity).toLocaleString()}</text>`;
+  html += `<text x="${x(points.length - 1) - 8}" y="${y(last.equity) - (compact ? 22 : 14)}" text-anchor="end" style="font-size:13px;font-weight:700;fill:#3FFFA0;">$${Math.round(last.equity).toLocaleString()}</text>`;
   svg.innerHTML = html;
 }
 
@@ -414,4 +456,13 @@ document.querySelectorAll('#periodTabs .tab').forEach(btn => {
 });
 
 renderChart('overall');
+
+let wasCompact = compact;
+window.addEventListener('resize', () => {
+  const c = window.innerWidth < 600;
+  if (c === wasCompact) return;
+  wasCompact = c;
+  setDims();
+  renderChart(document.querySelector('#periodTabs .tab.active').dataset.mode);
+});
 </script>
