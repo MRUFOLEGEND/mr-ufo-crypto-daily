@@ -106,17 +106,21 @@ b.bull{color:var(--bull)}b.bear{color:var(--bear)}b.neutral{color:var(--neutral)
 .why{font-size:14.5px;color:var(--dim)}
 .note{background:var(--surface2);border-left:3px solid var(--neutral);padding:10px 13px;border-radius:0 4px 4px 0;font-size:14.5px;color:var(--text);line-height:1.6}
 
-/* checklist */
-.check label{display:grid;grid-template-columns:26px 120px 1fr;gap:12px;align-items:start;padding:12px 15px;border-bottom:1px solid var(--border);cursor:pointer;font-size:14.5px}
-.check label:hover{background:rgba(255,255,255,.02)}
-.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)}
-.check .k{font-weight:700;color:var(--white);text-transform:uppercase;letter-spacing:1px}
-.check .d{color:var(--dim)}
-.verdict{padding:14px 15px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+/* auto checklist */
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:13px 15px;border-bottom:1px solid var(--border)}
+.chip{min-height:44px;min-width:64px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font:700 14px var(--mono);letter-spacing:1px;cursor:pointer;padding:0 12px}
+.chip[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 10px rgba(78,127,255,.35);color:var(--white)}
+.crow{display:grid;grid-template-columns:34px 120px 1fr;gap:12px;align-items:start;padding:12px 15px;border-bottom:1px solid var(--border);font-size:14.5px}
+.mark{width:26px;height:26px;border-radius:5px;display:grid;place-items:center;font-size:15px;font-weight:700;border:1px solid}
+.mark.ok{color:var(--bull);background:var(--bull-bg);border-color:var(--bull)}
+.mark.wait{color:var(--neutral);background:var(--neutral-bg);border-color:var(--neutral)}
+.mark.no{color:var(--bear);background:var(--bear-bg);border-color:var(--bear)}
+.crow .k{font-weight:700;color:var(--white);text-transform:uppercase;letter-spacing:1px}
+.crow .d{color:var(--dim)}
+.verdict{padding:14px 15px;display:grid;gap:6px}
 .verdict .v{font-size:19px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
-button{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 16px;min-height:44px;border-radius:4px;font:700 13px var(--mono);letter-spacing:1px;cursor:pointer;text-transform:uppercase}
-button:hover{border-color:var(--accent)}
-@media (max-width:600px){.check label{grid-template-columns:26px 1fr;gap:4px 10px}.check .d{grid-column:2}}
+.verdict .a{font-size:14.5px;color:var(--text)}
+@media (max-width:600px){.crow{grid-template-columns:34px 1fr;gap:4px 10px}.crow .d{grid-column:2}}
 footer{font-size:13px;color:var(--dim);line-height:1.7}
 </style>
 </head>
@@ -266,17 +270,10 @@ footer{font-size:13px;color:var(--dim);line-height:1.7}
   </div>
 
   <div class="card check" id="check">
-    <div class="card-hdr"><span class="card-title">Pre-trade checklist</span><span class="card-hint">saved on this device</span></div>
-    <label><input type="checkbox" id="c0"><span class="k">QQQ</span><span class="d">Daily 8 over 21 and no daily close back inside the old range (under ~715).</span></label>
-    <label><input type="checkbox" id="c1"><span class="k">BTC</span><span class="d">Daily 8 over 21 and no 4H close below 82.5k. For 1% size, BTC has also broken out of its 4H range.</span></label>
-    <label><input type="checkbox" id="c2"><span class="k">Narrative</span><span class="d">The coin's narrative is in the top group on 20-day strength against BTC.</span></label>
-    <label><input type="checkbox" id="c3"><span class="k">Leader</span><span class="d">Top 1–3 in that narrative, daily 8 over 21, perp turnover at least $10M a day.</span></label>
-    <label><input type="checkbox" id="c4"><span class="k">Level</span><span class="d">I marked the level before entering.</span></label>
-    <label><input type="checkbox" id="c5"><span class="k">Break</span><span class="d">A candle closed through the level on volume above average, after a grind rather than one spike.</span></label>
-    <label><input type="checkbox" id="c6"><span class="k">Retest</span><span class="d">Price came back, held the level, and printed a rejection candle.</span></label>
-    <label><input type="checkbox" id="c7"><span class="k">8/21</span><span class="d">The entry is in the direction of the daily 8/21.</span></label>
-    <label><input type="checkbox" id="c8"><span class="k">Risk</span><span class="d">Stop below the retest low minus 0.5 ATR, T1 at least 2R away, size taken from the matrix above.</span></label>
-    <div class="verdict"><span class="v" id="verdict">0 / 9 · No trade</span><button type="button" id="reset">Clear</button></div>
+    <div class="card-hdr"><span class="card-title">Pre-trade checklist · auto-filled</span><span class="card-hint">✓ pass · ⏳ waiting · ✗ fail</span></div>
+    <div class="chips" id="chips" role="group" aria-label="Pick a trade"></div>
+    <div id="crows"></div>
+    <div class="verdict"><span class="v" id="verdict"></span><span class="a" id="action"></span></div>
   </div>
 
   <footer>
@@ -327,13 +324,40 @@ footer{font-size:13px;color:var(--dim);line-height:1.7}
       '<div class="rr"><span>T1 <b>'+t.r1+'</b></span><span>T2 <b>'+t.r2+'</b> stretch</span></div>'+
       '<p class="why">'+t.w+'</p></div></div>';}).join('');
 
-  var boxes=[].slice.call(document.querySelectorAll('#check input')),K='cd-playbook-check-v2',N=boxes.length;
-  try{var sv=JSON.parse(localStorage.getItem(K)||'[]');boxes.forEach(function(b,i){b.checked=!!sv[i];});}catch(e){}
-  function upd(){var n=boxes.filter(function(b){return b.checked;}).length,v=document.getElementById('verdict');
-    v.textContent=n+' / '+N+' · '+(n===N?'Trade allowed':'No trade');v.style.color=n===N?'var(--bull)':(n>=N-2?'var(--neutral)':'var(--text)');
-    try{localStorage.setItem(K,JSON.stringify(boxes.map(function(b){return b.checked;})));}catch(e){}}
-  boxes.forEach(function(b){b.addEventListener('change',upd);});
-  document.getElementById('reset').addEventListener('click',function(){boxes.forEach(function(b){b.checked=false;});upd();});upd();
+  // auto checklist: scored from the snapshot data, per trade
+  var ITEMS=["QQQ","BTC","Narrative","Leader","Level","Break","Retest","8/21","Risk"];
+  var common={
+    QQQ:["ok","Daily 8 (735.1) over 21 (725.8), close 736.5, well above the 715 fail line."],
+    BTC:["ok","Daily 8 over 21 and no 4H close below 82.5k. The 4H is still ranging, so size is 0.5%, not 1%."],
+    "8/21":["ok","Daily 8 EMA is over the 21 EMA. The long is with the trend."]
+  };
+  var per={
+    SUI:{Narrative:["ok","L1s are a leading narrative."],Leader:["ok","Up 45% in 20 days, $284M/day on the perp."],Level:["ok","1.08 range high, marked."],Break:["ok","Daily close through 1.08 on 25 Sep."],Retest:["wait","Price is 1.14. Waiting for the dip to 1.10."],Risk:["ok","Stop 1.04, T1 1.295 = 3.3R."]},
+    ONDO:{Narrative:["ok","RWA is a leading narrative."],Leader:["ok","Leads RWA, $139M/day on the perp."],Level:["ok","0.464 range high / 0.49–0.53 shelf, marked."],Break:["ok","Daily close through 0.464 on 24 Sep."],Retest:["wait","Price is 0.519. Waiting for 0.505."],Risk:["ok","Stop 0.466, T1 0.609 = 2.7R."]},
+    ETH:{Narrative:["ok","Major, beating BTC on the week."],Leader:["ok","Daily 8 over 21, $7.7B/day on the perp."],Level:["ok","4H EMAs ~2,685 and range low 2,626, marked."],Break:["ok","Setup B needs no fresh break. The daily trend is the trigger."],Retest:["wait","Price is 2,710. Waiting for the dip to 2,670 and a 4H close back over the 8 EMA."],Risk:["ok","Stop 2,608, T1 2,807 = 2.2R."]},
+    LINK:{Narrative:["ok","RWA / oracle, leading narrative."],Leader:["ok","Up 26% in 20 days, broke on 2× volume, $231M/day."],Level:["ok","Old high 14.49, marked."],Break:["ok","Daily close through 14.49 on 28 Sep."],Retest:["wait","Price is 15.16. Waiting for 14.55."],Risk:["ok","Stop 13.95, T1 15.77 = 2.0R."]},
+    ENA:{Narrative:["ok","DeFi, leading narrative."],Leader:["ok","Up 62% in 20 days, $95M/day."],Level:["ok","0.231 shelf, marked."],Break:["ok","Daily close through 0.231 on 25 Sep."],Retest:["wait","Price is 0.251. Waiting for 0.232, which is 7% away and may not fill."],Risk:["ok","Stop 0.215, T1 0.295 = 3.7R."]},
+    BTC:{Narrative:["ok","BTC is the market itself."],Leader:["ok","$6.1B/day on the perp."],Level:["ok","81.9k old range top + daily 21 EMA 81.6k."],Break:["ok","Daily close through 81.9k on 21 Sep."],Retest:["wait","Price is 83,819. Waiting for 82,300."],Risk:["no","T1 85,200 is only 1.7R. Size for T2 (3.0R) or skip."]},
+    AVAX:{Narrative:["ok","L1s are a leading narrative."],Leader:["ok","Up 44% in 20 days, $87M/day."],Level:["ok","11.80 range top, marked."],Break:["no","No daily close above 11.80 yet. No break means no trade."],Retest:["wait","Comes after the break."],Risk:["ok","Planned: stop 11.10, T1 12.90 = 2.0R."]},
+    AAVE:{Narrative:["ok","DeFi, leading narrative."],Leader:["ok","Up 29% in 20 days, $90M/day."],Level:["ok","157.3 range high, marked."],Break:["no","Broke on one +11% 4H spike, not a grind. Counts as a spike."],Retest:["wait","Only if price returns to 157–158 on falling volume."],Risk:["no","T1 167.9 is only 1.5R."]}
+  };
+  var next={AVAX:"Set an alert at 11.80.",BTC:"Only take it if you size for T2.",AAVE:"Skip unless it comes back to 157–158 on falling volume."};
+  var order=trades.map(function(t){return t.s;});
+  var chips=document.getElementById('chips');
+  chips.innerHTML=order.map(function(c){return '<button type="button" class="chip" data-c="'+c+'" aria-pressed="false">'+c+'</button>';}).join('');
+  function render(c){
+    [].forEach.call(chips.children,function(b){b.setAttribute('aria-pressed',b.dataset.c===c?'true':'false');});
+    var t=trades.filter(function(x){return x.s===c;})[0],sym={ok:'✓',wait:'⏳',no:'✗'},lbl={ok:'pass',wait:'waiting',no:'fail'};
+    var res=ITEMS.map(function(k){return common[k]||per[c][k];});
+    document.getElementById('crows').innerHTML=ITEMS.map(function(k,i){var r=res[i];return '<div class="crow"><span class="mark '+r[0]+'" role="img" aria-label="'+lbl[r[0]]+'">'+sym[r[0]]+'</span><span class="k">'+k+'</span><span class="d">'+r[1]+'</span></div>';}).join('');
+    var ok=res.filter(function(r){return r[0]==='ok';}).length,fails=ITEMS.filter(function(k,i){return res[i][0]==='no';});
+    var v=document.getElementById('verdict'),a=document.getElementById('action');
+    if(fails.length){v.textContent=ok+' / 9 · No trade';v.style.color='var(--bear)';a.textContent='Fails on '+fails.join(', ')+'. '+(next[c]||'');}
+    else if(ok<9){v.textContent=ok+' / 9 · Waiting for retest';v.style.color='var(--neutral)';a.textContent='Place a limit order at '+t.e+', stop '+t.sl+', T1 '+t.t1+'. Cancel it if BTC closes a 4H candle below 82,500.';}
+    else{v.textContent='9 / 9 · Trade allowed';v.style.color='var(--bull)';a.textContent='';}
+  }
+  chips.addEventListener('click',function(e){var b=e.target.closest('.chip');if(b)render(b.dataset.c);});
+  render(order[0]);
 })();
 </script>
 
