@@ -1,0 +1,546 @@
+<!doctype html>
+<title>Paper Trading</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#1B1C1E; --surface:#232427; --surface-2:#2B2C30; --surface-3:#333438; --border:#3A3C41; --border-soft:#2E3033;
+    --text:#EEEFF1; --text-2:#A2A4AA; --text-3:#6D6F75; --accent:#3FFFA0; --accent-glow:#3FFFA066; --bad:#FF5E72; --bad-glow:#FF5E7255; --neutral:#8B8F9A; color-scheme:dark; }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:"IBM Plex Sans",system-ui,sans-serif; padding:32px 20px 70px; }
+  .wrap{ max-width:1080px; margin:0 auto; }
+  .mono{ font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums; }
+  h1{ font-size:1.7rem; font-weight:800; margin:0 0 4px; }
+  .subtitle{ color:var(--text-2); font-size:0.9rem; margin:0 0 20px; }
+  .tabs{ display:flex; gap:4px; background:var(--surface-3); border-radius:10px; padding:4px; margin-bottom:22px; flex-wrap:wrap; width:fit-content; max-width:100%; }
+  .tab{ border:0; background:transparent; color:var(--text-2); font:600 0.85rem "IBM Plex Sans",sans-serif; padding:8px 16px; border-radius:7px; cursor:pointer; }
+  .tab:hover{ color:var(--text); }
+  .tab.active{ background:var(--accent); color:#0E1210; box-shadow:0 0 14px var(--accent-glow); }
+  .tab small{ font-family:"IBM Plex Mono",monospace; font-weight:500; margin-left:6px; opacity:.85; }
+  .tiles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-bottom:22px; }
+  .tile{ background:linear-gradient(180deg,var(--surface),var(--surface-2)); border:1px solid var(--border-soft); border-radius:12px; padding:16px 18px; border-top:2px solid var(--neutral); }
+  .tile.good{ border-top-color:var(--accent); box-shadow:0 0 20px -8px var(--accent-glow); }
+  .tile.bad{ border-top-color:var(--bad); box-shadow:0 0 20px -8px var(--bad-glow); }
+  .tile-label{ font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-3); margin-bottom:6px; }
+  .tile-value{ font-size:1.4rem; font-weight:700; font-family:"IBM Plex Mono",monospace; }
+  .tile-sub{ font-size:0.78rem; color:var(--text-2); margin-top:4px; line-height:1.4; }
+  .good{ color:var(--accent); } .bad{ color:var(--bad); }
+  section{ background:var(--surface); border:1px solid var(--border-soft); border-radius:14px; padding:22px; margin-bottom:20px; }
+  h2{ font-size:0.95rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-2); margin:0 0 16px; }
+  svg{ width:100%; height:240px; display:block; overflow:visible; }
+  .dot{ cursor:pointer; } .dot:hover{ r:6; }
+  table{ width:100%; border-collapse:collapse; font-size:0.86rem; }
+  thead th{ text-align:left; font-size:0.7rem; text-transform:uppercase; color:var(--text-3); padding-bottom:8px; border-bottom:1px solid var(--border-soft); }
+  tbody td{ padding:10px 8px; border-bottom:1px solid var(--border-soft); }
+  .refs{ margin:0; padding-left:18px; color:var(--text-2); font-size:0.84rem; line-height:1.6; }
+  .note{ color:var(--text-3); font-size:0.8rem; margin-top:10px; }
+  footer{ color:var(--text-3); font-size:0.78rem; margin-top:24px; text-align:center; }
+  .head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px 20px; flex-wrap:wrap; }
+  .head > div{ min-width:0; }
+  .refresh{ display:inline-flex; align-items:center; gap:8px; background:transparent; color:var(--accent); border:1px solid var(--accent); border-radius:8px;
+    font:600 0.85rem "IBM Plex Sans",sans-serif; padding:9px 16px; cursor:pointer; }
+  .refresh:hover:not(:disabled){ background:var(--accent); color:#0E1210; box-shadow:0 0 14px var(--accent-glow); }
+  .refresh:disabled{ opacity:.55; cursor:not-allowed; }
+  .refresh:focus-visible, .tab:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .live{ color:var(--text-3); font-size:0.8rem; margin:6px 0 20px; line-height:1.5; }
+  .live a{ color:var(--accent); }
+  .live.ok{ color:var(--accent); } .live.err{ color:var(--bad); }
+  @media (max-width:640px){ h1{font-size:1.35rem;} .tab{padding:7px 11px;} }
+</style>
+<div class="wrap">
+  <div class="head">
+    <div><h1>Paper Trading — VWAP 2-Band · nWPOC · Donchian · Trend Basket</h1>
+    <p class="subtitle" id="sub"></p></div>
+    <button class="refresh" id="refresh" type="button">↻ Refresh</button>
+  </div>
+  <p class="live" id="live" aria-live="polite"></p>
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div id="view"></div>
+  <footer>Deterministic forward test on real OKX perpetual candles (VWAP 2-Band v4 on BTC/ETH/XRP + Swing Lab S13 Naked Weekly POC Magnet on ETH 15m: 100% equity, 0.05%/side; BTC Donchian 4H: 1% risk/trade, 0.08%/side; Trend Basket 4H: 10 coins, volatility-sized, 0.10%/side) — no LLM involved. Regenerated by <span class="mono">vwap_2band_paper.js</span> on a schedule.</footer>
+</div>
+<script>
+const DATA = {"updatedAt":1791451018723,"startCapital":10000,"accounts":[{"id":"1h","label":"BTC 1h","inst":"BTC-USDT-SWAP","bar":"1H","htf":null,"ref":["TradingView (verified, Jan 2025–Sep 2026): +46.70%, PF 1.234, max DD 11.18%, 278 trades, 45.3% wins","OKX engine, same window: +68.07%, PF 1.402, max DD 16.10%, 156 trades (engine runs optimistic vs TradingView)"],"startTs":1790076055260,"equity":9835.01,"maxDD":0.030904000000000088,"openPosition":{"dir":"short","entryTime":1791334800000,"entry":84330.1,"stop":85861.59373395228,"tp":81267.11253209546,"current":82858.5,"unrealizedR":0.96,"unrealizedDollar":171.63},"wins":1,"nTrades":4,"adx":49.424424844097146,"regime":"TRENDING","trendState":null,"wideEnough":true,"vwap":82795.47766380115,"upperBand":83339.40946088958,"lowerBand":82251.54586671272,"lastPrice":82858.5,"lastBarTime":1791450000000,"trades":[{"dir":"short","entryTime":1790337600000,"exitTime":1790773200000,"entry":84431.3,"stop":85628.28477130328,"tp":82037.33045739344,"exit":85628.28477130328,"R":-1,"pnlDollar":-151.91,"equityAfter":9848.09,"status":"Stopped"},{"dir":"short","entryTime":1790877600000,"exitTime":1790913600000,"entry":84761.4,"stop":85629.02667172144,"tp":83026.1466565571,"exit":85629.02667172144,"R":-1,"pnlDollar":-110.75,"equityAfter":9737.33,"status":"Stopped"},{"dir":"short","entryTime":1791036000000,"exitTime":1791100800000,"entry":84821.3,"stop":85140.09846850674,"tp":84183.70306298653,"exit":85140.09846850674,"R":-1,"pnlDollar":-46.37,"equityAfter":9690.96,"status":"Stopped"},{"dir":"long","entryTime":1791216000000,"exitTime":1791298800000,"entry":85270.1,"stop":84593.05549744856,"tp":86624.1890051029,"exit":86624.1890051029,"R":2,"pnlDollar":144.05,"equityAfter":9835.01,"status":"Target hit"}],"curve":[{"t":1790076055260,"label":"Start","equity":10000},{"t":1790773200000,"label":"Short stopped","equity":9848.09,"R":-1},{"t":1790913600000,"label":"Short stopped","equity":9737.33,"R":-1},{"t":1791100800000,"label":"Short stopped","equity":9690.96,"R":-1},{"t":1791298800000,"label":"Long target","equity":9835.01,"R":2}]},{"id":"30m","label":"BTC 30m","inst":"BTC-USDT-SWAP","bar":"30m","htf":null,"ref":["TradingView (Jan–Sep 2026): +22.92%, PF 1.212, max DD 14.96%, 200 trades","OKX engine, same window: −19.54%, PF 0.799, max DD 35.48% — the two sources disagree on the sign; unresolved"],"startTs":1790335547027,"equity":9851.49,"maxDD":0.028817000000000006,"openPosition":null,"wins":2,"nTrades":6,"adx":40.83160721627973,"regime":"TRENDING","trendState":null,"wideEnough":true,"vwap":82832.46997176886,"upperBand":83336.97347904851,"lowerBand":82327.96646448922,"lastPrice":82833.1,"lastBarTime":1791450000000,"trades":[{"dir":"long","entryTime":1790346600000,"exitTime":1790573400000,"entry":83976.8,"stop":82789.52873570294,"tp":86351.34252859412,"exit":82789.52873570294,"R":-1,"pnlDollar":-151.52,"equityAfter":9848.48,"status":"Stopped"},{"dir":"short","entryTime":1790643600000,"exitTime":1790661600000,"entry":82780.7,"stop":83845.47887294345,"tp":80651.14225411309,"exit":83845.47887294345,"R":-1,"pnlDollar":-136.65,"equityAfter":9711.83,"status":"Stopped"},{"dir":"long","entryTime":1790751600000,"exitTime":1790771400000,"entry":83277.8,"stop":82728.9979661087,"tp":84375.40406778261,"exit":84375.40406778261,"R":2,"pnlDollar":118.16,"equityAfter":9829.99,"status":"Target hit"},{"dir":"short","entryTime":1790875800000,"exitTime":1790910000000,"entry":84859.6,"stop":85344.82630998683,"tp":83889.14738002635,"exit":85344.82630998683,"R":-1,"pnlDollar":-66.09,"equityAfter":9763.89,"status":"Stopped"},{"dir":"short","entryTime":1791036000000,"exitTime":1791093600000,"entry":84789.1,"stop":85039.36148290761,"tp":84288.5770341848,"exit":85039.36148290761,"R":-1,"pnlDollar":-38.61,"equityAfter":9725.28,"status":"Stopped"},{"dir":"long","entryTime":1791217800000,"exitTime":1791297000000,"entry":85270.1,"stop":84673.59093119219,"tp":86463.11813761565,"exit":86463.11813761565,"R":2,"pnlDollar":126.21,"equityAfter":9851.49,"status":"Target hit"}],"curve":[{"t":1790335547027,"label":"Start","equity":10000},{"t":1790573400000,"label":"Long stopped","equity":9848.48,"R":-1},{"t":1790661600000,"label":"Short stopped","equity":9711.83,"R":-1},{"t":1790771400000,"label":"Long target","equity":9829.99,"R":2},{"t":1790910000000,"label":"Short stopped","equity":9763.89,"R":-1},{"t":1791093600000,"label":"Short stopped","equity":9725.28,"R":-1},{"t":1791297000000,"label":"Long target","equity":9851.49,"R":2}]},{"id":"15m","label":"BTC 15m","inst":"BTC-USDT-SWAP","bar":"15m","htf":null,"ref":["TradingView (Jun–Sep 2026): −8.36%, PF 0.801, 124 trades","OKX engine (Nov 2025–Sep 2026): −15.25%, PF 0.870, 273 trades — loses money at 15m without a filter"],"startTs":1790335547027,"equity":9437.71,"maxDD":0.056229000000000084,"openPosition":null,"wins":2,"nTrades":14,"adx":25.61175940303195,"regime":"TRENDING","trendState":null,"wideEnough":true,"vwap":82830.15004278673,"upperBand":83356.58614769828,"lowerBand":82303.71393787517,"lastPrice":82786.8,"lastBarTime":1791450900000,"trades":[{"dir":"short","entryTime":1790412300000,"exitTime":1790460000000,"entry":84164.2,"stop":84368.83399889526,"tp":83754.93200220946,"exit":84368.83399889526,"R":-1,"pnlDollar":-34.34,"equityAfter":9965.66,"status":"Stopped"},{"dir":"short","entryTime":1790461800000,"exitTime":1790464500000,"entry":84226.3,"stop":84386.66195127177,"tp":83905.57609745646,"exit":84386.66195127177,"R":-1,"pnlDollar":-28.96,"equityAfter":9936.7,"status":"Stopped"},{"dir":"short","entryTime":1790465400000,"exitTime":1790473500000,"entry":84314,"stop":84490.3696946656,"tp":83961.2606106688,"exit":84490.3696946656,"R":-1,"pnlDollar":-30.74,"equityAfter":9905.96,"status":"Stopped"},{"dir":"long","entryTime":1790550000000,"exitTime":1790554500000,"entry":84180.1,"stop":83951.18817653821,"tp":84637.92364692359,"exit":84637.92364692359,"R":2,"pnlDollar":43.91,"equityAfter":9949.87,"status":"Target hit"},{"dir":"long","entryTime":1790554500000,"exitTime":1790555400000,"entry":84751,"stop":84176.47801605433,"tp":85900.04396789134,"exit":84176.47801605433,"R":-1,"pnlDollar":-77.47,"equityAfter":9872.41,"status":"Stopped"},{"dir":"short","entryTime":1790555400000,"exitTime":1790772300000,"entry":84265,"stop":85154.69005652098,"tp":82485.61988695804,"exit":85154.69005652098,"R":-1,"pnlDollar":-114.21,"equityAfter":9758.2,"status":"Stopped"},{"dir":"short","entryTime":1790828100000,"exitTime":1790829900000,"entry":83830,"stop":84037.51064116214,"tp":83414.97871767572,"exit":84037.51064116214,"R":-1,"pnlDollar":-33.94,"equityAfter":9724.26,"status":"Stopped"},{"dir":"short","entryTime":1790873100000,"exitTime":1790874900000,"entry":84168.9,"stop":84810.83177005302,"tp":82885.03645989395,"exit":84810.83177005302,"R":-1,"pnlDollar":-83.96,"equityAfter":9640.3,"status":"Stopped"},{"dir":"short","entryTime":1790876700000,"exitTime":1790910000000,"entry":84859.6,"stop":85273.42770810297,"tp":84031.94458379407,"exit":85273.42770810297,"R":-1,"pnlDollar":-56.7,"equityAfter":9583.6,"status":"Stopped"},{"dir":"short","entryTime":1791030600000,"exitTime":1791034200000,"entry":84781.1,"stop":84926.67768418064,"tp":84489.94463163873,"exit":84926.67768418064,"R":-1,"pnlDollar":-26.06,"equityAfter":9557.54,"status":"Stopped"},{"dir":"short","entryTime":1791051300000,"exitTime":1791055800000,"entry":84947.3,"stop":85051.01224969239,"tp":84739.87550061524,"exit":84739.87550061524,"R":2,"pnlDollar":13.76,"equityAfter":9571.3,"status":"Target hit"},{"dir":"short","entryTime":1791085500000,"exitTime":1791094500000,"entry":84802.3,"stop":84907.82812555744,"tp":84591.24374888513,"exit":84907.82812555744,"R":-1,"pnlDollar":-21.49,"equityAfter":9549.8,"status":"Stopped"},{"dir":"long","entryTime":1791248400000,"exitTime":1791250200000,"entry":86032.9,"stop":85611.96366768559,"tp":86874.7726646288,"exit":85611.96366768559,"R":-1,"pnlDollar":-56.32,"equityAfter":9493.48,"status":"Stopped"},{"dir":"long","entryTime":1791425700000,"exitTime":1791429300000,"entry":83138.9,"stop":82734.00508112778,"tp":83948.68983774443,"exit":82734.00508112778,"R":-1,"pnlDollar":-55.77,"equityAfter":9437.71,"status":"Stopped"}],"curve":[{"t":1790335547027,"label":"Start","equity":10000},{"t":1790460000000,"label":"Short stopped","equity":9965.66,"R":-1},{"t":1790464500000,"label":"Short stopped","equity":9936.7,"R":-1},{"t":1790473500000,"label":"Short stopped","equity":9905.96,"R":-1},{"t":1790554500000,"label":"Long target","equity":9949.87,"R":2},{"t":1790555400000,"label":"Long stopped","equity":9872.41,"R":-1},{"t":1790772300000,"label":"Short stopped","equity":9758.2,"R":-1},{"t":1790829900000,"label":"Short stopped","equity":9724.26,"R":-1},{"t":1790874900000,"label":"Short stopped","equity":9640.3,"R":-1},{"t":1790910000000,"label":"Short stopped","equity":9583.6,"R":-1},{"t":1791034200000,"label":"Short stopped","equity":9557.54,"R":-1},{"t":1791055800000,"label":"Short target","equity":9571.3,"R":2},{"t":1791094500000,"label":"Short stopped","equity":9549.8,"R":-1},{"t":1791250200000,"label":"Long stopped","equity":9493.48,"R":-1},{"t":1791429300000,"label":"Long stopped","equity":9437.71,"R":-1}]},{"id":"15m-trend","label":"BTC 15m + 4H trend","inst":"BTC-USDT-SWAP","bar":"15m","htf":"4H EMA50","ref":["OKX engine backtest, 15m, Nov 2025–Sep 2026 (same data as the unfiltered 15m run): 155 trades, 35.5% wins, −4.93%, PF 0.933, max DD 10.86%","Same data WITHOUT the filter: 273 trades, −15.25%, PF 0.870, max DD 17.60% — the filter cut losses by about two thirds, but the result is still negative","By side with the filter: longs +$202 (65 trades), shorts −$695 (90 trades) — shorts against a 4H downtrend are where the money is lost","Filter rule: longs only when the 4H close is above its EMA50, shorts only when below (closed bars only, no lookahead). Not yet checked in TradingView."],"startTs":1790335547027,"equity":9873.75,"maxDD":0.024785919582802525,"openPosition":null,"wins":2,"nTrades":7,"adx":25.61175940303195,"regime":"TRENDING","trendState":-1,"wideEnough":true,"vwap":82830.15004278673,"upperBand":83356.58614769828,"lowerBand":82303.71393787517,"lastPrice":82786.8,"lastBarTime":1791450900000,"trades":[{"dir":"long","entryTime":1790456400000,"exitTime":1790497800000,"entry":84079.8,"stop":83701.02139128954,"tp":84837.35721742093,"exit":84837.35721742093,"R":2,"pnlDollar":80.01,"equityAfter":10080.01,"status":"Target hit"},{"dir":"long","entryTime":1790550000000,"exitTime":1790554500000,"entry":84180.1,"stop":83951.18817653821,"tp":84637.92364692359,"exit":84637.92364692359,"R":2,"pnlDollar":44.69,"equityAfter":10124.7,"status":"Target hit"},{"dir":"long","entryTime":1790554500000,"exitTime":1790555400000,"entry":84751,"stop":84176.47801605433,"tp":85900.04396789134,"exit":84176.47801605433,"R":-1,"pnlDollar":-78.83,"equityAfter":10045.87,"status":"Stopped"},{"dir":"short","entryTime":1790662500000,"exitTime":1790666100000,"entry":83836.9,"stop":84011.8206717634,"tp":83487.05865647318,"exit":84011.8206717634,"R":-1,"pnlDollar":-31.03,"equityAfter":10014.84,"status":"Stopped"},{"dir":"long","entryTime":1790736300000,"exitTime":1790738100000,"entry":83348.4,"stop":83142.08962349317,"tp":83761.02075301364,"exit":83142.08962349317,"R":-1,"pnlDollar":-34.83,"equityAfter":9980.01,"status":"Stopped"},{"dir":"long","entryTime":1790739000000,"exitTime":1790749800000,"entry":83332.5,"stop":83017.95385488868,"tp":83961.59229022264,"exit":83017.95385488868,"R":-1,"pnlDollar":-47.69,"equityAfter":9932.32,"status":"Stopped"},{"dir":"long","entryTime":1791248400000,"exitTime":1791250200000,"entry":86032.9,"stop":85611.96366768559,"tp":86874.7726646288,"exit":85611.96366768559,"R":-1,"pnlDollar":-58.58,"equityAfter":9873.75,"status":"Stopped"}],"curve":[{"t":1790335547027,"label":"Start","equity":10000},{"t":1790497800000,"label":"Long target","equity":10080.01,"R":2},{"t":1790554500000,"label":"Long target","equity":10124.7,"R":2},{"t":1790555400000,"label":"Long stopped","equity":10045.87,"R":-1},{"t":1790666100000,"label":"Short stopped","equity":10014.84,"R":-1},{"t":1790738100000,"label":"Long stopped","equity":9980.01,"R":-1},{"t":1790749800000,"label":"Long stopped","equity":9932.32,"R":-1},{"t":1791250200000,"label":"Long stopped","equity":9873.75,"R":-1}]},{"id":"eth-1h","label":"ETH 1h","inst":"ETH-USDT-SWAP","bar":"1H","htf":null,"ref":["OKX engine (May 2023–Sep 2026): PF 1.27, 380 trades, 40.8% wins, MC 3/4 gates, profitable every year, max DD 37% at 100% equity","Robustness: 11 one-at-a-time parameter variants all PF 1.00–1.41; 30m/15m versions fail (edge is 1H-specific)"],"startTs":1791185268081,"equity":10232.95,"maxDD":0.014725,"openPosition":null,"wins":1,"nTrades":2,"adx":52.427288439878225,"regime":"TRENDING","trendState":null,"wideEnough":true,"vwap":2566.1994076323467,"upperBand":2582.8214639337675,"lowerBand":2549.577351330926,"lastPrice":2557.6,"lastBarTime":1791450000000,"trades":[{"dir":"long","entryTime":1791219600000,"exitTime":1791334800000,"entry":2704.45,"stop":2667.3692184349857,"tp":2778.611563130028,"exit":2667.3692184349857,"R":-1,"pnlDollar":-147.25,"equityAfter":9852.75,"status":"Stopped"},{"dir":"short","entryTime":1791334800000,"exitTime":1791378000000,"entry":2655.91,"stop":2708.5333892507156,"tp":2550.6632214985684,"exit":2550.6632214985684,"R":2,"pnlDollar":380.2,"equityAfter":10232.95,"status":"Target hit"}],"curve":[{"t":1791185268081,"label":"Start","equity":10000},{"t":1791334800000,"label":"Long stopped","equity":9852.75,"R":-1},{"t":1791378000000,"label":"Short target","equity":10232.95,"R":2}]},{"id":"xrp-1h","label":"XRP 1h","inst":"XRP-USDT-SWAP","bar":"1H","htf":null,"ref":["OKX engine (May 2023–Sep 2026): PF 1.28, 373 trades, 41.0% wins, MC 3/4 gates, max DD 49% at 100% equity","Robustness: 11 one-at-a-time parameter variants all PF 1.09–1.30; 15m fails, 30m PF 1.19 (2/4) on a short sample"],"startTs":1791185268081,"equity":10224.28,"maxDD":0.01730599999999995,"openPosition":null,"wins":1,"nTrades":2,"adx":54.71425920160236,"regime":"TRENDING","trendState":null,"wideEnough":true,"vwap":1.408205445908113,"upperBand":1.4293638468605685,"lowerBand":1.3870470449556576,"lastPrice":1.4093,"lastBarTime":1791450000000,"trades":[{"dir":"short","entryTime":1791252000000,"exitTime":1791295200000,"entry":1.4963,"stop":1.52067458188956,"tp":1.44755083622088,"exit":1.52067458188956,"R":-1,"pnlDollar":-173.06,"equityAfter":9826.94,"status":"Stopped"},{"dir":"short","entryTime":1791334800000,"exitTime":1791392400000,"entry":1.4751,"stop":1.5056903610430534,"tp":1.4139192779138934,"exit":1.4139192779138934,"R":2,"pnlDollar":397.34,"equityAfter":10224.28,"status":"Target hit"}],"curve":[{"t":1791185268081,"label":"Start","equity":10000},{"t":1791295200000,"label":"Short stopped","equity":9826.94,"R":-1},{"t":1791392400000,"label":"Short target","equity":10224.28,"R":2}]},{"id":"eth-15m-nwpoc","strategy":"nwpoc","label":"ETH 15m nWPOC","inst":"ETH-USDT-SWAP","bar":"15m","htf":"4H EMA200","ref":["Swing Lab S13 (OKX engine): ETH Dec 2023–Sep 2026 PF 1.33, +$4,658 at 100% equity; ETH 2020–23 PF 0.89, −$1,866 (failed out-of-sample)","Pooled over 7 datasets (BTC/ETH/SOL/TAO/gold + 2020–23) ≈ breakeven (PF 1.05). TradingView ETH 15m Jun 1–Oct 6 2026: +$296, PF 1.21, 12 trades","Paper test = does it keep working on data that did not exist when it was designed? Not a validated edge."],"startTs":1791277141677,"equity":10000,"maxDD":0,"openPosition":{"dir":"short","entryTime":1791394200000,"entry":2544.45,"stop":2586.2811631292875,"tp":2403.8561500000005,"current":2558.67,"unrealizedR":-0.34,"unrealizedDollar":-55.89},"wins":0,"nTrades":0,"trendState":-1,"pocUp":null,"pocDn":2403.8561500000005,"lastPrice":2558.67,"lastBarTime":1791450900000,"trades":[],"curve":[{"t":1791277141677,"label":"Start","equity":10000}]},{"id":"btc-4h-donchian","strategy":"donchian","label":"BTC 4h Donchian","inst":"BTC-USDT-SWAP","bar":"4H","htf":"Daily EMA50/200 gate","ref":["OKX engine, BTC 4H long-only (~2.6 yr): 48 trades, PF 3.65, MC 3/4 gates (bootstrap fails), max DD 4.2%, CAGR 21.6% at 1% risk per trade","Robust: 15 parameter variants all PF 1.8–4.1. But BTC-only (ETH 4H PF 1.47, SOL 1.1, gold 1.09), PF fades 6.5 → 3.3 → 1.9 by thirds, ~18 trades/yr","Daily EMA50/200 gate kept it flat Nov 2025 → 12 Sep 2026. Not cross-checked in TradingView. Sizing differs from the other tabs: 1% risk, not 100% equity"],"startTs":1791280081953,"equity":10000,"maxDD":0,"openPosition":null,"wins":0,"nTrades":0,"trendState":null,"gate":"BULL (longs allowed)","adx":29.55440870680511,"breakoutLevel":86686.8,"lastPrice":82905.2,"lastBarTime":1791446400000,"trades":[],"curve":[{"t":1791280081953,"label":"Start","equity":10000}]},{"id":"trend-basket-4h","strategy":"tsmom","label":"Trend Basket 4h","inst":"10 OKX perps","bar":"4H","htf":null,"ref":["OKX engine 2020-01 to 2026-10, 10 coins, long-only: CAGR 46%, Sharpe 1.44, max DD 28% (BTC buy & hold: CAGR 43%, Sharpe 0.91, max DD 77%)","Out-of-sample 2020-22 Sharpe 1.61, 2023+ Sharpe 1.32. 2022 -15% (BTC -64%). But 2025 -6% and 2026 YTD +9%: the last two years were flat","Robust to neighbouring EMAs (Sharpe 1.34-1.51), double costs (1.40), dropping DOGE/SOL/AVAX (1.25) and to 12 fallen coins (still positive). Avg 29% invested","Sizing differs from the other tabs: volatility-targeted, about 3-8% of equity per coin. Equity on this tab includes open positions (marked to market)"],"startTs":1791451018723,"equity":10000,"maxDD":0,"openPosition":null,"openList":[],"signals":[{"coin":"BTC","up":true,"z":0.56},{"coin":"ETH","up":false,"z":-0.88},{"coin":"SOL","up":true,"z":0.52},{"coin":"XRP","up":false,"z":-0.89},{"coin":"BNB","up":true,"z":0.64},{"coin":"DOGE","up":false,"z":-0.91},{"coin":"ADA","up":true,"z":1.38},{"coin":"LINK","up":false,"z":-0.11},{"coin":"AVAX","up":true,"z":1.64},{"coin":"LTC","up":true,"z":0.66}],"wins":0,"nTrades":0,"trendState":null,"lastPrice":82914.5,"lastBarTime":1791446400000,"trades":[],"curve":[{"t":1791451018723,"label":"Start","equity":10000}]}]};
+const START = DATA.startCapital;
+
+// ---------- live refresh: same calculation as the scheduled run, on candles fetched from OKX now ----------
+const LIVE = {"P":{"useTrendFilter":true,"adxLen":14,"adxSmooth":14,"maxAdx":25,"stdevMult":2.5,"requireOppCandle":true,"confirmBufferAtr":0,"atrLen":14,"minBandWidthAtr":2,"atrBufferMult":0.75,"rMultiple":2},"S13":{"grid":0.002,"minDist":1,"maxDist":6,"keepBars":17472,"brk":8,"swing":24,"atrBuf":0.25,"minRR":1.5,"maxHold":960},"DONCH":{"dLen":20,"trail":3,"stopAtr":2,"adxMin":20,"minAtrPct":0.004,"riskPct":0.01,"comm":0.0008},"TSM":{"fast":20,"slow":100,"atrLen":14,"volDays":30,"volTarget":0.02,"comm":0.001},"START_CAPITAL":10000,"COMMISSION_PCT":0.0005,"QTY_PCT_OF_EQUITY":1,"BAR_MS":{"5m":300000,"15m":900000,"30m":1800000,"1H":3600000,"4H":14400000},"accounts":[{"id":"1h","label":"BTC 1h","inst":"BTC-USDT-SWAP","bar":"1H","bars":1500,"htf":null,"ref":["TradingView (verified, Jan 2025–Sep 2026): +46.70%, PF 1.234, max DD 11.18%, 278 trades, 45.3% wins","OKX engine, same window: +68.07%, PF 1.402, max DD 16.10%, 156 trades (engine runs optimistic vs TradingView)"],"startTs":1790076055260},{"id":"30m","label":"BTC 30m","inst":"BTC-USDT-SWAP","bar":"30m","bars":3000,"htf":null,"ref":["TradingView (Jan–Sep 2026): +22.92%, PF 1.212, max DD 14.96%, 200 trades","OKX engine, same window: −19.54%, PF 0.799, max DD 35.48% — the two sources disagree on the sign; unresolved"],"startTs":1790335547027},{"id":"15m","label":"BTC 15m","inst":"BTC-USDT-SWAP","bar":"15m","bars":6000,"htf":null,"ref":["TradingView (Jun–Sep 2026): −8.36%, PF 0.801, 124 trades","OKX engine (Nov 2025–Sep 2026): −15.25%, PF 0.870, 273 trades — loses money at 15m without a filter"],"startTs":1790335547027},{"id":"15m-trend","label":"BTC 15m + 4H trend","inst":"BTC-USDT-SWAP","bar":"15m","bars":6000,"htf":"4H","htfEma":50,"ref":["OKX engine backtest, 15m, Nov 2025–Sep 2026 (same data as the unfiltered 15m run): 155 trades, 35.5% wins, −4.93%, PF 0.933, max DD 10.86%","Same data WITHOUT the filter: 273 trades, −15.25%, PF 0.870, max DD 17.60% — the filter cut losses by about two thirds, but the result is still negative","By side with the filter: longs +$202 (65 trades), shorts −$695 (90 trades) — shorts against a 4H downtrend are where the money is lost","Filter rule: longs only when the 4H close is above its EMA50, shorts only when below (closed bars only, no lookahead). Not yet checked in TradingView."],"startTs":1790335547027},{"id":"eth-1h","label":"ETH 1h","inst":"ETH-USDT-SWAP","bar":"1H","bars":1500,"htf":null,"ref":["OKX engine (May 2023–Sep 2026): PF 1.27, 380 trades, 40.8% wins, MC 3/4 gates, profitable every year, max DD 37% at 100% equity","Robustness: 11 one-at-a-time parameter variants all PF 1.00–1.41; 30m/15m versions fail (edge is 1H-specific)"],"startTs":1791185268081},{"id":"xrp-1h","label":"XRP 1h","inst":"XRP-USDT-SWAP","bar":"1H","bars":1500,"htf":null,"ref":["OKX engine (May 2023–Sep 2026): PF 1.28, 373 trades, 41.0% wins, MC 3/4 gates, max DD 49% at 100% equity","Robustness: 11 one-at-a-time parameter variants all PF 1.09–1.30; 15m fails, 30m PF 1.19 (2/4) on a short sample"],"startTs":1791185268081},{"id":"eth-15m-nwpoc","strategy":"nwpoc","label":"ETH 15m nWPOC","inst":"ETH-USDT-SWAP","bar":"15m","bars":12000,"htf":"4H","htfEma":200,"ref":["Swing Lab S13 (OKX engine): ETH Dec 2023–Sep 2026 PF 1.33, +$4,658 at 100% equity; ETH 2020–23 PF 0.89, −$1,866 (failed out-of-sample)","Pooled over 7 datasets (BTC/ETH/SOL/TAO/gold + 2020–23) ≈ breakeven (PF 1.05). TradingView ETH 15m Jun 1–Oct 6 2026: +$296, PF 1.21, 12 trades","Paper test = does it keep working on data that did not exist when it was designed? Not a validated edge."],"startTs":1791277141677},{"id":"btc-4h-donchian","strategy":"donchian","label":"BTC 4h Donchian","inst":"BTC-USDT-SWAP","bar":"4H","bars":1500,"htf":"1Dutc","htfEma":null,"ref":["OKX engine, BTC 4H long-only (~2.6 yr): 48 trades, PF 3.65, MC 3/4 gates (bootstrap fails), max DD 4.2%, CAGR 21.6% at 1% risk per trade","Robust: 15 parameter variants all PF 1.8–4.1. But BTC-only (ETH 4H PF 1.47, SOL 1.1, gold 1.09), PF fades 6.5 → 3.3 → 1.9 by thirds, ~18 trades/yr","Daily EMA50/200 gate kept it flat Nov 2025 → 12 Sep 2026. Not cross-checked in TradingView. Sizing differs from the other tabs: 1% risk, not 100% equity"],"startTs":1791280081953},{"id":"trend-basket-4h","strategy":"tsmom","label":"Trend Basket 4h","insts":["BTC-USDT-SWAP","ETH-USDT-SWAP","SOL-USDT-SWAP","XRP-USDT-SWAP","BNB-USDT-SWAP","DOGE-USDT-SWAP","ADA-USDT-SWAP","LINK-USDT-SWAP","AVAX-USDT-SWAP","LTC-USDT-SWAP"],"inst":"BTC-USDT-SWAP","bar":"4H","bars":700,"htf":null,"htfEma":null,"ref":["OKX engine 2020-01 to 2026-10, 10 coins, long-only: CAGR 46%, Sharpe 1.44, max DD 28% (BTC buy & hold: CAGR 43%, Sharpe 0.91, max DD 77%)","Out-of-sample 2020-22 Sharpe 1.61, 2023+ Sharpe 1.32. 2022 -15% (BTC -64%). But 2025 -6% and 2026 YTD +9%: the last two years were flat","Robust to neighbouring EMAs (Sharpe 1.34-1.51), double costs (1.40), dropping DOGE/SOL/AVAX (1.25) and to 12 fallen coins (still positive). Avg 29% invested","Sizing differs from the other tabs: volatility-targeted, about 3-8% of equity per coin. Equity on this tab includes open positions (marked to market)"],"startTs":1791451018723}]};
+const P = LIVE.P, S13 = LIVE.S13, DONCH = LIVE.DONCH, TSM = LIVE.TSM, START_CAPITAL = LIVE.START_CAPITAL, COMMISSION_PCT = LIVE.COMMISSION_PCT, QTY_PCT_OF_EQUITY = LIVE.QTY_PCT_OF_EQUITY, BAR_MS = LIVE.BAR_MS;
+function rma(src, len) {
+  const n = src.length, out = new Array(n).fill(NaN);
+  const start = src.findIndex(v => !isNaN(v));
+  if (start === -1) return out;
+  let sum = 0;
+  for (let i = start; i < n; i++) {
+    const k = i - start;
+    if (k < len) { sum += src[i]; if (k === len - 1) out[i] = sum / len; }
+    else out[i] = (out[i - 1] * (len - 1) + src[i]) / len;
+  }
+  return out;
+}
+
+function computeIndicators(rows) {
+  const n = rows.length;
+  const high = rows.map(r => r.h), low = rows.map(r => r.l), close = rows.map(r => r.c);
+  const tr = new Array(n).fill(0);
+  tr[0] = high[0] - low[0];
+  for (let i = 1; i < n; i++) tr[i] = Math.max(high[i] - low[i], Math.abs(high[i] - close[i - 1]), Math.abs(low[i] - close[i - 1]));
+  const atr = rma(tr, P.atrLen);
+  const plusDM = new Array(n).fill(0), minusDM = new Array(n).fill(0);
+  for (let i = 1; i < n; i++) {
+    const up = high[i] - high[i - 1], down = low[i - 1] - low[i];
+    plusDM[i] = (up > down && up > 0) ? up : 0;
+    minusDM[i] = (down > up && down > 0) ? down : 0;
+  }
+  const smPlusDM = rma(plusDM, P.adxLen), smMinusDM = rma(minusDM, P.adxLen), atrForAdx = rma(tr, P.adxLen);
+  const dx = new Array(n).fill(NaN);
+  for (let i = 0; i < n; i++) {
+    if (isNaN(atrForAdx[i]) || atrForAdx[i] === 0) continue;
+    const dp = 100 * smPlusDM[i] / atrForAdx[i], dm = 100 * smMinusDM[i] / atrForAdx[i];
+    dx[i] = (dp + dm) === 0 ? 0 : 100 * Math.abs(dp - dm) / (dp + dm);
+  }
+  const adx = rma(dx, P.adxSmooth);
+
+  // Session-anchored VWAP + stdev bands (session = UTC calendar day)
+  const vwap = new Array(n).fill(NaN), upperBand = new Array(n).fill(NaN), lowerBand = new Array(n).fill(NaN);
+  let cumPV = 0, cumV = 0, cumPV2 = 0, curDay = null;
+  for (let i = 0; i < n; i++) {
+    const d = new Date(rows[i].t), day = d.getUTCDate() + '-' + d.getUTCMonth();
+    if (day !== curDay) { cumPV = 0; cumV = 0; cumPV2 = 0; curDay = day; }
+    const hlc3 = (rows[i].h + rows[i].l + rows[i].c) / 3, vol = rows[i].v;
+    cumPV += vol * hlc3; cumV += vol; cumPV2 += vol * hlc3 * hlc3;
+    const v = cumV > 0 ? cumPV / cumV : hlc3;
+    const stdev = Math.sqrt(cumV > 0 ? Math.max(cumPV2 / cumV - v * v, 0) : 0);
+    vwap[i] = v; upperBand[i] = v + P.stdevMult * stdev; lowerBand[i] = v - P.stdevMult * stdev;
+  }
+  return { atr, adx, vwap, upperBand, lowerBand };
+}
+
+function htfTrendStates(rows, htfRows, htfMs, ltfMs, emaLen) {
+  const alpha = 2 / (emaLen + 1), ema = new Array(htfRows.length);
+  ema[0] = htfRows[0].c;
+  for (let i = 1; i < htfRows.length; i++) ema[i] = alpha * htfRows[i].c + (1 - alpha) * ema[i - 1];
+  const out = new Array(rows.length).fill(0);
+  let j = -1;
+  for (let i = 0; i < rows.length; i++) {
+    const ltfClose = rows[i].t + ltfMs;
+    while (j + 1 < htfRows.length && htfRows[j + 1].t + htfMs <= ltfClose) j++;
+    if (j >= emaLen) out[i] = htfRows[j].c > ema[j] ? 1 : -1;
+  }
+  return out;
+}
+
+function simulate(rows, ind, paperStartTs, trend) {
+  const n = rows.length;
+  const { atr, adx, upperBand, lowerBand } = ind;
+  let equity = START_CAPITAL, pos = null;
+  const trades = [], curve = [{ t: paperStartTs, label: 'Start', equity }];
+
+  for (let i = 1; i < n; i++) {
+    const bar = rows[i];
+    const wideEnough = atr[i] > 0 && (upperBand[i] - lowerBand[i]) >= P.minBandWidthAtr * atr[i];
+    const notTrending = !P.useTrendFilter || adx[i] < P.maxAdx;
+
+    if (pos) { // stop-first-if-same-bar convention
+      let exitPrice = null, reason = null;
+      if (pos.dir === 'long') {
+        if (bar.l <= pos.stop) { exitPrice = pos.stop; reason = 'Stopped'; }
+        else if (bar.h >= pos.tp) { exitPrice = pos.tp; reason = 'Target hit'; }
+      } else {
+        if (bar.h >= pos.stop) { exitPrice = pos.stop; reason = 'Stopped'; }
+        else if (bar.l <= pos.tp) { exitPrice = pos.tp; reason = 'Target hit'; }
+      }
+      if (reason) {
+        const R = pos.dir === 'long' ? (exitPrice - pos.entryPrice) / pos.risk : (pos.entryPrice - exitPrice) / pos.risk;
+        const gross = pos.qtyBtc * (pos.dir === 'long' ? (exitPrice - pos.entryPrice) : (pos.entryPrice - exitPrice));
+        const commission = (pos.entryEquity + Math.abs(gross)) * COMMISSION_PCT * 2;
+        equity += gross - commission;
+        trades.push({ dir: pos.dir, entryTime: rows[pos.entryIdx].t, exitTime: bar.t, entry: pos.entryPrice, stop: pos.stop, tp: pos.tp,
+          exit: exitPrice, R: +R.toFixed(2), pnlDollar: +(gross - commission).toFixed(2), equityAfter: +equity.toFixed(2), status: reason });
+        curve.push({ t: bar.t, label: `${pos.dir === 'long' ? 'Long' : 'Short'} ${reason === 'Stopped' ? 'stopped' : 'target'}`, equity: +equity.toFixed(2), R: +R.toFixed(2) });
+        pos = null;
+      }
+    }
+
+    if (!pos && bar.t > paperStartTs) {
+      const touchedLower = rows[i - 1].l <= lowerBand[i - 1], touchedUpper = rows[i - 1].h >= upperBand[i - 1];
+      const reclaimedUp = bar.c > lowerBand[i] + P.confirmBufferAtr * atr[i] && (!P.requireOppCandle || bar.c > bar.o);
+      const reclaimedDown = bar.c < upperBand[i] - P.confirmBufferAtr * atr[i] && (!P.requireOppCandle || bar.c < bar.o);
+      const longOk = !trend || trend[i] === 1, shortOk = !trend || trend[i] === -1;
+      const longSignal = touchedLower && reclaimedUp && wideEnough && notTrending && longOk;
+      const shortSignal = touchedUpper && reclaimedDown && wideEnough && notTrending && shortOk;
+      if (longSignal) {
+        const sl = Math.min(rows[i - 1].l, bar.l) - atr[i] * P.atrBufferMult, risk = bar.c - sl;
+        if (risk > 0) pos = { dir: 'long', entryIdx: i, entryPrice: bar.c, stop: sl, tp: bar.c + risk * P.rMultiple, risk, qtyBtc: equity * QTY_PCT_OF_EQUITY / bar.c, entryEquity: equity };
+      } else if (shortSignal) {
+        const sl = Math.max(rows[i - 1].h, bar.h) + atr[i] * P.atrBufferMult, risk = sl - bar.c;
+        if (risk > 0) pos = { dir: 'short', entryIdx: i, entryPrice: bar.c, stop: sl, tp: bar.c - risk * P.rMultiple, risk, qtyBtc: equity * QTY_PCT_OF_EQUITY / bar.c, entryEquity: equity };
+      }
+    }
+  }
+
+  let openPosition = null;
+  if (pos) {
+    const last = rows[n - 1];
+    const uR = pos.dir === 'long' ? (last.c - pos.entryPrice) / pos.risk : (pos.entryPrice - last.c) / pos.risk;
+    const uD = pos.qtyBtc * (pos.dir === 'long' ? (last.c - pos.entryPrice) : (pos.entryPrice - last.c));
+    openPosition = { dir: pos.dir, entryTime: rows[pos.entryIdx].t, entry: pos.entryPrice, stop: pos.stop, tp: pos.tp,
+      current: last.c, unrealizedR: +uR.toFixed(2), unrealizedDollar: +uD.toFixed(2) };
+  }
+  return { trades, curve, equity: +equity.toFixed(2), openPosition };
+}
+
+function simulateNwpoc(rows, paperStartTs, trend) {
+  const n = rows.length, WEEK = 7 * 86400e3, MON = 4 * 86400e3;
+  const tr = rows.map((r, i) => i ? Math.max(r.h - r.l, Math.abs(r.h - rows[i - 1].c), Math.abs(r.l - rows[i - 1].c)) : r.h - r.l);
+  const atr = rma(tr, 14);
+  const naked = []; let prof = new Map(), step = 0, week = null;
+  let equity = START_CAPITAL, pos = null;
+  const trades = [], curve = [{ t: paperStartTs, label: 'Start', equity }];
+  const close = (i, px, reason) => {
+    const gross = pos.qty * (pos.dir === 'long' ? px - pos.entryPrice : pos.entryPrice - px);
+    const commission = (pos.entryEquity + Math.abs(gross)) * COMMISSION_PCT * 2;
+    const R = (pos.dir === 'long' ? px - pos.entryPrice : pos.entryPrice - px) / pos.risk;
+    equity += gross - commission;
+    trades.push({ dir: pos.dir, entryTime: rows[pos.entryIdx].t, exitTime: rows[i].t, entry: pos.entryPrice, stop: pos.stop, tp: pos.tp,
+      exit: px, R: +R.toFixed(2), pnlDollar: +(gross - commission).toFixed(2), equityAfter: +equity.toFixed(2), status: reason });
+    curve.push({ t: rows[i].t, label: (pos.dir === 'long' ? 'Long ' : 'Short ') + (reason === 'Stopped' ? 'stopped' : reason === 'Target hit' ? 'target' : 'time exit'), equity: +equity.toFixed(2), R: +R.toFixed(2) });
+    pos = null;
+  };
+  let pocUp = null, pocDn = null;
+  for (let i = 0; i < n; i++) {
+    const b = rows[i], wk = Math.floor((b.t - MON) / WEEK);
+    if (week !== null && wk !== week && prof.size) {               // week closed -> its POC becomes naked
+      let bk = 0, bv = -1; for (const [k, v] of prof) if (v > bv) { bv = v; bk = k; }
+      naked.push({ p: (bk + 0.5) * step, i });
+      prof = new Map();
+    }
+    week = wk;
+    for (let k = naked.length - 1; k >= 0; k--) if ((b.l <= naked[k].p && b.h >= naked[k].p) || i - naked[k].i > S13.keepBars) naked.splice(k, 1);
+    if (!prof.size) step = b.o * S13.grid;
+    const b0 = Math.floor(b.l / step), b1 = Math.floor(b.h / step), vPer = b.v / (b1 - b0 + 1);
+    for (let k = b0; k <= b1; k++) prof.set(k, (prof.get(k) || 0) + vPer);
+    pocUp = null; pocDn = null;
+    for (const x of naked) { if (x.p > b.c && (pocUp === null || x.p < pocUp)) pocUp = x.p; if (x.p < b.c && (pocDn === null || x.p > pocDn)) pocDn = x.p; }
+
+    if (pos && i > pos.entryIdx) {
+      if (pos.dir === 'long' && b.l <= pos.stop) close(i, Math.min(b.o, pos.stop), 'Stopped');
+      else if (pos.dir === 'short' && b.h >= pos.stop) close(i, Math.max(b.o, pos.stop), 'Stopped');
+      else if (pos.dir === 'long' && b.h >= pos.tp) close(i, Math.max(b.o, pos.tp), 'Target hit');
+      else if (pos.dir === 'short' && b.l <= pos.tp) close(i, Math.min(b.o, pos.tp), 'Target hit');
+      else if (i - pos.entryIdx >= S13.maxHold) close(i, b.c, 'Time exit');
+    }
+    if (pos || b.t <= paperStartTs || i < S13.swing || isNaN(atr[i]) || !trend || !trend[i]) continue;
+    let hiBrk = -Infinity, loBrk = Infinity, swLo = Infinity, swHi = -Infinity;
+    for (let k = i - S13.brk; k < i; k++) { hiBrk = Math.max(hiBrk, rows[k].h); loBrk = Math.min(loBrk, rows[k].l); }
+    for (let k = i - S13.swing + 1; k <= i; k++) { swLo = Math.min(swLo, rows[k].l); swHi = Math.max(swHi, rows[k].h); }
+    if (trend[i] === 1 && b.c > hiBrk && pocUp !== null) {
+      const d = (pocUp / b.c - 1) * 100, sl = swLo - S13.atrBuf * atr[i];
+      if (d >= S13.minDist && d <= S13.maxDist && sl < b.c && pocUp - b.c >= S13.minRR * (b.c - sl))
+        pos = { dir: 'long', entryIdx: i, entryPrice: b.c, stop: sl, tp: pocUp, risk: b.c - sl, qty: equity * QTY_PCT_OF_EQUITY / b.c, entryEquity: equity };
+    } else if (trend[i] === -1 && b.c < loBrk && pocDn !== null) {
+      const d = (1 - pocDn / b.c) * 100, sl = swHi + S13.atrBuf * atr[i];
+      if (d >= S13.minDist && d <= S13.maxDist && sl > b.c && b.c - pocDn >= S13.minRR * (sl - b.c))
+        pos = { dir: 'short', entryIdx: i, entryPrice: b.c, stop: sl, tp: pocDn, risk: sl - b.c, qty: equity * QTY_PCT_OF_EQUITY / b.c, entryEquity: equity };
+    }
+  }
+  let openPosition = null;
+  if (pos) {
+    const last = rows[n - 1];
+    const uR = (pos.dir === 'long' ? last.c - pos.entryPrice : pos.entryPrice - last.c) / pos.risk;
+    const uD = pos.qty * (pos.dir === 'long' ? last.c - pos.entryPrice : pos.entryPrice - last.c);
+    openPosition = { dir: pos.dir, entryTime: rows[pos.entryIdx].t, entry: pos.entryPrice, stop: pos.stop, tp: pos.tp, current: last.c, unrealizedR: +uR.toFixed(2), unrealizedDollar: +uD.toFixed(2) };
+  }
+  return { trades, curve, equity: +equity.toFixed(2), openPosition, pocUp, pocDn };
+}
+
+function simulateDonchian(rows, dailyRows, paperStartTs) {
+  const n = rows.length, D = DONCH;
+  const emaSma = (src, len) => { const o = new Array(src.length).fill(NaN); let s = 0; for (let i = 0; i < src.length; i++) { if (i < len) { s += src[i]; if (i === len - 1) o[i] = s / len; } else o[i] = src[i] * (2 / (len + 1)) + o[i - 1] * (1 - 2 / (len + 1)); } return o; };
+  const ind = computeIndicators(rows), atr = ind.atr, adx = ind.adx;
+  const dc = dailyRows.map(r => r.c), e50 = emaSma(dc, 50), e200 = emaSma(dc, 200);
+  const dayIdx = new Array(n).fill(-1); { let k = -1; for (let i = 0; i < n; i++) { const day = Math.floor(rows[i].t / 86400e3); while (k + 1 < dailyRows.length && Math.floor(dailyRows[k + 1].t / 86400e3) < day) k++; dayIdx[i] = k; } }
+  let equity = START_CAPITAL, pos = null, stopLevel = NaN, activeStop = NaN;
+  const trades = [], curve = [{ t: paperStartTs, label: 'Start', equity }];
+  const hiH = i => { let m = -Infinity; for (let k = i - D.dLen; k < i; k++) m = Math.max(m, rows[k].h); return m; };  // previous 20-bar high
+  const loL = i => { let m = Infinity; for (let k = i - D.dLen; k < i; k++) m = Math.min(m, rows[k].l); return m; };
+  const hiC = i => { let m = -Infinity; for (let k = i - D.dLen + 1; k <= i; k++) m = Math.max(m, rows[k].c); return m; };
+  for (let i = D.dLen + 1; i < n; i++) {
+    const b = rows[i];
+    if (pos && !isNaN(activeStop) && b.l <= activeStop) {                       // stop active from the bar after it was set
+      const px = Math.min(b.o, activeStop), gross = pos.qty * (px - pos.entryPrice), commission = pos.notional * D.comm * 2;
+      const R = (px - pos.entryPrice) / pos.risk;
+      equity += gross - commission;
+      trades.push({ dir: 'long', entryTime: rows[pos.entryIdx].t, exitTime: b.t, entry: pos.entryPrice, stop: activeStop, tp: null, exit: px,
+        R: +R.toFixed(2), pnlDollar: +(gross - commission).toFixed(2), equityAfter: +equity.toFixed(2), status: 'Trailing stop' });
+      curve.push({ t: b.t, label: 'Long trailing stop', equity: +equity.toFixed(2), R: +R.toFixed(2) });
+      pos = null; stopLevel = NaN; activeStop = NaN;
+    }
+    const k = dayIdx[i], bull = k >= 0 && e50[k] > e200[k] && dailyRows[k].c > e200[k];
+    const base = adx[i] >= D.adxMin && atr[i] / b.c >= D.minAtrPct;
+    const dUp = hiH(i), crossUp = b.c > dUp && rows[i - 1].c <= hiH(i - 1);
+    const wasFlat = !pos;
+    if (wasFlat && b.t > paperStartTs && crossUp && bull && base) {
+      const stopDist = D.stopAtr * atr[i], scale = Math.min(1, D.riskPct * b.c / stopDist), notional = equity * scale;
+      const init = Math.min(b.c - stopDist, loL(i));
+      pos = { entryIdx: i, entryPrice: b.c, qty: notional / b.c, notional, risk: b.c - init, init, scale };
+    } else if (pos) {                                                              // trailing stop update (bars after entry)
+      const ch = hiC(i) - D.trail * atr[i];
+      stopLevel = isNaN(stopLevel) ? Math.min(pos.init, ch) : Math.max(stopLevel, ch);
+      activeStop = stopLevel;
+    }
+  }
+  let openPosition = null;
+  if (pos) {
+    const last = rows[n - 1];
+    openPosition = { dir: 'long', entryTime: rows[pos.entryIdx].t, entry: pos.entryPrice, stop: isNaN(activeStop) ? pos.init : activeStop, tp: null, current: last.c,
+      unrealizedR: +((last.c - pos.entryPrice) / pos.risk).toFixed(2), unrealizedDollar: +(pos.qty * (last.c - pos.entryPrice)).toFixed(2), sizePct: +(pos.scale * 100).toFixed(1) };
+  }
+  const li = n - 1, kl = dayIdx[li];
+  return { trades, curve, equity: +equity.toFixed(2), openPosition,
+    gate: kl < 0 || isNaN(e200[kl]) ? 'warming up' : (e50[kl] > e200[kl] && dailyRows[kl].c > e200[kl]) ? 'BULL (longs allowed)' : 'not bull (no longs)',
+    adx: adx[li], breakoutLevel: Math.max(...rows.slice(-D.dLen).map(r => r.h)) };   // level the NEXT bar must close above
+}
+
+function simulateTsmom(rowsMap, paperStartTs) {
+  const insts = Object.keys(rowsMap), N = insts.length, T = TSM, barsPerDay = 6, volN = T.volDays * barsPerDay;
+  const times = [...new Set(insts.flatMap(s => rowsMap[s].map(r => r.t)))].sort((a, b) => a - b), n = times.length;
+  const ser = {};
+  for (const s of insts) {
+    const m = new Map(rowsMap[s].map(r => [r.t, r])); const c = [], h = [], l = [];
+    for (let i = 0; i < n; i++) { const r = m.get(times[i]); const pc = i ? c[i - 1] : NaN; c.push(r ? r.c : pc); h.push(r ? r.h : pc); l.push(r ? r.l : pc); }
+    const ema = len => { const o = new Array(n).fill(NaN), k = 2 / (len + 1); let e = NaN, cnt = 0; for (let i = 0; i < n; i++) { if (!isFinite(c[i])) continue; e = isNaN(e) ? c[i] : c[i] * k + e * (1 - k); if (++cnt >= len) o[i] = e; } return o; };
+    const tr = c.map((v, i) => i && isFinite(c[i - 1]) ? Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1])) : h[i] - l[i]);
+    const atr = rma(tr.map(v => isFinite(v) ? v : NaN), T.atrLen), ef = ema(T.fast), es = ema(T.slow);
+    ser[s] = { c, z: c.map((_, i) => (ef[i] - es[i]) / atr[i]), lr: c.map((v, i) => i ? Math.log(v / c[i - 1]) : NaN) };
+  }
+  const dailyVol = (s, i) => { let a = 0, b = 0, m = 0; for (let j = i - volN + 1; j <= i; j++) { const v = ser[s].lr[j]; if (!isFinite(v)) continue; a += v; b += v * v; m++; } if (m < volN * 0.8) return NaN; const mu = a / m; return Math.sqrt(Math.max(0, b / m - mu * mu)) * Math.sqrt(barsPerDay); };
+  let cash = START_CAPITAL; const pos = {}, trades = [], curve = [{ t: paperStartTs, label: 'Start', equity: START_CAPITAL }];
+  const mtm = i => cash + Object.keys(pos).reduce((a, s) => a + pos[s].qty * ser[s].c[i], 0);
+  let started = false;
+  for (let i = 1; i < n; i++) {
+    if (times[i] <= paperStartTs) continue;
+    const eqNow = mtm(i); let acted = !started; started = true;
+    for (const s of insts) {
+      const z = ser[s].z[i], px = ser[s].c[i], want = isFinite(z) && z > 0;
+      if (pos[s] && !want) {
+        const p = pos[s], val = p.qty * px, fee = val * T.comm; cash += val - fee;
+        const pnl = val - fee - p.cost, ret = (px / p.entry - 1) * 100;
+        trades.push({ dir: 'long', coin: s.split('-')[0], entryTime: p.t, exitTime: times[i], entry: p.entry, exit: px, stop: null, tp: null,
+          R: +(ret - 2 * T.comm * 100).toFixed(2), pnlDollar: +pnl.toFixed(2), equityAfter: +mtm(i).toFixed(2), status: 'Trend ended' });
+        delete pos[s]; acted = true;
+      } else if (!pos[s] && want) {
+        const vol = dailyVol(s, i); if (!isFinite(vol) || vol <= 0) continue;
+        const notional = eqNow * Math.min(1, T.volTarget / vol) / N, fee = notional * T.comm;
+        cash -= notional + fee; pos[s] = { qty: notional / px, entry: px, t: times[i], cost: notional + fee, sizePct: +(notional / eqNow * 100).toFixed(1) }; acted = true;
+      }
+    }
+    if (acted) curve.push({ t: times[i], label: Object.keys(pos).length + ' coins long', equity: +mtm(i).toFixed(2) });
+  }
+  const li = n - 1, equity = started ? mtm(li) : START_CAPITAL;
+  if (started && curve.at(-1).t !== times[li]) curve.push({ t: times[li], label: 'Now (marked to market)', equity: +equity.toFixed(2) });
+  const open = Object.keys(pos).map(s => ({ coin: s.split('-')[0], entry: pos[s].entry, current: ser[s].c[li], sizePct: pos[s].sizePct,
+    unrealizedDollar: +(pos[s].qty * ser[s].c[li] - pos[s].cost).toFixed(2), retPct: +((ser[s].c[li] / pos[s].entry - 1) * 100).toFixed(2) }));
+  const signals = insts.map(s => ({ coin: s.split('-')[0], up: ser[s].z[li] > 0, z: +ser[s].z[li].toFixed(2) }));
+  return { trades, curve, equity: +equity.toFixed(2), open, signals, lastTime: times[li] };
+}
+
+function maxDrawdown(curve) {
+  let peak = curve[0].equity, dd = 0;
+  for (const p of curve) { peak = Math.max(peak, p.equity); dd = Math.max(dd, (peak - p.equity) / peak); }
+  return dd;
+}
+
+function buildResult(a, rows, htfRows, startTs) {
+  if (a.strategy === 'tsmom') { // rows = { instId: candles } for every coin in a.insts
+    const sim = simulateTsmom(rows, startTs), btc = rows['BTC-USDT-SWAP'] || Object.values(rows)[0], li = btc.length - 1;
+    return {
+      id: a.id, strategy: 'tsmom', label: a.label, inst: a.insts.length + ' OKX perps', bar: a.bar, htf: null, ref: a.ref,
+      startTs, equity: sim.equity, maxDD: maxDrawdown(sim.curve), openPosition: null, openList: sim.open, signals: sim.signals,
+      wins: sim.trades.filter(t => t.R > 0).length, nTrades: sim.trades.length, trendState: null,
+      lastPrice: btc[li].c, lastBarTime: sim.lastTime, trades: sim.trades, curve: sim.curve,
+    };
+  }
+  if (a.strategy === 'donchian') {
+    const sim = simulateDonchian(rows, htfRows || [], startTs), li = rows.length - 1;
+    return {
+      id: a.id, strategy: 'donchian', label: a.label, inst: a.inst || 'BTC-USDT-SWAP', bar: a.bar, htf: 'Daily EMA50/200 gate', ref: a.ref,
+      startTs, equity: sim.equity, maxDD: maxDrawdown(sim.curve), openPosition: sim.openPosition,
+      wins: sim.trades.filter(t => t.R > 0).length, nTrades: sim.trades.length,
+      trendState: null, gate: sim.gate, adx: sim.adx, breakoutLevel: sim.breakoutLevel,
+      lastPrice: rows[li].c, lastBarTime: rows[li].t, trades: sim.trades, curve: sim.curve,
+    };
+  }
+  if (a.strategy === 'nwpoc') {
+    const trend = htfRows ? htfTrendStates(rows, htfRows, BAR_MS[a.htf], BAR_MS[a.bar], a.htfEma) : null;
+    const sim = simulateNwpoc(rows, startTs, trend), li = rows.length - 1;
+    return {
+      id: a.id, strategy: 'nwpoc', label: a.label, inst: a.inst || 'BTC-USDT-SWAP', bar: a.bar, htf: a.htf + ' EMA' + a.htfEma, ref: a.ref,
+      startTs, equity: sim.equity, maxDD: maxDrawdown(sim.curve), openPosition: sim.openPosition,
+      wins: sim.trades.filter(t => t.R > 0).length, nTrades: sim.trades.length,
+      trendState: trend ? trend[li] : null, pocUp: sim.pocUp, pocDn: sim.pocDn,
+      lastPrice: rows[li].c, lastBarTime: rows[li].t, trades: sim.trades, curve: sim.curve,
+    };
+  }
+  const ind = computeIndicators(rows);
+  const trend = a.htf && htfRows ? htfTrendStates(rows, htfRows, BAR_MS[a.htf], BAR_MS[a.bar], a.htfEma) : null;
+  const sim = simulate(rows, ind, startTs, trend);
+  const li = rows.length - 1;
+  const closed = sim.trades;
+  return {
+    id: a.id, label: a.label, inst: a.inst || 'BTC-USDT-SWAP', bar: a.bar, htf: a.htf ? a.htf + ' EMA' + a.htfEma : null, ref: a.ref,
+    startTs, equity: sim.equity, maxDD: maxDrawdown(sim.curve), openPosition: sim.openPosition,
+    wins: closed.filter(t => t.R > 0).length, nTrades: closed.length,
+    adx: ind.adx[li], regime: ind.adx[li] < P.maxAdx ? 'RANGING' : 'TRENDING',
+    trendState: trend ? trend[li] : null,
+    wideEnough: (ind.upperBand[li] - ind.lowerBand[li]) >= P.minBandWidthAtr * ind.atr[li],
+    vwap: ind.vwap[li], upperBand: ind.upperBand[li], lowerBand: ind.lowerBand[li],
+    lastPrice: rows[li].c, lastBarTime: rows[li].t, trades: closed, curve: sim.curve,
+  };
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function okxPage(inst, bar, after) {
+  const url = 'https://www.okx.com/api/v5/market/history-candles?instId=' + inst + '&bar=' + bar + '&limit=100' + (after ? '&after=' + after : '');
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const j = await (await fetch(url)).json();
+      if (j.code !== '0') throw new Error('OKX error ' + j.code + ' ' + (j.msg || ''));
+      return j.data;
+    } catch (e) { if (attempt >= 4) throw e; await sleep(800 * attempt); }
+  }
+}
+async function okxCandles(inst, bar, total) {
+  const byTs = new Map(); let after, calls = 0;
+  while (byTs.size < total && calls < Math.ceil(total / 100) + 5) {
+    const page = await okxPage(inst, bar, after);
+    if (!page.length) break;
+    for (const r of page) byTs.set(+r[0], { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[6] });
+    after = page[page.length - 1][0]; calls++;
+    await sleep(120);
+  }
+  return [...byTs.values()].sort((a, b) => a.t - b.t);
+}
+const liveEl = document.getElementById('live'), refreshBtn = document.getElementById('refresh');
+const setLive = (msg, cls) => { liveEl.textContent = msg; liveEl.className = 'live' + (cls ? ' ' + cls : ''); };
+// Live refresh works wherever the browser may call OKX: the local file, and the GitHub Pages copy
+// (OKX sends CORS headers for it). The claude.ai viewer blocks outside requests, so probe once with a
+// one-candle request and only enable the button when it succeeds.
+const PAGES_URL = 'https://mrufolegend.github.io/mr-ufo-crypto-daily/paper-trading.html';
+async function canReachOkx() {
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const j = await (await fetch('https://www.okx.com/api/v5/market/history-candles?instId=BTC-USDT-SWAP&bar=1H&limit=1', { signal: ctl.signal, cache: 'no-store' })).json();
+    return j.code === '0';
+  } catch (e) { return false; } finally { clearTimeout(timer); }
+}
+async function refreshLive() {
+  refreshBtn.disabled = true;
+  try {
+    const cache = {}, get = (inst, bar, n) => cache[inst + bar + n] || (cache[inst + bar + n] = okxCandles(inst, bar, n));
+    const out = [];
+    for (let k = 0; k < LIVE.accounts.length; k++) {
+      const a = LIVE.accounts[k];
+      setLive('Fetching ' + a.label + ' from OKX… (' + (k + 1) + ' of ' + LIVE.accounts.length + ')');
+      let rows;
+      if (a.insts) { rows = {}; for (const x of a.insts) rows[x] = await get(x, a.bar, a.bars); }
+      else rows = await get(a.inst, a.bar, a.bars);
+      const htfRows = a.htf ? await get(a.inst, a.htf, 400) : null;
+      out.push(buildResult(a, rows, htfRows, a.startTs));
+    }
+    DATA.accounts = out; DATA.updatedAt = Date.now();
+    drawTabs(); drawView();
+    setLive('Live from OKX · recalculated ' + fmtDate(DATA.updatedAt) + '. Same rules and paper-start dates as the daily run.', 'ok');
+  } catch (e) {
+    setLive('Could not reach OKX (' + (e && e.message ? e.message : e) + '). Check the internet connection and try again. Still showing the snapshot from ' + fmtDate(DATA.updatedAt) + '.', 'err');
+  } finally { refreshBtn.disabled = false; }
+}
+const fmtUsd = v => (v >= 0 ? '+' : '−') + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtPct = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2) + '%';
+const fmtDate = t => new Date(t).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+const fmtPx = v => v.toFixed(v >= 1000 ? 1 : v >= 10 ? 2 : 4);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const setSub = a => { document.getElementById('sub').textContent = (a.inst || 'BTC-USDT-SWAP') + ' (OKX) · ' + a.bar + ' · Updated ' + fmtDate(DATA.updatedAt); };
+const tabsEl = document.getElementById('tabs'), viewEl = document.getElementById('view');
+let active = (function(){ try { return localStorage.getItem('vwapTab'); } catch (e) { return null; } })();
+if (!DATA.accounts.some(a => a.id === active)) active = DATA.accounts[0].id;
+
+function drawTabs() {
+  tabsEl.innerHTML = '';
+  DATA.accounts.forEach(a => {
+    const pct = (a.equity / START - 1) * 100;
+    const b = document.createElement('button');
+    b.className = 'tab' + (a.id === active ? ' active' : '');
+    b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', a.id === active);
+    b.innerHTML = esc(a.label) + '<small>' + (a.nTrades || a.openPosition ? fmtPct(pct) : 'flat') + '</small>';
+    b.onclick = () => { active = a.id; try { localStorage.setItem('vwapTab', a.id); } catch (e) {} drawTabs(); drawView(); };
+    tabsEl.appendChild(b);
+  });
+}
+
+function curveSvg(a) {
+  const pts = a.curve;
+  if (pts.length < 2) return '<div class="note" style="text-align:center;padding:60px 0">No closed trades yet — equity flat at $' + START.toLocaleString('en-US') + '</div>';
+  const ys = pts.map(p => p.equity), minY = Math.min(...ys), maxY = Math.max(...ys), pad = (maxY - minY) * 0.15 || 50;
+  const x = i => 20 + (i / (pts.length - 1)) * 960, y = v => 220 - ((v - (minY - pad)) / ((maxY + pad) - (minY - pad))) * 200;
+  const path = pts.map((p, i) => (i ? 'L' : 'M') + x(i) + ',' + y(p.equity)).join(' ');
+  const base = '<line x1="20" x2="980" y1="' + y(START) + '" y2="' + y(START) + '" stroke="#3A3C41" stroke-dasharray="4 4"/>';
+  return '<svg viewBox="0 0 1000 240" preserveAspectRatio="none">' + base + '<path d="' + path + '" fill="none" stroke="#3FFFA0" stroke-width="2"/>' +
+    pts.map((p, i) => '<circle class="dot" cx="' + x(i) + '" cy="' + y(p.equity) + '" r="4" fill="#3FFFA0"><title>' + esc(fmtDate(p.t) + ' — equity $' + p.equity.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' (' + p.label + ')') + '</title></circle>').join('') + '</svg>';
+}
+
+function drawView() {
+  const a = DATA.accounts.find(x => x.id === active);
+  setSub(a);
+  const pct = (a.equity / START - 1) * 100, wr = a.nTrades ? a.wins / a.nTrades * 100 : 0;
+  const op = a.openPosition;
+  const trendTxt = a.trendState == null ? '' : ' · ' + a.htf + ' trend ' + (a.trendState === 1 ? 'UP (longs only)' : a.trendState === -1 ? 'DOWN (shorts only)' : 'warming up');
+  const ol = a.openList || [];
+  const basketTile = a.strategy === 'tsmom'
+    ? '<div class="tile ' + (ol.reduce((x, o) => x + o.unrealizedDollar, 0) >= 0 ? 'good' : 'bad') + '"><div class="tile-label">Open positions</div><div class="tile-value">' + (ol.length ? ol.length + ' long' : 'Flat') + '</div><div class="tile-sub">' +
+      (ol.length ? ol.map(o => esc(o.coin) + ' ' + fmtPct(o.retPct) + ' (' + o.sizePct + '%)').join(' · ') + '<br>Unrealized ' + fmtUsd(ol.reduce((x, o) => x + o.unrealizedDollar, 0)) : 'No coin in an uptrend') +
+      '<br>Uptrend now: ' + esc(a.signals.filter(x => x.up).map(x => x.coin).join(', ') || 'none') + '</div></div>' : null;
+  const openTile = basketTile ? basketTile : op
+    ? '<div class="tile ' + (op.unrealizedDollar >= 0 ? 'good' : 'bad') + '"><div class="tile-label">Open position</div><div class="tile-value">' + (op.dir === 'long' ? 'LONG' : 'SHORT') + ' @ ' + fmtPx(op.entry) + '</div><div class="tile-sub">Unrealized ' + fmtUsd(op.unrealizedDollar) + ' (' + (op.unrealizedR >= 0 ? '+' : '−') + Math.abs(op.unrealizedR).toFixed(2) + 'R)<br>Stop ' + fmtPx(op.stop) + (op.tp == null ? ' (trailing) · size ' + op.sizePct + '% of equity' : ' · Target ' + fmtPx(op.tp)) + '</div></div>'
+    : a.strategy === 'donchian'
+    ? '<div class="tile"><div class="tile-label">Open position</div><div class="tile-value">Flat</div><div class="tile-sub">Daily gate ' + esc(a.gate) + ' · ADX ' + a.adx.toFixed(1) + ' (min 20) · enters on a 4H close above ' + fmtPx(a.breakoutLevel) + '</div></div>'
+    : a.strategy === 'nwpoc'
+    ? '<div class="tile"><div class="tile-label">Open position</div><div class="tile-value">Flat</div><div class="tile-sub">Naked weekly POC above ' + (a.pocUp ? fmtPx(a.pocUp) : '—') + ' · below ' + (a.pocDn ? fmtPx(a.pocDn) : '—') + esc(trendTxt) + '</div></div>'
+    : '<div class="tile"><div class="tile-label">Open position</div><div class="tile-value">Flat</div><div class="tile-sub">' + a.regime + ' · ADX ' + a.adx.toFixed(1) + ' (max 25) · band ' + (a.wideEnough ? 'wide enough' : 'too narrow') + esc(trendTxt) + '</div></div>';
+  const unit = a.strategy === 'tsmom' ? '%' : 'R';
+  const rows = a.trades.slice().reverse().map(t => '<tr><td>' + fmtDate(t.exitTime) + '</td><td>' + (t.coin ? esc(t.coin) + ' ' : '') + (t.dir === 'long' ? 'Long' : 'Short') + '</td><td class="mono">' + fmtPx(t.entry) + '</td><td class="mono">' + fmtPx(t.exit) + '</td><td class="mono ' + (t.R >= 0 ? 'good' : 'bad') + '">' + (t.R >= 0 ? '+' : '−') + Math.abs(t.R).toFixed(2) + unit + '</td><td class="mono ' + (t.pnlDollar >= 0 ? 'good' : 'bad') + '">' + fmtUsd(t.pnlDollar) + '</td></tr>').join('');
+  viewEl.innerHTML =
+    '<div class="tiles">' +
+      '<div class="tile ' + (a.equity >= START ? 'good' : 'bad') + '"><div class="tile-label">Equity</div><div class="tile-value">$' + a.equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</div><div class="tile-sub">' + fmtUsd(a.equity - START) + ' USDT (' + fmtPct(pct) + ') since ' + fmtDate(a.startTs) + '</div></div>' +
+      '<div class="tile"><div class="tile-label">Max drawdown (paper)</div><div class="tile-value">' + (a.maxDD * 100).toFixed(2) + '%</div><div class="tile-sub">' + (a.strategy === 'tsmom' ? 'Marked to market at each rebalance' : 'Closed-trade basis') + '</div></div>' +
+      '<div class="tile"><div class="tile-label">Trades / win rate</div><div class="tile-value">' + a.nTrades + ' / ' + wr.toFixed(0) + '%</div><div class="tile-sub">' + (a.strategy === 'tsmom' ? '10 coins · long-only · vol-sized · 0.10% fees' : a.strategy === 'donchian' ? 'Long-only · 1% risk/trade · 0.08% fees' : a.strategy === 'nwpoc' ? 'S13 · 4H EMA200 trend' : a.htf ? 'Filter: ' + esc(a.htf) : 'No trend filter') + '</div></div>' +
+      openTile +
+    '</div>' +
+    '<section><h2>Equity curve — ' + esc(a.label) + '</h2>' + curveSvg(a) + '</section>' +
+    '<section><h2>Closed trades</h2><div style="overflow-x:auto"><table><thead><tr><th>Exit (UTC)</th><th>Dir</th><th>Entry</th><th>Exit</th><th>' + (a.strategy === 'tsmom' ? 'Return' : 'R') + '</th><th>PnL (USDT)</th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="6" style="color:var(--text-3)">No closed trades yet.</td></tr>') + '</tbody></table></div></section>' +
+    '<section><h2>Backtest reference — ' + esc(a.label) + '</h2>' +
+      (a.ref.length ? '<ul class="refs">' + a.ref.map(r => '<li>' + esc(r) + '</li>').join('') + '</ul>' : '<div class="note">No backtest reference recorded for this variant yet.</div>') +
+      '<div class="note">Backtests are not predictions, and the OKX engine has not been reconciled with TradingView\u2019s Strategy Tester — treat the two sources as a range, not a fact.</div></section>';
+}
+drawTabs(); drawView();
+refreshBtn.disabled = true;
+setLive('Snapshot saved ' + fmtDate(DATA.updatedAt) + '. Checking connection to OKX…');
+canReachOkx().then(ok => {
+  if (ok) {
+    refreshBtn.disabled = false;
+    refreshBtn.addEventListener('click', refreshLive);
+    setLive('Snapshot saved ' + fmtDate(DATA.updatedAt) + '. Press Refresh to recalculate every account from live OKX candles (takes about a minute).');
+  } else {
+    refreshBtn.textContent = '↻ Refresh (open live version)';
+    refreshBtn.disabled = false;
+    refreshBtn.addEventListener('click', () => window.open(PAGES_URL, '_blank', 'noopener'));
+    setLive('Snapshot saved ' + fmtDate(DATA.updatedAt) + '. This viewer blocks requests to OKX (claude.ai does this), so it can’t refresh here.');
+    liveEl.append(' Live version: ');
+    const a = document.createElement('a'); a.href = PAGES_URL; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'mrufolegend.github.io › paper-trading';
+    liveEl.append(a, '.');
+  }
+});
+</script>
