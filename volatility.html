@@ -59,6 +59,13 @@ b{color:var(--white)}
 .tgl{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:14px;cursor:pointer}
 .tgl input{width:20px;height:20px;accent-color:var(--accent)}
 .status{font-size:13.5px;color:var(--dim)}
+.conn{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;letter-spacing:.5px}
+.conn::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor}
+.done{font-size:14.5px;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2)}
+.done.flash{animation:flash 1.6s ease-out}
+.done.ok{border-color:var(--bull)}.done.bad{border-color:var(--bear);color:var(--bear)}
+@keyframes flash{0%{background:rgba(78,127,255,.35)}100%{background:var(--surface2)}}
+@media (prefers-reduced-motion:reduce){.done.flash{animation:none}}
 .progress{height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
 .progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
 
@@ -124,12 +131,14 @@ footer{font-size:13px;color:var(--dim);line-height:1.7}
     <div class="card-body">
       <div class="bar">
         <button class="btn primary" id="refresh">↻ Refresh</button>
+        <span class="conn dim" id="conn">OKX: not checked</span>
         <label class="tgl"><input type="checkbox" id="auto"> Auto every 60s</label>
         <label class="tgl"><input type="checkbox" id="sound"> Sound + notify on new ⚡</label>
         <label class="tgl"><input type="checkbox" id="dumps" checked> Show dumps</label>
       </div>
       <div class="progress" aria-hidden="true"><i id="prog"></i></div>
-      <div class="status" id="status" role="status">Press Refresh to scan.</div>
+      <div class="done" id="done" role="status" aria-live="polite">Not scanned yet.</div>
+      <div class="status" id="status">Press Refresh to scan.</div>
     </div>
   </section>
 
@@ -224,7 +233,7 @@ let activeList = store.get('tab', 'now');
 if (['#now', '#hour', '#h4'].includes(location.hash)) activeList = location.hash.slice(1);
 let data = null;          // last scan
 let seenNow = new Set(store.get('seenNow', []));
-let busy = false, timer = null;
+let busy = false, timer = null, lastAt = null, prevKeys = null;
 
 const $ = id => document.getElementById(id);
 
@@ -236,7 +245,8 @@ const fmtPx = v => v >= 1000 ? v.toLocaleString('en-US', {maximumFractionDigits:
 const fmtPct = v => (v >= 0 ? '+' : '') + (v * 100).toFixed(2) + '%';
 const cls = v => v >= 0 ? 'bull' : 'bear';
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const utc = d => d.toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+const utc = d => d.toISOString().slice(0, 19).replace('T', ' ') + ' UTC';
+const ago = d => { const s = Math.round((Date.now() - d) / 1000); return s < 60 ? s + 's ago' : Math.floor(s / 60) + 'm ' + (s % 60) + 's ago'; };
 
 // Throttled fetch: OKX candles allow 40 req / 2s per IP, we stay at ~16/s.
 let lastStart = 0;
@@ -300,11 +310,15 @@ const fires = (m, L) => m.ratio >= S[L.xKey] && Math.abs(m.ch) * 100 >= S[L.pKey
 async function scan(){
   if (busy) return; busy = true;
   $('refresh').disabled = true;
+  const btnTxt = t => $('refresh').textContent = t;
+  btnTxt('Scanning…');
+  const t0 = performance.now();
   const prog = p => $('prog').style.width = (p * 100).toFixed(0) + '%';
   const status = t => $('status').textContent = t;
   try {
     status('Loading coin list…'); prog(0.02);
     const [inst, tick] = await Promise.all([okx('/public/instruments?instType=SWAP'), okx('/market/tickers?instType=SWAP')]);
+    setConn(true, Math.round(performance.now() - t0) + ' ms');
     const meta = new Map(inst.map(x => [x.instId, x]));
     const now = Date.now();
     let skipped = {meme: 0, young: 0, other: 0};
@@ -334,21 +348,36 @@ async function scan(){
         if (r) out.push(Object.assign(r, {id: u.id, usd: u.usd, btc: u.btc}));
       } catch (e) { failed++; }
       done++; prog(0.05 + 0.95 * done / uni.length);
-      status(`Scanning ${done}/${uni.length} coins…`);
+      status(`Scanning ${done}/${uni.length} coins…`); btnTxt(`Scanning ${done}/${uni.length}`);
     });
     data = {at: new Date(), coins: out, n: uni.length - 1, skipped, failed};
-    $('stamp').textContent = 'Updated ' + utc(data.at);
+    lastAt = data.at; tickStamp();
     $('universe').textContent = `${data.n} coins ≥ $${S.minLiq}M/24h`;
     status(`Done: ${out.length - 1} coins scanned` + (failed ? `, ${failed} failed (retry with Refresh)` : '') +
       `. Skipped ${skipped.meme} memes under $${S.memeLiq}M, ${skipped.young} new listings, ${skipped.other} stocks/commodities/stables.`);
     render(true);
+    const keys = new Set(Object.keys(LISTS).flatMap(k => data.coins.filter(c => !c.btc && fires(c.lists[k], LISTS[k])).map(c => k + c.sym)));
+    const added = prevKeys ? [...keys].filter(k => !prevKeys.has(k)).length : keys.size;
+    const gone = prevKeys ? [...prevKeys].filter(k => !keys.has(k)).length : 0;
+    prevKeys = keys;
+    const secs = ((performance.now() - t0) / 1000).toFixed(0);
+    const bad = failed > (out.length / 5);
+    setDone(bad ? `⚠ Refreshed at ${utc(data.at).slice(11)}, but ${failed} of ${uni.length} coins failed to load. Results are incomplete. Press Refresh again.`
+      : `✓ Refreshed at ${utc(data.at).slice(11)} in ${secs}s · ${keys.size} alerts · ${added} new · ${gone} dropped off`, bad ? 'bad' : 'ok');
   } catch (e) {
+    setConn(false, e.message);
+    setDone(`✗ Refresh failed: couldn't reach OKX (${esc(e.message)}). Nothing was updated. Check your connection and try again.`, 'bad');
     $('status').innerHTML = `<span class="bear">Couldn't reach OKX: ${esc(e.message)}.</span> Check your connection and press Refresh. If this keeps happening here, open the page on <a href="https://mrufolegend.github.io/mr-ufo-crypto-daily/volatility.html">GitHub Pages</a>.`;
   } finally {
-    busy = false; $('refresh').disabled = false;
+    busy = false; $('refresh').disabled = false; $('refresh').textContent = '↻ Refresh';
     setTimeout(() => prog(0), 600);
   }
 }
+
+function setConn(ok, detail){ const c = $('conn'); c.className = 'conn ' + (ok ? 'bull' : 'bear'); c.textContent = ok ? 'OKX connected · ' + detail : 'OKX unreachable'; }
+function setDone(text, kind){ const d = $('done'); d.textContent = text; d.className = 'done ' + kind; void d.offsetWidth; d.classList.add('flash'); }
+function tickStamp(){ if (lastAt) $('stamp').textContent = 'Updated ' + utc(lastAt) + ' · ' + ago(lastAt); }
+setInterval(tickStamp, 1000);
 
 // ---------- rendering ----------
 function spark(r, L, up){
