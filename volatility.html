@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Volatility Alerts</title>
+<meta name="description" content="OKX USDT perps with abnormal volume spikes: starting now, last hour, last 4h.">
+<style>
+/* Crypto Daily brand. Single dark theme by design. Phone-first: nothing under 12px, grids collapse at ≤600px. */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0d12;--surface:#13161f;--surface2:#1a1e2d;--border:#2a2f48;
+  --text:#e2e5f0;--dim:#8891b0;
+  --bull:#00d97e;--bear:#ff3d5a;--neutral:#f5a623;
+  --bull-bg:rgba(0,217,126,.08);--bear-bg:rgba(255,61,90,.08);--neutral-bg:rgba(245,166,35,.08);
+  --accent:#4e7fff;--accent2:#9b59f5;--white:#ffffff;
+  --mono:'SF Mono','Fira Code','Courier New',monospace;
+  color-scheme:dark;
+}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:16px;line-height:1.6}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+b{color:var(--white)}
+
+.brand-sticky{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.brand-block{display:flex;align-items:center;gap:12px;border:2px solid var(--accent);border-radius:10px;padding:8px 14px;box-shadow:0 0 12px rgba(78,127,255,.3)}
+.brand-ape{width:70px;height:70px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;object-position:top;box-shadow:0 0 12px rgba(78,127,255,.4);flex-shrink:0}
+.brand-title{font-size:20px;font-weight:700;color:var(--white);letter-spacing:1px}
+.brand-sub{font-size:15px;color:var(--accent2);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;font-weight:600}
+.stamp{margin-left:auto;font-size:13px;color:var(--dim);text-align:right;line-height:1.6}
+@media (max-width:600px){.brand-sticky{position:static}.stamp{margin-left:0;text-align:left}.brand-ape{width:52px;height:52px}.brand-title{font-size:18px}.brand-sub{font-size:13px}}
+
+.wrap{max-width:1200px;margin:0 auto;padding-inline:16px;padding-block:20px 60px;display:grid;gap:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;min-width:0}
+.card-hdr{padding:11px 15px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.card-title{font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--white)}
+.card-hint{font-size:13px;color:var(--dim)}
+.card-body{padding:15px;display:grid;gap:12px}
+.dim{color:var(--dim)}
+.bull{color:var(--bull)}.bear{color:var(--bear)}.neutral{color:var(--neutral)}
+
+.bias{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:4px;width:max-content}
+.bias-bull{background:var(--bull-bg);color:var(--bull);border:1px solid var(--bull)}
+.bias-bear{background:var(--bear-bg);color:var(--bear);border:1px solid var(--bear)}
+.bias-neutral{background:var(--neutral-bg);color:var(--neutral);border:1px solid var(--neutral)}
+.bias::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.tag{font-size:12.5px;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:.5px;background:rgba(78,127,255,.12);color:var(--accent);border:1px solid rgba(78,127,255,.3);white-space:nowrap}
+.tag-p{background:rgba(155,89,245,.12);color:var(--accent2);border-color:rgba(155,89,245,.3)}
+.tag-o{background:var(--neutral-bg);color:var(--neutral);border-color:rgba(245,166,35,.3)}
+.note{background:var(--surface2);border-left:3px solid var(--neutral);padding:10px 13px;border-radius:0 4px 4px 0;font-size:14.5px;line-height:1.6}
+.note.err{border-left-color:var(--bear)}
+
+/* controls */
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{min-height:44px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font:700 14px var(--mono);letter-spacing:1px;text-transform:uppercase;cursor:pointer;padding:0 16px}
+.btn.primary{border-color:var(--accent);color:var(--white);box-shadow:0 0 10px rgba(78,127,255,.35)}
+.btn:disabled{opacity:.5;cursor:wait}
+.tgl{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:14px;cursor:pointer}
+.tgl input{width:20px;height:20px;accent-color:var(--accent)}
+.status{font-size:13.5px;color:var(--dim)}
+.progress{height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+
+/* btc bar */
+.btc{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.btc div{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;min-width:0}
+.btc span{display:block;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
+.btc b{font-size:18px;font-variant-numeric:tabular-nums}
+@media (max-width:860px){.btc{grid-template-columns:repeat(2,minmax(0,1fr))}.btc div:first-child{grid-column:1/-1}}
+
+/* lists */
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{min-height:44px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font:700 14px var(--mono);letter-spacing:.5px;cursor:pointer;padding:0 14px}
+.tab[aria-selected="true"]{border-color:var(--accent);color:var(--white);box-shadow:0 0 10px rgba(78,127,255,.35)}
+.tab .n{display:inline-block;min-width:24px;margin-left:6px;padding:0 6px;border-radius:10px;background:var(--bg);font-size:13px}
+.lead{font-size:14.5px;color:var(--dim)}
+.alerts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:12px}
+.alert{border-left:4px solid var(--bull)}
+.alert.dn{border-left-color:var(--bear)}
+.alert .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.alert .sym{font-size:24px;font-weight:700;color:var(--white);letter-spacing:1px;line-height:1.1}
+.alert .new{font-size:12px;font-weight:700;color:var(--bg);background:var(--neutral);padding:2px 7px;border-radius:3px;letter-spacing:1px}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 14px}
+.kv div{min-width:0}
+.kv span{display:block;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
+.kv b{font-size:16px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.spark{background:var(--bg);border:1px solid var(--border);border-radius:6px}
+.spark .axis{display:flex;justify-content:space-between;gap:8px;padding:2px 8px 4px;font-size:12px;color:var(--dim)}
+.spark svg{display:block;width:100%;height:auto}
+.links{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px}
+.links a{min-height:32px;display:inline-flex;align-items:center}
+.empty{padding:22px 15px;text-align:center;color:var(--dim);font-size:14.5px}
+
+/* settings */
+details.card summary{cursor:pointer;list-style:none;padding:13px 15px;background:var(--surface2);font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--white);min-height:44px}
+details.card summary::-webkit-details-marker{display:none}
+details.card summary::after{content:" ▸";color:var(--accent)}
+details[open].card summary::after{content:" ▾"}
+.sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:14px 22px}
+.set{display:grid;gap:4px;min-width:0}
+.set label{font-size:13px;color:var(--dim);display:flex;justify-content:space-between;gap:8px}
+.set label b{font-variant-numeric:tabular-nums}
+.set input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
+.grp{font-size:12.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent2);grid-column:1/-1;margin-top:4px}
+footer{font-size:13px;color:var(--dim);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="brand-sticky">
+  <div class="brand-block">
+    <img class="brand-ape" src="BASC.png" alt="Mr UFO">
+    <div>
+      <div class="brand-title">CRYPTO DAILY</div>
+      <div class="brand-sub">Volatility Alerts</div>
+    </div>
+  </div>
+  <div class="stamp"><span id="stamp">Not loaded yet</span><br>Data: OKX public API · USDT perps</div>
+</div>
+
+<main class="wrap">
+
+  <section class="card">
+    <div class="card-body">
+      <div class="bar">
+        <button class="btn primary" id="refresh">↻ Refresh</button>
+        <label class="tgl"><input type="checkbox" id="auto"> Auto every 60s</label>
+        <label class="tgl"><input type="checkbox" id="sound"> Sound + notify on new ⚡</label>
+        <label class="tgl"><input type="checkbox" id="dumps" checked> Show dumps</label>
+      </div>
+      <div class="progress" aria-hidden="true"><i id="prog"></i></div>
+      <div class="status" id="status" role="status">Press Refresh to scan.</div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="btc-t">
+    <div class="card-hdr"><span class="card-title" id="btc-t">BTC first</span><span class="card-hint">Check BTC before acting on any alt</span></div>
+    <div class="card-body">
+      <div class="btc" id="btc">
+        <div><span>Trend (1H EMA 20/50)</span><b class="dim">–</b></div>
+        <div><span>Price</span><b>–</b></div>
+        <div><span>1h</span><b>–</b></div>
+        <div><span>4h</span><b>–</b></div>
+        <div><span>Vol 1h vs normal</span><b>–</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="list-t">
+    <div class="card-hdr"><span class="card-title" id="list-t">Alerts</span><span class="card-hint" id="universe">–</span></div>
+    <div class="card-body">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-list="now" aria-selected="true">⚡ Starting now<span class="n" id="n-now">0</span></button>
+        <button class="tab" role="tab" data-list="hour" aria-selected="false">🔥 Last hour<span class="n" id="n-hour">0</span></button>
+        <button class="tab" role="tab" data-list="h4" aria-selected="false">🌊 Last 4h<span class="n" id="n-h4">0</span></button>
+      </div>
+      <p class="lead" id="lead"></p>
+      <div class="alerts" id="alerts"></div>
+    </div>
+  </section>
+
+  <details class="card" id="settings">
+    <summary>Settings</summary>
+    <div class="card-body">
+      <div class="sets" id="sets"></div>
+      <div class="bar"><button class="btn" id="reset">Reset to defaults</button></div>
+      <p class="note">Coin filters (liquidity, meme floor) apply on the next Refresh. Trigger sliders apply right away.</p>
+    </div>
+  </details>
+
+  <footer>
+    How it works: every refresh pulls 5-minute and 1-hour candles for each coin from OKX. Volume in the window is compared with that coin's <b>median</b> volume
+    (15m vs the last 24h, 1h and 4h vs the last 7 days), so one old spike doesn't skew "normal". ×N = how many times the coin hit the same trigger
+    in the look-back (4h for ⚡ and 🔥, 12h for 🌊). Skipped: stocks/commodity perps, stablecoins, coins listed &lt;14 days ago, memes under the meme floor.
+    <br><br>This is a scanner, not a strategy. It is <b>not backtested</b>. A volume spike says something is happening, not which way it goes next.
+    Check BTC and the chart before acting, size live trades at 0.5–1% risk, and don't chase a candle that already ran. Not financial advice.
+  </footer>
+</main>
+
+<script>
+(() => {
+'use strict';
+const API = 'https://www.okx.com/api/v5';
+
+const MEMES = new Set(('DOGE PEPE SHIB BONK WIF FLOKI BOME MEME NEIRO NEIROETH TURBO PNUT MOODENG POPCAT MEW BRETT TRUMP MELANIA FARTCOIN GOAT PENGU SPX ' +
+  'ACT CHILLGUY DOGS NOT MOG BABYDOGE PEOPLE SATS ORDI RATS CAT MUBARAK USELESS PUMP LUCE GIGA PONKE SLERF MYRO WEN BAN TST BROCCOLI ' +
+  'AIDOGE ELON LADYS VINE JELLYJELLY HIPPO KOMA DEGEN TOSHI SUNDOG HMSTR CATI X 1000SATS PIPPIN AI16Z ZEREBRO FWOG MICHI').split(' '));
+const STABLES = new Set('USDC USDE FDUSD DAI TUSD USD1 PYUSD RLUSD USDG USDD EURC USTC'.split(' '));
+
+const DEFAULTS = {minLiq:10, memeLiq:50, minAge:14,
+  nowX:4, nowPct:1.5, hourX:3, hourPct:3, h4X:2.5, h4Pct:5};
+const SLIDERS = [
+  ['grp','Which coins'],
+  ['minLiq','Min 24h volume', 3, 100, 1, v => '$' + v + 'M'],
+  ['memeLiq','Meme coins need', 10, 300, 5, v => '$' + v + 'M'],
+  ['minAge','Skip new listings under', 0, 60, 1, v => v + ' days'],
+  ['grp','⚡ Starting now (15m)'],
+  ['nowX','Volume ≥', 2, 10, 0.5, v => v + '× normal'],
+  ['nowPct','Price move ≥', 0.5, 5, 0.1, v => v + '%'],
+  ['grp','🔥 Last hour'],
+  ['hourX','Volume ≥', 1.5, 8, 0.5, v => v + '× normal'],
+  ['hourPct','Price move ≥', 1, 10, 0.5, v => v + '%'],
+  ['grp','🌊 Last 4h'],
+  ['h4X','Volume ≥', 1.5, 6, 0.5, v => v + '× normal'],
+  ['h4Pct','Price move ≥', 2, 20, 0.5, v => v + '%'],
+];
+
+const LISTS = {
+  now:  {name:'⚡ Fast move', win:3,  back:3,  look:48, step:3,  xKey:'nowX',  pKey:'nowPct',  base:'b15', chartBars:48,
+         lead:'Moves that are just starting: last 15 min volume vs this coin\'s normal 15 min (past 24h). Earliest signal, most noise.'},
+  hour: {name:'🔥 Big move',  win:12, back:12, look:48, step:3,  xKey:'hourX', pKey:'hourPct', base:'b1h', chartBars:72,
+         lead:'Moves already under way: last hour volume vs this coin\'s normal hour (past 7 days).'},
+  h4:   {name:'🌊 Swing move', win:48, back:48, look:144, step:12, xKey:'h4X',   pKey:'h4Pct',   base:'b4h', chartBars:240,
+         lead:'Bigger swings: last 4h volume vs this coin\'s normal 4h (past 7 days). For swing setups, not scalps.'},
+};
+
+// ---------- storage (per-viewer convenience only) ----------
+const store = {
+  get(k, d){ try { const v = localStorage.getItem('vt_' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v){ try { localStorage.setItem('vt_' + k, JSON.stringify(v)); } catch {} }
+};
+let S = Object.assign({}, DEFAULTS, store.get('settings', {}));
+let activeList = store.get('tab', 'now');
+if (['#now', '#hour', '#h4'].includes(location.hash)) activeList = location.hash.slice(1);
+let data = null;          // last scan
+let seenNow = new Set(store.get('seenNow', []));
+let busy = false, timer = null;
+
+const $ = id => document.getElementById(id);
+
+// ---------- helpers ----------
+const median = a => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const sum = (a, i, j) => { let t = 0; for (let k = i; k < j; k++) t += a[k]; return t; };
+const fmtUsd = v => v >= 1e9 ? '$' + (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? '$' + (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v / 1e3).toFixed(0) + 'K' : '$' + v.toFixed(0);
+const fmtPx = v => v >= 1000 ? v.toLocaleString('en-US', {maximumFractionDigits: 1}) : v >= 1 ? v.toFixed(v >= 100 ? 2 : 4) : v.toPrecision(4);
+const fmtPct = v => (v >= 0 ? '+' : '') + (v * 100).toFixed(2) + '%';
+const cls = v => v >= 0 ? 'bull' : 'bear';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const utc = d => d.toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+
+// Throttled fetch: OKX candles allow 40 req / 2s per IP, we stay at ~16/s.
+let lastStart = 0;
+async function okx(path, tries = 4){
+  for (let i = 0; i < tries; i++){
+    const wait = Math.max(0, lastStart + 62 - Date.now());
+    lastStart = Date.now() + wait;
+    if (wait) await new Promise(r => setTimeout(r, wait));
+    try {
+      const r = await fetch(API + path, {cache: 'no-store'});
+      const j = await r.json();
+      if (j.code === '0') return j.data;
+      if (j.code === '50011') { await new Promise(r => setTimeout(r, 1200 * (i + 1))); continue; }
+      throw new Error('OKX ' + j.code + ' ' + j.msg);
+    } catch (e) {
+      if (i === tries - 1) throw e;
+      await new Promise(r => setTimeout(r, 800 * (i + 1)));
+    }
+  }
+}
+async function pool(items, n, fn){
+  let i = 0;
+  await Promise.all(Array.from({length: n}, async () => { while (i < items.length) { const k = i++; await fn(items[k], k); } }));
+}
+
+// Candles come newest-first: [ts,o,h,l,c,vol,volCcy,volCcyQuote,confirm]
+const parse = rows => rows.slice().reverse().map(r => ({t: +r[0], c: +r[4], v: +r[7]}));
+
+// ---------- analysis ----------
+function analyse(sym, m5, h1){
+  const N = m5.length, M = h1.length;
+  if (N < 120 || M < 48) return null;
+  const c = m5.map(x => x.c), v = m5.map(x => x.v), hv = h1.map(x => x.v);
+  // Baselines: 15m = median of non-overlapping 15m blocks over the past ~24h (excluding the window itself)
+  const b15s = []; for (let e = N - 3; e - 3 >= 0; e -= 3) b15s.push(sum(v, e - 3, e));
+  // 1h and 4h from hourly candles, skipping the last 2 hours (current partial + window)
+  const done = hv.slice(0, M - 2);
+  const b4s = []; for (let e = done.length; e - 4 >= 0; e -= 4) b4s.push(sum(done, e - 4, e));
+  const base = {b15: median(b15s.slice(0, 96)), b1h: median(done), b4h: median(b4s)};
+  if (!(base.b15 > 0 && base.b1h > 0 && base.b4h > 0)) return null;
+  // window metrics ending at bar index e (exclusive)
+  const at = (L, e) => {
+    const vol = sum(v, e - L.win, e), b = base[L.base];
+    return {vol, ratio: vol / b, ch: c[e - 1] / c[e - 1 - L.back] - 1};
+  };
+  const res = {sym, price: c[N - 1], base, m5, h1c: h1.map(x => x.c), lists: {}};
+  for (const [k, L] of Object.entries(LISTS)){
+    const cur = at(L, N);
+    // repeat count: how often the trigger fired within the look-back
+    const hist = [];
+    for (let e = N; e - L.win - L.back - 1 >= 0 && N - e < L.look; e -= L.step) hist.push(at(L, e));
+    res.lists[k] = {...cur, hist};
+  }
+  res.ch24 = c[N - 1] / c[Math.max(0, N - 289)] - 1;
+  return res;
+}
+
+const fires = (m, L) => m.ratio >= S[L.xKey] && Math.abs(m.ch) * 100 >= S[L.pKey] && (S.dumps !== false || m.ch > 0);
+
+// ---------- scan ----------
+async function scan(){
+  if (busy) return; busy = true;
+  $('refresh').disabled = true;
+  const prog = p => $('prog').style.width = (p * 100).toFixed(0) + '%';
+  const status = t => $('status').textContent = t;
+  try {
+    status('Loading coin list…'); prog(0.02);
+    const [inst, tick] = await Promise.all([okx('/public/instruments?instType=SWAP'), okx('/market/tickers?instType=SWAP')]);
+    const meta = new Map(inst.map(x => [x.instId, x]));
+    const now = Date.now();
+    let skipped = {meme: 0, young: 0, other: 0};
+    const uni = [];
+    for (const t of tick){
+      const m = meta.get(t.instId);
+      if (!m || !t.instId.endsWith('-USDT-SWAP') || m.state !== 'live') continue;
+      const sym = t.instId.replace('-USDT-SWAP', '');
+      const usd = +t.volCcy24h * +t.last;
+      if (sym === 'BTC') { uni.push({id: t.instId, sym, usd, btc: true}); continue; }
+      if (usd < S.minLiq * 1e6) continue;
+      if (m.instCategory !== '1' || STABLES.has(sym)) { skipped.other++; continue; }
+      if (MEMES.has(sym) && usd < S.memeLiq * 1e6) { skipped.meme++; continue; }
+      if (now - +m.listTime < S.minAge * 864e5) { skipped.young++; continue; }
+      uni.push({id: t.instId, sym, usd, listTime: +m.listTime});
+    }
+    uni.sort((a, b) => b.usd - a.usd);
+    const out = []; let done = 0, failed = 0;
+    status(`Scanning ${uni.length} coins…`);
+    await pool(uni, 6, async u => {
+      try {
+        const [a, b] = await Promise.all([
+          okx(`/market/candles?instId=${u.id}&bar=5m&limit=300`),
+          okx(`/market/candles?instId=${u.id}&bar=1H&limit=170`)
+        ]);
+        const r = analyse(u.sym, parse(a), parse(b));
+        if (r) out.push(Object.assign(r, {id: u.id, usd: u.usd, btc: u.btc}));
+      } catch (e) { failed++; }
+      done++; prog(0.05 + 0.95 * done / uni.length);
+      status(`Scanning ${done}/${uni.length} coins…`);
+    });
+    data = {at: new Date(), coins: out, n: uni.length - 1, skipped, failed};
+    $('stamp').textContent = 'Updated ' + utc(data.at);
+    $('universe').textContent = `${data.n} coins ≥ $${S.minLiq}M/24h`;
+    status(`Done: ${out.length - 1} coins scanned` + (failed ? `, ${failed} failed (retry with Refresh)` : '') +
+      `. Skipped ${skipped.meme} memes under $${S.memeLiq}M, ${skipped.young} new listings, ${skipped.other} stocks/commodities/stables.`);
+    render(true);
+  } catch (e) {
+    $('status').innerHTML = `<span class="bear">Couldn't reach OKX: ${esc(e.message)}.</span> Check your connection and press Refresh. If this keeps happening here, open the page on <a href="https://mrufolegend.github.io/mr-ufo-crypto-daily/volatility.html">GitHub Pages</a>.`;
+  } finally {
+    busy = false; $('refresh').disabled = false;
+    setTimeout(() => prog(0), 600);
+  }
+}
+
+// ---------- rendering ----------
+function spark(r, L, up){
+  const bars = r.m5.slice(-L.chartBars), n = bars.length;
+  const W = 420, H = 120, P = 6;
+  const cs = bars.map(b => b.c), lo = Math.min(...cs), hi = Math.max(...cs), rng = hi - lo || hi * 0.001;
+  const x = i => P + (W - 2 * P) * i / (n - 1), y = v => H - P - (H - 2 * P) * (v - lo) / rng;
+  const pts = cs.map((v, i) => x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
+  const winX = x(Math.max(0, n - 1 - L.win));
+  const col = up ? 'var(--bull)' : 'var(--bear)';
+  const span = L.chartBars * 5 / 60;
+  return `<div class="spark"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(r.sym)} price, last ${span}h">
+    <rect x="${winX.toFixed(1)}" y="0" width="${(W - P - winX).toFixed(1)}" height="${H}" fill="${up ? 'rgba(0,217,126,.10)' : 'rgba(255,61,90,.10)'}"/>
+    <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>
+  </svg><div class="axis"><span>-${span}h</span><span>shaded = trigger window · now</span></div></div>`;
+}
+
+function render(fresh){
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.list === activeList));
+  $('lead').textContent = LISTS[activeList].lead + ` Trigger: volume ≥ ${S[LISTS[activeList].xKey]}× and price ≥ ${S[LISTS[activeList].pKey]}%.`;
+  const btc = data && data.coins.find(c => c.btc);
+  renderBtc(btc);
+  if (!data) { $('alerts').innerHTML = '<div class="empty">Press Refresh to scan.</div>'; return; }
+
+  const lists = {};
+  for (const [k, L] of Object.entries(LISTS)){
+    lists[k] = data.coins.filter(c => !c.btc && fires(c.lists[k], L))
+      .map(c => ({c, m: c.lists[k], reps: c.lists[k].hist.filter(h => fires(h, L)).length}))
+      .sort((a, b) => b.m.ratio - a.m.ratio);
+    $('n-' + k).textContent = lists[k].length;
+  }
+
+  // new ⚡ alerts since the previous scan → sound / notification
+  if (fresh){
+    const cur = lists.now.map(x => x.c.sym);
+    const fresh1 = cur.filter(s => !seenNow.has(s));
+    if (fresh1.length && $('sound').checked && seenNow.size + cur.length > 0 && store.get('scanned', false)) notify(fresh1);
+    data.newNow = new Set(fresh1);
+    seenNow = new Set(cur); store.set('seenNow', cur); store.set('scanned', true);
+  }
+
+  const L = LISTS[activeList], rows = lists[activeList];
+  const win = {now: '15m', hour: '1h', h4: '4h'}[activeList];
+  $('alerts').innerHTML = rows.length ? rows.map(({c, m, reps}) => {
+    const up = m.ch >= 0;
+    const isNew = activeList === 'now' && data.newNow && data.newNow.has(c.sym);
+    const base = c.sym.toLowerCase();
+    return `<article class="card alert${up ? '' : ' dn'}"><div class="card-body">
+      <div class="top"><span class="sym">${esc(c.sym)}</span>
+        <span class="bias ${up ? 'bias-bull' : 'bias-bear'}">${up ? 'Pump' : 'Dump'}</span>
+        <span class="tag${reps > 2 ? ' tag-o' : ''}">${L.name} ×${Math.max(1, reps)}</span>
+        ${MEMES.has(c.sym) ? '<span class="tag tag-p">meme</span>' : ''}
+        ${isNew ? '<span class="new">NEW</span>' : ''}</div>
+      <div class="kv">
+        <div><span>Price</span><b>$${fmtPx(c.price)}</b></div>
+        <div><span>Change ${win}</span><b class="${cls(m.ch)}">${fmtPct(m.ch)}</b></div>
+        <div><span>Volume increase</span><b class="neutral">+${((m.ratio - 1) * 100).toFixed(0)}%</b></div>
+        <div><span>Volume ${win}</span><b>${fmtUsd(m.vol)}</b></div>
+        <div><span>24h change</span><b class="${cls(c.ch24)}">${fmtPct(c.ch24)}</b></div>
+        <div><span>24h volume</span><b>${fmtUsd(c.usd)}</b></div>
+      </div>
+      ${spark(c, L, up)}
+      <div class="links"><a href="https://www.tradingview.com/chart/?symbol=OKX:${encodeURIComponent(c.sym)}USDT.P" target="_blank" rel="noopener">TradingView ↗</a>
+        <a href="https://www.okx.com/trade-swap/${encodeURIComponent(base)}-usdt-swap" target="_blank" rel="noopener">OKX ↗</a></div>
+    </div></article>`;
+  }).join('') : `<div class="empty">Nothing on this list right now. A quiet list is fine. Don't go looking for a trade.</div>`;
+}
+
+function renderBtc(b){
+  const el = $('btc');
+  if (!b) return;
+  const hc = b.h1c;
+  const ema = (a, n) => { const k = 2 / (n + 1); let e = a[0]; for (const x of a) e = x * k + e * (1 - k); return e; };
+  const e20 = ema(hc, 20), e50 = ema(hc, 50), p = b.price;
+  const trend = p > e20 && e20 > e50 ? ['Uptrend', 'bias-bull'] : p < e20 && e20 < e50 ? ['Downtrend', 'bias-bear'] : ['Mixed', 'bias-neutral'];
+  const h = b.lists.hour, f = b.lists.h4;
+  el.innerHTML = `
+    <div><span>Trend (1H EMA 20/50)</span><b><span class="bias ${trend[1]}">${trend[0]}</span></b></div>
+    <div><span>Price</span><b>$${fmtPx(p)}</b></div>
+    <div><span>1h</span><b class="${cls(h.ch)}">${fmtPct(h.ch)}</b></div>
+    <div><span>4h</span><b class="${cls(f.ch)}">${fmtPct(f.ch)}</b></div>
+    <div><span>Vol 1h vs normal</span><b class="${h.ratio >= 2 ? 'neutral' : ''}">${h.ratio.toFixed(1)}×</b></div>`;
+}
+
+function notify(syms){
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.18].forEach(t => { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = 880; g.gain.value = 0.08;
+      o.connect(g).connect(ctx.destination); o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.12); });
+  } catch {}
+  try { if ('Notification' in window && Notification.permission === 'granted') new Notification('⚡ Volatility alert', {body: syms.join(', ')}); } catch {}
+}
+
+// ---------- settings UI ----------
+function buildSettings(){
+  $('sets').innerHTML = SLIDERS.map(s => s[0] === 'grp' ? `<div class="grp">${s[1]}</div>` :
+    `<div class="set"><label for="s-${s[0]}">${s[1]} <b id="v-${s[0]}">${s[5](S[s[0]])}</b></label>
+     <input type="range" id="s-${s[0]}" min="${s[2]}" max="${s[3]}" step="${s[4]}" value="${S[s[0]]}"></div>`).join('');
+  SLIDERS.filter(s => s[0] !== 'grp').forEach(s => {
+    $('s-' + s[0]).addEventListener('input', e => {
+      S[s[0]] = +e.target.value; $('v-' + s[0]).textContent = s[5](S[s[0]]);
+      store.set('settings', S); render(false);
+    });
+  });
+}
+
+// ---------- wiring ----------
+$('refresh').addEventListener('click', scan);
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { activeList = t.dataset.list; store.set('tab', activeList); render(false); }));
+$('reset').addEventListener('click', () => { const d = S.dumps; S = Object.assign({}, DEFAULTS, {dumps: d}); store.set('settings', S); buildSettings(); render(false); });
+$('dumps').checked = S.dumps !== false;
+$('dumps').addEventListener('change', e => { S.dumps = e.target.checked; store.set('settings', S); render(false); });
+$('sound').checked = store.get('sound', false);
+$('sound').addEventListener('change', e => {
+  store.set('sound', e.target.checked);
+  try { if (e.target.checked && 'Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {}
+});
+$('auto').checked = store.get('auto', false);
+const setAuto = () => { clearInterval(timer); if ($('auto').checked) timer = setInterval(scan, 60000); };
+$('auto').addEventListener('change', e => { store.set('auto', e.target.checked); setAuto(); });
+
+buildSettings();
+render(false);
+setAuto();
+scan();
+})();
+</script>
+</body>
+</html>
