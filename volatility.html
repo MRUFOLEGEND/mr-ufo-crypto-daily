@@ -343,7 +343,7 @@ async function scan(){
     const uni = btcRow ? [btcRow, ...ok] : ok;
     const out = []; let done = 0, failed = 0;
     status(`Scanning ${uni.length} coins…`);
-    await pool(uni, 6, async u => {
+    await pool(uni, 12, async u => {
       try {
         // 7-day hourly baseline changes slowly: reuse it for 30 min, so later refreshes need one request per coin
         const hc = h1Cache.get(u.id), fresh = hc && Date.now() - hc.at < 30 * 60e3;
