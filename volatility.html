@@ -173,7 +173,7 @@ footer{font-size:13px;color:var(--dim);line-height:1.7}
     <div class="card-body">
       <div class="sets" id="sets"></div>
       <div class="bar"><button class="btn" id="reset">Reset to defaults</button></div>
-      <p class="note">Coin filters (liquidity, meme floor) apply on the next Refresh. Trigger sliders apply right away.</p>
+      <p class="note">Coin filters (top N, meme floor, new listings) apply on the next Refresh. Trigger sliders apply right away.</p>
     </div>
   </details>
 
@@ -196,11 +196,11 @@ const MEMES = new Set(('DOGE PEPE SHIB BONK WIF FLOKI BOME MEME NEIRO NEIROETH T
   'AIDOGE ELON LADYS VINE JELLYJELLY HIPPO KOMA DEGEN TOSHI SUNDOG HMSTR CATI X 1000SATS PIPPIN AI16Z ZEREBRO FWOG MICHI').split(' '));
 const STABLES = new Set('USDC USDE FDUSD DAI TUSD USD1 PYUSD RLUSD USDG USDD EURC USTC'.split(' '));
 
-const DEFAULTS = {minLiq:10, memeLiq:50, minAge:14,
+const DEFAULTS = {topN:200, memeLiq:50, minAge:14,
   nowX:4, nowPct:1.5, hourX:3, hourPct:3, h4X:2.5, h4Pct:5};
 const SLIDERS = [
   ['grp','Which coins'],
-  ['minLiq','Min 24h volume', 3, 100, 1, v => '$' + v + 'M'],
+  ['topN','Scan the top', 50, 280, 10, v => v + ' coins (24h vol)'],
   ['memeLiq','Meme coins need', 10, 300, 5, v => '$' + v + 'M'],
   ['minAge','Skip new listings under', 0, 60, 1, v => v + ' days'],
   ['grp','⚡ Starting now (15m)'],
@@ -233,6 +233,7 @@ let activeList = store.get('tab', 'now');
 if (['#now', '#hour', '#h4'].includes(location.hash)) activeList = location.hash.slice(1);
 let data = null;          // last scan
 let seenNow = new Set(store.get('seenNow', []));
+const h1Cache = new Map();
 let busy = false, timer = null, lastAt = null, prevKeys = null;
 
 const $ = id => document.getElementById(id);
@@ -248,11 +249,11 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 const utc = d => d.toISOString().slice(0, 19).replace('T', ' ') + ' UTC';
 const ago = d => { const s = Math.round((Date.now() - d) / 1000); return s < 60 ? s + 's ago' : Math.floor(s / 60) + 'm ' + (s % 60) + 's ago'; };
 
-// Throttled fetch: OKX candles allow 40 req / 2s per IP, we stay at ~16/s.
+// Throttled fetch: OKX candles allow 40 req / 2s per IP, we stay at ~18/s.
 let lastStart = 0;
 async function okx(path, tries = 4){
   for (let i = 0; i < tries; i++){
-    const wait = Math.max(0, lastStart + 62 - Date.now());
+    const wait = Math.max(0, lastStart + 55 - Date.now());
     lastStart = Date.now() + wait;
     if (wait) await new Promise(r => setTimeout(r, wait));
     try {
@@ -321,39 +322,46 @@ async function scan(){
     setConn(true, Math.round(performance.now() - t0) + ' ms');
     const meta = new Map(inst.map(x => [x.instId, x]));
     const now = Date.now();
-    let skipped = {meme: 0, young: 0, other: 0};
-    const uni = [];
+    const all = []; let btcRow = null;
     for (const t of tick){
       const m = meta.get(t.instId);
       if (!m || !t.instId.endsWith('-USDT-SWAP') || m.state !== 'live') continue;
       const sym = t.instId.replace('-USDT-SWAP', '');
       const usd = +t.volCcy24h * +t.last;
-      if (sym === 'BTC') { uni.push({id: t.instId, sym, usd, btc: true}); continue; }
-      if (usd < S.minLiq * 1e6) continue;
-      if (m.instCategory !== '1' || STABLES.has(sym)) { skipped.other++; continue; }
-      if (MEMES.has(sym) && usd < S.memeLiq * 1e6) { skipped.meme++; continue; }
-      if (now - +m.listTime < S.minAge * 864e5) { skipped.young++; continue; }
-      uni.push({id: t.instId, sym, usd, listTime: +m.listTime});
+      if (sym === 'BTC') { btcRow = {id: t.instId, sym, usd, btc: true}; continue; }
+      const why = m.instCategory !== '1' || STABLES.has(sym) ? 'other'
+        : MEMES.has(sym) && usd < S.memeLiq * 1e6 ? 'meme'
+        : now - +m.listTime < S.minAge * 864e5 ? 'young' : null;
+      all.push({id: t.instId, sym, usd, why});
     }
-    uni.sort((a, b) => b.usd - a.usd);
+    // Top N eligible coins by 24h dollar volume; skip counts only for coins that would have ranked inside that cut
+    all.sort((a, b) => b.usd - a.usd);
+    const ok = all.filter(x => !x.why).slice(0, S.topN);
+    const floor = ok.length ? ok[ok.length - 1].usd : 0;
+    const skipped = {meme: 0, young: 0, other: 0};
+    all.forEach(x => { if (x.why && x.usd >= floor) skipped[x.why]++; });
+    const uni = btcRow ? [btcRow, ...ok] : ok;
     const out = []; let done = 0, failed = 0;
     status(`Scanning ${uni.length} coins…`);
     await pool(uni, 6, async u => {
       try {
+        // 7-day hourly baseline changes slowly: reuse it for 30 min, so later refreshes need one request per coin
+        const hc = h1Cache.get(u.id), fresh = hc && Date.now() - hc.at < 30 * 60e3;
         const [a, b] = await Promise.all([
           okx(`/market/candles?instId=${u.id}&bar=5m&limit=300`),
-          okx(`/market/candles?instId=${u.id}&bar=1H&limit=170`)
+          fresh ? hc.rows : okx(`/market/candles?instId=${u.id}&bar=1H&limit=170`)
         ]);
+        if (!fresh) h1Cache.set(u.id, {at: Date.now(), rows: b});
         const r = analyse(u.sym, parse(a), parse(b));
         if (r) out.push(Object.assign(r, {id: u.id, usd: u.usd, btc: u.btc}));
       } catch (e) { failed++; }
       done++; prog(0.05 + 0.95 * done / uni.length);
       status(`Scanning ${done}/${uni.length} coins…`); btnTxt(`Scanning ${done}/${uni.length}`);
     });
-    data = {at: new Date(), coins: out, n: uni.length - 1, skipped, failed};
+    data = {at: new Date(), coins: out, n: ok.length, floor, skipped, failed};
     lastAt = data.at; tickStamp();
-    $('universe').textContent = `${data.n} coins ≥ $${S.minLiq}M/24h`;
-    status(`Done: ${out.length - 1} coins scanned` + (failed ? `, ${failed} failed (retry with Refresh)` : '') +
+    $('universe').textContent = `Top ${data.n} coins · down to ${fmtUsd(floor)}/24h`;
+    status(`Done: ${out.filter(c => !c.btc).length} of top ${ok.length} coins scanned` + (failed ? `, ${failed} failed (retry with Refresh)` : '') +
       `. Skipped ${skipped.meme} memes under $${S.memeLiq}M, ${skipped.young} new listings, ${skipped.other} stocks/commodities/stables.`);
     render(true);
     const keys = new Set(Object.keys(LISTS).flatMap(k => data.coins.filter(c => !c.btc && fires(c.lists[k], LISTS[k])).map(c => k + c.sym)));
