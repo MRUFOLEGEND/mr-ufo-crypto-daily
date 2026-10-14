@@ -71,7 +71,7 @@ svg.spark{width:100%;height:80px;display:block}
 .foot{font-size:13px;color:var(--dim);line-height:1.7}
 @media (max-width:600px){.m{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .ovwrap{overflow-x:auto;border:1px solid var(--border);border-radius:6px}
-table.ov{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+table.ov{width:100%;border-collapse:collapse;font-size:14px;min-width:720px}
 .ov th{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);text-align:left;font-weight:600;padding:8px 10px;background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap}
 .ov td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
 .ov tr:last-child td{border-bottom:0}
@@ -92,6 +92,13 @@ table.ov{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
 .refresh{min-height:44px}
 .refresh-msg{font-size:12px;color:var(--dim);width:100%;text-align:right}
 @media (max-width:600px){.stamp-row{margin-left:0;justify-content:flex-start}.refresh-msg{text-align:left}}
+.ov .vd{font-size:11px;padding:2px 7px}
+.st-cell{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;padding:2px 8px;border-radius:4px;white-space:nowrap;border:1px solid}
+.chip-l{border-color:var(--bull);background:var(--bull-bg)}.chip-s{border-color:var(--bear);background:var(--bear-bg)}
+.chip b{text-transform:uppercase;letter-spacing:.5px}
+.ov .stat{font-size:11px;padding:2px 8px}
+.ov td:last-child{min-width:420px}
 </style></head>
 <body>
 <div class="brand-sticky">
@@ -170,8 +177,9 @@ function spark(s) {
     + (v.some(x => x !== 1) ? '<path d="' + line + 'L' + W + ',' + H + 'L0,' + H + 'Z" fill="url(#' + id + ')"/>' : '') + '<path d="' + line + '" fill="none" stroke="' + c + '" stroke-width="1.8" vector-effect="non-scaling-stroke"/></svg>';
 }
 const statBadge = p => p.open.length ? '<span class="stat stat-open">● In trade · ' + p.open.length + '</span>' : '<span class="stat stat-flat">Flat</span>';
-const statText = p => p.open.length ? p.open.map(o => '<b class="' + (o.dir === 'Long' ? 'bull' : 'bear') + '">' + o.coin + ' ' + o.dir.toLowerCase() + '</b> <span class="' + cls(o.retPct) + '">' + pct(o.retPct, 2) + '</span>').join(', ')
-  : p.trades ? '<span class="dim">All closed (' + p.trades + ' trade' + (p.trades > 1 ? 's' : '') + ')</span>' : '<span class="dim">No trades yet</span>';
+const statText = p => '<div class="st-cell">' + (p.open.length ? '<span class="stat stat-open">● Open · ' + p.open.length + '</span>' + p.open.map(o => '<span class="chip ' + (o.dir === 'Long' ? 'chip-l' : 'chip-s') + '"><b class="' + (o.dir === 'Long' ? 'bull' : 'bear') + '">' + o.coin + ' ' + o.dir + '</b><span class="' + cls(o.retPct) + '">' + pct(o.retPct, 2) + '</span></span>').join('')
+  : '<span class="stat stat-flat">Flat</span><span class="dim">' + (p.trades ? 'all closed (' + p.trades + ' trade' + (p.trades > 1 ? 's' : '') + ')' : 'no trades yet') + '</span>') + '</div>';
+const vdBadge = s => { const ok = /ACCEPT|STRONG/.test(s.verdict); return '<span class="bias vd ' + (ok ? 'bias-bull' : 'bias-neutral') + '">' + (ok ? 'Acceptable' : 'Weak edge') + '</span>'; };
 function overview() {
   const sum = k => S.reduce((a, s) => a + (s.paper[k] || 0), 0), live = S.filter(s => s.paper.open.length), tot = sum('pnlUsd'), cap = 10000 * S.length;
   const kpi = (l, v, c = '') => '<div class="kpi"><div class="l">' + l + '</div><div class="v num ' + c + '">' + v + '</div></div>';
@@ -179,9 +187,9 @@ function overview() {
     + kpi('In a trade', live.length + ' / ' + S.length) + kpi('Open positions', S.reduce((a, s) => a + s.paper.open.length, 0)) + kpi('Closed trades', sum('trades'));
   $('#ovh').textContent = (S.length < ALL.length ? 'showing ' + S.length + ' of ' + ALL.length + ' · ' : '') + (live.length ? live.length + ' in a trade · ' + (S.length - live.length) + ' flat' : 'all flat');
   const rows = S.slice().sort((a, b) => (b.paper.open.length > 0) - (a.paper.open.length > 0) || b.paper.pnlUsd - a.paper.pnlUsd || a.rank - b.rank);
-  $('#ov').innerHTML = '<thead><tr><th>#</th><th>Strategy</th><th class="r">P&amp;L</th><th class="r">%</th><th class="r">Realized</th><th>Status</th></tr></thead><tbody>'
-    + rows.map(s => { const p = s.paper; return '<tr data-r="' + s.rank + '"' + (p.open.length ? ' class="live"' : '') + '><td>' + s.rank + '</td><td>' + short(s.name) + '</td><td class="r ' + cls(p.pnlUsd) + '">' + usd(p.pnlUsd, true) + '</td><td class="r ' + cls(p.pnlPct) + '">' + pct(p.pnlPct, 2) + '</td><td class="r ' + cls(p.realizedUsd) + '">' + (p.realizedUsd == null ? '–' : usd(p.realizedUsd, true)) + '</td><td>' + statText(p) + '</td></tr>'; }).join('')
-    + '</tbody><tfoot><tr><td></td><td>Total · ' + S.length + ' accounts × $10k</td><td class="r ' + cls(tot) + '">' + usd(tot, true) + '</td><td class="r ' + cls(tot) + '">' + pct(100 * tot / cap, 2) + '</td><td class="r">' + usd(sum('realizedUsd'), true) + '</td><td>' + live.length + ' in a trade</td></tr></tfoot>';
+  $('#ov').innerHTML = '<thead><tr><th>#</th><th>Strategy</th><th>Verdict</th><th class="r">P&amp;L</th><th class="r">%</th><th class="r">Realized</th><th>Status</th></tr></thead><tbody>'
+    + rows.map(s => { const p = s.paper; return '<tr data-r="' + s.rank + '"' + (p.open.length ? ' class="live"' : '') + '><td>' + s.rank + '</td><td>' + short(s.name) + '</td><td>' + vdBadge(s) + '</td><td class="r ' + cls(p.pnlUsd) + '">' + usd(p.pnlUsd, true) + '</td><td class="r ' + cls(p.pnlPct) + '">' + pct(p.pnlPct, 2) + '</td><td class="r ' + cls(p.realizedUsd) + '">' + (p.realizedUsd == null ? '–' : usd(p.realizedUsd, true)) + '</td><td>' + statText(p) + '</td></tr>'; }).join('')
+    + '</tbody><tfoot><tr><td></td><td>Total · ' + S.length + ' accounts × $10k</td><td></td><td class="r ' + cls(tot) + '">' + usd(tot, true) + '</td><td class="r ' + cls(tot) + '">' + pct(100 * tot / cap, 2) + '</td><td class="r">' + usd(sum('realizedUsd'), true) + '</td><td>' + live.length + ' in a trade</td></tr></tfoot>';
 }
 $('#ov').addEventListener('click', e => { const tr = e.target.closest('tr[data-r]'); if (tr) { const el = document.getElementById('s' + tr.dataset.r); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
 function card(s) {
