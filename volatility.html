@@ -111,6 +111,51 @@ details[open].card summary::after{content:" ▾"}
 .set input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 .grp{font-size:12.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent2);grid-column:1/-1;margin-top:4px}
 footer{font-size:13px;color:var(--dim);line-height:1.7}
+
+/* view switch */
+.views{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.view{min-height:52px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;font:700 15px var(--mono);letter-spacing:.5px;cursor:pointer;padding:0 12px}
+.view[aria-selected="true"]{border-color:var(--accent);color:var(--white);background:var(--surface2);box-shadow:0 0 12px rgba(78,127,255,.35)}
+
+/* relative strength */
+.tag-g{background:var(--bull-bg);color:var(--bull);border-color:rgba(0,217,126,.35)}
+.tag-r{background:var(--bear-bg);color:var(--bear);border-color:rgba(255,61,90,.35)}
+.how{display:grid;gap:6px;padding-left:20px;font-size:14.5px}
+.how li::marker{color:var(--accent)}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.split{grid-template-columns:1fr}}
+.rlist{list-style:none;display:grid}
+.rrow{display:grid;grid-template-columns:30px minmax(0,1fr) 92px 44px;gap:10px;align-items:center;padding:9px 15px;border-bottom:1px solid var(--border)}
+.rrow:last-child{border-bottom:0}
+.rk{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums}
+.rsym{font-size:17px;color:var(--white);letter-spacing:.5px;margin-right:6px}
+.rtags{display:inline-flex;gap:5px;flex-wrap:wrap;vertical-align:middle}
+.rsub{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums;margin-top:2px}
+.rsub b{font-weight:700}
+.rspark svg{display:block;width:92px;height:34px}
+.rating{display:grid;place-items:center;width:44px;height:36px;border-radius:6px;font-weight:700;font-size:16px;border:1px solid var(--border);background:var(--surface2);font-variant-numeric:tabular-nums}
+.rating.hi{color:var(--bull);border-color:var(--bull);background:var(--bull-bg)}
+.rating.lo{color:var(--bear);border-color:var(--bear);background:var(--bear-bg)}
+@media (max-width:440px){.rrow{grid-template-columns:26px minmax(0,1fr) 44px}.rspark{display:none}}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{min-height:40px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font:700 13px var(--mono);letter-spacing:.5px;cursor:pointer;padding:0 12px}
+.chip[aria-pressed="true"]{border-color:var(--accent);color:var(--white);box-shadow:0 0 8px rgba(78,127,255,.35)}
+.search{min-height:44px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;font:15px var(--mono);padding:0 12px;width:min(100%,220px)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:6px;max-height:75vh;overflow-y:auto}
+table.rs{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+table.rs th,table.rs td{padding:7px 10px;white-space:nowrap;text-align:right;border-bottom:1px solid var(--border)}
+table.rs th{position:sticky;top:0;z-index:2;background:var(--surface2);color:var(--dim);font-size:12px;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;user-select:none}
+table.rs th[aria-sort="descending"]::after{content:" ▾";color:var(--accent)}
+table.rs th[aria-sort="ascending"]::after{content:" ▴";color:var(--accent)}
+table.rs td:first-child,table.rs th:first-child{position:sticky;left:0;text-align:left;background:var(--surface);z-index:1}
+table.rs th:first-child{z-index:3;background:var(--surface2)}
+table.rs tbody tr:hover td{background:var(--surface2)}
+table.rs td:first-child b{color:var(--white)}
+table.rs td:first-child small{color:var(--dim);font-size:12px;margin-right:6px}
+.breadth{font-size:14.5px}
+.emad{display:inline-flex;gap:8px;font-size:13px;font-weight:700;vertical-align:middle}
+.emad i{font-style:normal}
+
 </style>
 </head>
 <body>
@@ -119,7 +164,7 @@ footer{font-size:13px;color:var(--dim);line-height:1.7}
     <img class="brand-ape" src="BASC.png" alt="Mr UFO">
     <div>
       <div class="brand-title">CRYPTO DAILY</div>
-      <div class="brand-sub">Volatility Alerts</div>
+      <div class="brand-sub">Volatility &amp; Strength</div>
     </div>
   </div>
   <div class="stamp"><span id="stamp">Not loaded yet</span><br>Data: OKX public API · USDT perps</div>
@@ -142,6 +187,12 @@ footer{font-size:13px;color:var(--dim);line-height:1.7}
     </div>
   </section>
 
+  <div class="views" role="tablist" aria-label="View">
+    <button class="view" role="tab" data-view="alerts" aria-selected="true">⚡ Volume alerts</button>
+    <button class="view" role="tab" data-view="rs" aria-selected="false">💪 Relative strength</button>
+  </div>
+
+  <div id="view-alerts" style="display:grid;gap:20px">
   <section class="card" aria-labelledby="btc-t">
     <div class="card-hdr"><span class="card-title" id="btc-t">BTC first</span><span class="card-hint">Check BTC before acting on any alt</span></div>
     <div class="card-body">
@@ -168,6 +219,60 @@ footer{font-size:13px;color:var(--dim);line-height:1.7}
     </div>
   </section>
 
+  </div>
+
+  <div id="view-rs" style="display:grid;gap:20px" hidden>
+    <section class="card" aria-labelledby="rs-t">
+      <div class="card-hdr"><span class="card-title" id="rs-t">Relative strength vs BTC</span><span class="card-hint" id="rs-uni">–</span></div>
+      <div class="card-body">
+        <div class="btc" id="rs-btc">
+          <div><span>BTC vs daily EMA 20·50·200</span><b class="dim">–</b></div>
+          <div><span>BTC 7d</span><b>–</b></div>
+          <div><span>BTC 30d</span><b>–</b></div>
+          <div><span>Alts beating BTC 7d</span><b>–</b></div>
+          <div><span>Alts above 20D EMA</span><b>–</b></div>
+        </div>
+        <p class="breadth" id="rs-read"></p>
+        <details><summary class="dim" style="cursor:pointer;min-height:32px">How to use this (tap)</summary>
+          <ol class="how">
+            <li><b>Longs come from the Leaders.</b> Only when BTC's daily trend is up or flat. The best ones show <span class="tag tag-g">RS 30d high</span> and <span class="tag tag-g">Holds red days</span> and are not <span class="tag tag-o">Extended</span>. Prefer coins above all three daily EMAs (▲20 ▲50 ▲200, same as the Crypto Daily overview). Buy pullbacks toward the 20 EMA, not green candles.</li>
+            <li><b>Shorts come from the Laggards.</b> Only when BTC is in a downtrend. Best: <span class="tag tag-r">RS 30d low</span> + <span class="tag tag-r">Bleeds red days</span> + below all three daily EMAs (▼20 ▼50 ▼200).</li>
+            <li><b>Red-day edge is the real test.</b> It's the coin's average daily result minus BTC's on days BTC closed red (last 30 days). A coin that holds up while BTC dumps is usually first to run when BTC turns.</li>
+            <li><b>Watch the beta.</b> <span class="tag tag-p">High beta</span> coins (≥2) outperform in every rally just by moving harder. If the red-day edge is negative, that outperformance is leverage, not strength.</li>
+            <li><b>Breadth sets the mode.</b> Over 60% of alts beating BTC = alt-friendly market. Under 30% = BTC dominance phase: trade only the top leaders, or BTC itself.</li>
+          </ol>
+        </details>
+      </div>
+    </section>
+
+    <div class="split">
+      <section class="card" aria-labelledby="lead-t">
+        <div class="card-hdr"><span class="card-title bull" id="lead-t">🟢 Leaders · top 25</span><span class="card-hint">Strongest vs BTC</span></div>
+        <ul class="rlist" id="rs-leaders"><li class="empty">Loading…</li></ul>
+      </section>
+      <section class="card" aria-labelledby="lag-t">
+        <div class="card-hdr"><span class="card-title bear" id="lag-t">🔴 Laggards · bottom 25</span><span class="card-hint">Weakest vs BTC</span></div>
+        <ul class="rlist" id="rs-laggards"><li class="empty">Loading…</li></ul>
+      </section>
+    </div>
+
+    <section class="card" aria-labelledby="all-t">
+      <div class="card-hdr"><span class="card-title" id="all-t">Full list</span><span class="card-hint" id="rs-count">–</span></div>
+      <div class="card-body">
+        <div class="filters">
+          <input class="search" id="rs-q" type="search" placeholder="Search coin" aria-label="Search coin">
+          <button class="chip" data-f="nh" aria-pressed="false">RS 30d high</button>
+          <button class="chip" data-f="nl" aria-pressed="false">RS 30d low</button>
+          <button class="chip" data-f="up" aria-pressed="false">Above all EMAs</button>
+          <button class="chip" data-f="hold" aria-pressed="false">Holds red days</button>
+          <button class="chip" data-f="fresh" aria-pressed="false">Not extended</button>
+        </div>
+        <div class="tbl-wrap"><table class="rs" id="rs-table"></table></div>
+        <p class="dim" style="font-size:13px">Tap a column header to sort. "vs BTC" = % change of the COIN/BTC ratio, i.e. how much better or worse than simply holding BTC.</p>
+      </div>
+    </section>
+  </div>
+
   <details class="card" id="settings">
     <summary>Settings</summary>
     <div class="card-body">
@@ -181,6 +286,9 @@ footer{font-size:13px;color:var(--dim);line-height:1.7}
     How it works: every refresh pulls 5-minute and 1-hour candles for each coin from OKX. Volume in the window is compared with that coin's <b>median</b> volume
     (15m vs the last 24h, 1h and 4h vs the last 7 days), so one old spike doesn't skew "normal". ×N = how many times the coin hit the same trigger
     in the look-back (4h for ⚡ and 🔥, 12h for 🌊). Skipped: stocks/commodity perps, stablecoins, coins listed &lt;14 days ago, memes under the meme floor.
+
+    <br><br>Relative strength: 300 daily candles (UTC) for the same top-N list; EMA 20/50/200 on the daily close ("–" = coin too new for that EMA), refreshed every 60 min, with live prices on every Refresh.
+    RS rating 1–99 = percentile blend of performance vs BTC over 1d (20%), 7d (40%) and 30d (40%).
     <br><br>This is a scanner, not a strategy. It is <b>not backtested</b>. A volume spike says something is happening, not which way it goes next.
     Check BTC and the chart before acting, size live trades at 0.5–1% risk, and don't chase a candle that already ran. Not financial advice.
   </footer>
@@ -308,6 +416,35 @@ function analyse(sym, m5, h1){
 const fires = (m, L) => m.ratio >= S[L.xKey] && Math.abs(m.ch) * 100 >= S[L.pKey] && (S.dumps !== false || m.ch > 0);
 
 // ---------- scan ----------
+// Shared coin universe: top N eligible USDT perps by 24h dollar volume
+async function getUniverse(){
+  const t0 = performance.now();
+  const [inst, tick] = await Promise.all([okx('/public/instruments?instType=SWAP'), okx('/market/tickers?instType=SWAP')]);
+  setConn(true, Math.round(performance.now() - t0) + ' ms');
+  const meta = new Map(inst.map(x => [x.instId, x]));
+  const now = Date.now();
+  const all = []; let btcRow = null;
+  for (const t of tick){
+    const m = meta.get(t.instId);
+    if (!m || !t.instId.endsWith('-USDT-SWAP') || m.state !== 'live') continue;
+    const sym = t.instId.replace('-USDT-SWAP', '');
+    const usd = +t.volCcy24h * +t.last, last = +t.last;
+    if (sym === 'BTC') { btcRow = {id: t.instId, sym, usd, last, btc: true}; continue; }
+    const why = m.instCategory !== '1' || STABLES.has(sym) ? 'other'
+      : MEMES.has(sym) && usd < S.memeLiq * 1e6 ? 'meme'
+      : now - +m.listTime < S.minAge * 864e5 ? 'young' : null;
+    all.push({id: t.instId, sym, usd, last, why});
+  }
+  // skip counts only for coins that would have ranked inside the cut
+  all.sort((a, b) => b.usd - a.usd);
+  const ok = all.filter(x => !x.why).slice(0, S.topN);
+  const floor = ok.length ? ok[ok.length - 1].usd : 0;
+  const skipped = {meme: 0, young: 0, other: 0};
+  all.forEach(x => { if (x.why && x.usd >= floor) skipped[x.why]++; });
+  return {ok, floor, skipped, btcRow, uni: btcRow ? [btcRow, ...ok] : ok};
+}
+const skipTxt = sk => `Skipped ${sk.meme} memes under ${S.memeLiq}M, ${sk.young} new listings, ${sk.other} stocks/commodities/stables.`;
+
 async function scan(){
   if (busy) return; busy = true;
   $('refresh').disabled = true;
@@ -318,29 +455,7 @@ async function scan(){
   const status = t => $('status').textContent = t;
   try {
     status('Loading coin list…'); prog(0.02);
-    const [inst, tick] = await Promise.all([okx('/public/instruments?instType=SWAP'), okx('/market/tickers?instType=SWAP')]);
-    setConn(true, Math.round(performance.now() - t0) + ' ms');
-    const meta = new Map(inst.map(x => [x.instId, x]));
-    const now = Date.now();
-    const all = []; let btcRow = null;
-    for (const t of tick){
-      const m = meta.get(t.instId);
-      if (!m || !t.instId.endsWith('-USDT-SWAP') || m.state !== 'live') continue;
-      const sym = t.instId.replace('-USDT-SWAP', '');
-      const usd = +t.volCcy24h * +t.last;
-      if (sym === 'BTC') { btcRow = {id: t.instId, sym, usd, btc: true}; continue; }
-      const why = m.instCategory !== '1' || STABLES.has(sym) ? 'other'
-        : MEMES.has(sym) && usd < S.memeLiq * 1e6 ? 'meme'
-        : now - +m.listTime < S.minAge * 864e5 ? 'young' : null;
-      all.push({id: t.instId, sym, usd, why});
-    }
-    // Top N eligible coins by 24h dollar volume; skip counts only for coins that would have ranked inside that cut
-    all.sort((a, b) => b.usd - a.usd);
-    const ok = all.filter(x => !x.why).slice(0, S.topN);
-    const floor = ok.length ? ok[ok.length - 1].usd : 0;
-    const skipped = {meme: 0, young: 0, other: 0};
-    all.forEach(x => { if (x.why && x.usd >= floor) skipped[x.why]++; });
-    const uni = btcRow ? [btcRow, ...ok] : ok;
+    const {ok, floor, skipped, uni} = await getUniverse();
     const out = []; let done = 0, failed = 0;
     status(`Scanning ${uni.length} coins…`);
     await pool(uni, 12, async u => {
@@ -362,7 +477,7 @@ async function scan(){
     lastAt = data.at; tickStamp();
     $('universe').textContent = `Top ${data.n} coins · down to ${fmtUsd(floor)}/24h`;
     status(`Done: ${out.filter(c => !c.btc).length} of top ${ok.length} coins scanned` + (failed ? `, ${failed} failed (retry with Refresh)` : '') +
-      `. Skipped ${skipped.meme} memes under $${S.memeLiq}M, ${skipped.young} new listings, ${skipped.other} stocks/commodities/stables.`);
+      '. ' + skipTxt(skipped));
     render(true);
     const keys = new Set(Object.keys(LISTS).flatMap(k => data.coins.filter(c => !c.btc && fires(c.lists[k], LISTS[k])).map(c => k + c.sym)));
     const added = prevKeys ? [...keys].filter(k => !prevKeys.has(k)).length : keys.size;
@@ -380,6 +495,203 @@ async function scan(){
     busy = false; $('refresh').disabled = false; $('refresh').textContent = '↻ Refresh';
     setTimeout(() => prog(0), 600);
   }
+}
+
+// ---------- relative strength ----------
+const dCache = new Map();          // daily candles per instId, reused for 60 min
+let rsData = null;
+const RS_SORT_DEF = {k: 'rating', dir: -1};
+let rsSort = store.get('rsSort', RS_SORT_DEF);
+const rsFilt = new Set();
+const ema = (a, n) => { const k = 2 / (n + 1); const out = []; let e = a[0]; for (const x of a){ e = x * k + e * (1 - k); out.push(e); } return out; };
+
+function rsCalc(u, rows, btcMap){
+  // rows: newest-first daily candles. Use live last price for today's bar.
+  const d = rows.slice().reverse().map(r => ({t: +r[0], h: +r[2], c: +r[4], v: +r[7]}));
+  if (d.length) d[d.length - 1].c = u.last;
+  const a = d.filter(x => btcMap.has(x.t));
+  const n = a.length;
+  if (n < 8) return null;
+  const cc = a.map(x => x.c), bc = a.map(x => btcMap.get(x.t));
+  const ret = (arr, k) => n - 1 - k >= 0 ? arr[n - 1] / arr[n - 1 - k] - 1 : null;
+  const rel = k => { const r = ret(cc, k), b = ret(bc, k); return r == null ? null : (1 + r) / (1 + b) - 1; };
+  const ratio = cc.map((c, i) => c / bc[i]);
+  const re = ema(ratio, 20);
+  const rsTrend = n < 25 ? 'flat' : ratio[n - 1] > re[n - 1] && re[n - 1] > re[n - 6] ? 'up' : ratio[n - 1] < re[n - 1] && re[n - 1] < re[n - 6] ? 'down' : 'flat';
+  const prev = ratio.slice(Math.max(0, n - 31), n - 1);
+  const nh = n >= 31 && ratio[n - 1] >= Math.max(...prev);
+  const nl = n >= 31 && ratio[n - 1] <= Math.min(...prev);
+  // daily returns over the last 30 complete days (today is excluded)
+  const rc = [], rb = [];
+  for (let i = Math.max(1, n - 31); i <= n - 2; i++){ rc.push(cc[i] / cc[i - 1] - 1); rb.push(bc[i] / bc[i - 1] - 1); }
+  const mean = x => x.reduce((p, q) => p + q, 0) / x.length;
+  let beta = null, edge = null;
+  if (rb.length >= 14){
+    const mc = mean(rc), mb = mean(rb);
+    let cov = 0, vb = 0; rb.forEach((b, i) => { cov += (rc[i] - mc) * (b - mb); vb += (b - mb) ** 2; });
+    beta = vb > 0 ? cov / vb : null;
+    const red = rb.map((b, i) => b < 0 ? rc[i] - b : null).filter(x => x != null);
+    if (red.length >= 4) edge = mean(red);
+  }
+  const e20 = ema(cc, 20), e50 = ema(cc, 50), e200 = ema(cc, 200), p = cc[n - 1];
+  // EMA stack like the Crypto Daily overview: price above/below daily EMA 20, 50, 200 (null = not enough history)
+  const a20 = n >= 20 ? p > e20[n - 1] : null, a50 = n >= 50 ? p > e50[n - 1] : null, a200 = n >= 200 ? p > e200[n - 1] : null;
+  const trend = stackOf(a20, a50, a200);
+  const hi30 = Math.max(...a.slice(-30).map(x => x.h));
+  const vAvg = (i, j) => mean(a.slice(i, j).map(x => x.v));
+  const volTr = n >= 32 ? vAvg(n - 8, n - 1) / vAvg(n - 31, n - 1) : null;
+  return {sym: u.sym, id: u.id, usd: u.usd, price: p, days: n,
+    r1: rel(1), r7: rel(7), r30: rel(30), r90: rel(90),
+    p1: ret(cc, 1), p7: ret(cc, 7), p30: ret(cc, 30),
+    rsTrend, nh, nl, beta, edge, trend, a20, a50, a200, ext: p / e20[n - 1] - 1, off: p / hi30 - 1, volTr,
+    spark: ratio.slice(-30)};
+}
+
+function stackOf(...a){ const k = a.filter(x => x != null); return k.length && k.every(x => x) ? 'up' : k.length && k.every(x => !x) ? 'down' : 'mixed'; }
+
+function rsRate(rows){
+  const keys = [['r1', .2], ['r7', .4], ['r30', .4]];
+  const sorted = {};
+  keys.forEach(([k]) => sorted[k] = rows.map(r => r[k]).filter(v => v != null).sort((x, y) => x - y));
+  const pct = (k, v) => { const a = sorted[k]; let lo = 0, hi = a.length; while (lo < hi){ const m = (lo + hi) >> 1; if (a[m] < v) lo = m + 1; else hi = m; } return a.length > 1 ? lo / (a.length - 1) : .5; };
+  rows.forEach(r => { let w = 0, t = 0; keys.forEach(([k, wt]) => { if (r[k] != null){ t += wt * pct(k, r[k]); w += wt; } }); r.score = w ? t / w : .5; });
+  const ord = [...rows].sort((x, y) => x.score - y.score);
+  ord.forEach((r, i) => r.rating = Math.round(1 + 98 * (ord.length > 1 ? i / (ord.length - 1) : .5)));
+}
+
+async function rsScan(){
+  if (busy) return; busy = true;
+  $('refresh').disabled = true;
+  const btnTxt = t => $('refresh').textContent = t;
+  btnTxt('Loading…');
+  const t0 = performance.now();
+  const prog = p => $('prog').style.width = (p * 100).toFixed(0) + '%';
+  const status = t => $('status').textContent = t;
+  try {
+    status('Loading coin list…'); prog(0.02);
+    const {ok, floor, skipped, uni, btcRow} = await getUniverse();
+    if (!btcRow) throw new Error('BTC not found in OKX tickers');
+    let done = 0, failed = 0, fetched = 0;
+    const need = uni.filter(u => { const c = dCache.get(u.id); return !(c && Date.now() - c.at < 60 * 60e3); });
+    status(need.length ? `Loading daily candles for ${need.length} coins…` : 'Daily candles cached, updating live prices…');
+    await pool(need, 12, async u => {
+      try { dCache.set(u.id, {at: Date.now(), rows: await okx(`/market/candles?instId=${u.id}&bar=1Dutc&limit=300`)}); fetched++; }
+      catch (e) { failed++; }
+      done++; prog(0.05 + 0.9 * done / need.length);
+      btnTxt(`Loading ${done}/${need.length}`);
+    });
+    const bRows = dCache.get(btcRow.id);
+    if (!bRows) throw new Error('BTC daily candles failed');
+    const bd = bRows.rows.slice().reverse().map(r => ({t: +r[0], c: +r[4]}));
+    bd[bd.length - 1].c = btcRow.last;
+    const btcMap = new Map(bd.map(x => [x.t, x.c]));
+    const rows = ok.map(u => dCache.get(u.id) && rsCalc(u, dCache.get(u.id).rows, btcMap)).filter(Boolean);
+    rsRate(rows);
+    const bc = bd.map(x => x.c), N = bc.length, be20 = ema(bc, 20), be50 = ema(bc, 50), be200 = ema(bc, 200);
+    const btc = {price: bc[N - 1], p7: bc[N - 1] / bc[N - 8] - 1, p30: bc[N - 1] / bc[N - 31] - 1,
+      a20: bc[N - 1] > be20[N - 1], a50: bc[N - 1] > be50[N - 1], a200: N >= 200 ? bc[N - 1] > be200[N - 1] : null};
+    btc.trend = stackOf(btc.a20, btc.a50, btc.a200);
+    rsData = {at: new Date(), rows, btc, floor, skipped, failed};
+    lastAt = rsData.at; tickStamp();
+    renderRS();
+    const secs = ((performance.now() - t0) / 1000).toFixed(0);
+    const bad = failed > rows.length / 5;
+    status(`Done: ${rows.length} of top ${ok.length} coins ranked` + (failed ? `, ${failed} failed` : '') + '. ' + skipTxt(skipped));
+    setDone(bad ? `⚠ Updated at ${utc(rsData.at).slice(11)}, but ${failed} coins failed to load. Press Refresh again.`
+      : `✓ Relative strength updated at ${utc(rsData.at).slice(11)} in ${secs}s · ${rows.length} coins ranked · ${fetched ? fetched + ' daily charts loaded' : 'live prices updated'}`, bad ? 'bad' : 'ok');
+  } catch (e) {
+    setConn(false, e.message);
+    setDone(`✗ Refresh failed: couldn't reach OKX (${esc(e.message)}). Nothing was updated. Check your connection and try again.`, 'bad');
+  } finally {
+    busy = false; $('refresh').disabled = false; $('refresh').textContent = '↻ Refresh';
+    setTimeout(() => prog(0), 600);
+  }
+}
+
+const pctCell = (v, dp = 1) => v == null ? '<span class="dim">–</span>' : `<span class="${cls(v)}">${(v >= 0 ? '+' : '') + (v * 100).toFixed(dp)}%</span>`;
+const trendWord = t => ({up: '<span class="bull">Above all</span>', down: '<span class="bear">Below all</span>', mixed: '<span class="neutral">Mixed</span>'}[t]);
+const emaCell = a => a == null ? '<span class="dim">–</span>' : a ? '<span class="bull">▲ Above</span>' : '<span class="bear">▼ Below</span>';
+const emaDots = r => '<span class="emad" title="Price vs daily EMA 20 · 50 · 200">' + [['20', r.a20], ['50', r.a50], ['200', r.a200]]
+  .map(([l, a]) => `<i class="${a == null ? 'dim' : a ? 'bull' : 'bear'}">${a == null ? '·' : a ? '▲' : '▼'}${l}</i>`).join('') + '</span>';
+function rsTags(r){
+  const t = [];
+  if (r.nh) t.push('<span class="tag tag-g">RS 30d high</span>');
+  if (r.nl) t.push('<span class="tag tag-r">RS 30d low</span>');
+  if (r.edge != null && r.edge >= 0.005) t.push('<span class="tag tag-g">Holds red days</span>');
+  if (r.edge != null && r.edge <= -0.005) t.push('<span class="tag tag-r">Bleeds red days</span>');
+  if (r.ext >= 0.25) t.push('<span class="tag tag-o">Extended</span>');
+  if (r.beta != null && r.beta >= 2) t.push('<span class="tag tag-p">High beta</span>');
+  return t.join('');
+}
+function miniSpark(vals, up){
+  if (!vals || vals.length < 2) return '';
+  const W = 92, H = 34, lo = Math.min(...vals), hi = Math.max(...vals), rg = hi - lo || hi * 0.001;
+  const pts = vals.map((v, i) => (2 + (W - 4) * i / (vals.length - 1)).toFixed(1) + ',' + (H - 3 - (H - 6) * (v - lo) / rg).toFixed(1)).join(' ');
+  return `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${up ? 'var(--bull)' : 'var(--bear)'}" stroke-width="1.8"/></svg>`;
+}
+function rsRow(r, i){
+  const up = r.spark[r.spark.length - 1] >= r.spark[0];
+  return `<li class="rrow"><span class="rk">${i + 1}</span>
+    <div style="min-width:0"><b class="rsym">${esc(r.sym)}</b><span class="rtags">${rsTags(r)}</span>
+      <div class="rsub">vs BTC 7d ${pctCell(r.r7)} · 30d ${pctCell(r.r30)} · own 7d ${pctCell(r.p7)}</div>
+      <div class="rsub">EMA ${emaDots(r)}</div></div>
+    <span class="rspark" title="COIN/BTC ratio, last 30 days">${miniSpark(r.spark, up)}</span>
+    <span class="rating ${r.rating >= 80 ? 'hi' : r.rating <= 20 ? 'lo' : ''}" title="RS rating 1–99">${r.rating}</span></li>`;
+}
+
+const RS_COLS = [
+  ['sym', 'Coin'], ['rating', 'RS'], ['r1', 'vs BTC 1d'], ['r7', 'vs BTC 7d'], ['r30', 'vs BTC 30d'], ['r90', 'vs BTC 90d'],
+  ['p7', 'Own 7d'], ['p30', 'Own 30d'], ['rsTrend', 'RS trend'], ['trend', 'EMA stack'], ['a20', 'EMA 20'], ['a50', 'EMA 50'], ['a200', 'EMA 200'], ['ext', 'vs 20D EMA'], ['off', 'Off 30d high'],
+  ['beta', 'Beta'], ['edge', 'Red-day edge'], ['volTr', 'Vol 7d/30d'], ['usd', '24h vol']];
+function renderRS(){
+  if (!rsData) return;
+  const {rows, btc} = rsData;
+  const tr = {up: ['Above all', 'bias-bull'], down: ['Below all', 'bias-bear'], mixed: ['Mixed', 'bias-neutral']}[btc.trend];
+  const beat = rows.filter(r => r.r7 > 0).length / rows.length, above = rows.filter(r => r.ext > 0).length / rows.length;
+  $('rs-btc').innerHTML = `
+    <div><span>BTC vs daily EMA 20·50·200</span><b><span class="bias ${tr[1]}">${tr[0]}</span></b><span style="display:block;margin-top:4px">${emaDots(btc)}</span></div>
+    <div><span>BTC 7d</span><b class="${cls(btc.p7)}">${fmtPct(btc.p7)}</b></div>
+    <div><span>BTC 30d</span><b class="${cls(btc.p30)}">${fmtPct(btc.p30)}</b></div>
+    <div><span>Alts beating BTC 7d</span><b class="${beat >= .6 ? 'bull' : beat < .3 ? 'bear' : 'neutral'}">${Math.round(beat * 100)}%</b></div>
+    <div><span>Alts above 20D EMA</span><b class="${above >= .6 ? 'bull' : above < .3 ? 'bear' : 'neutral'}">${Math.round(above * 100)}%</b></div>`;
+  const mode = beat >= .6 ? 'Alt-friendly: most alts are beating BTC this week. Leaders can be traded more freely.'
+    : beat < .3 ? 'BTC dominance phase: most alts are losing to BTC. Only the top leaders are worth a long, or just trade BTC.'
+    : 'Mixed market: be selective. Stick to leaders with an RS 30d high.';
+  const side = btc.trend === 'up' ? ' BTC is trending up, so look for longs in the Leaders.' : btc.trend === 'down' ? ' BTC is trending down, so Laggards are the short list and Leaders that hold up are your watchlist for the turn.' : ' BTC trend is mixed, so trade smaller.';
+  $('rs-read').innerHTML = '<b>Read:</b> ' + mode + side;
+  $('rs-uni').textContent = `Top ${rows.length} coins · down to ${fmtUsd(rsData.floor)}/24h`;
+  const byRating = [...rows].sort((a, b) => b.rating - a.rating || b.score - a.score);
+  $('rs-leaders').innerHTML = byRating.slice(0, 25).map(rsRow).join('');
+  $('rs-laggards').innerHTML = byRating.slice(-25).reverse().map(rsRow).join('');
+  renderRSTable();
+}
+function renderRSTable(){
+  if (!rsData) return;
+  const q = $('rs-q').value.trim().toUpperCase();
+  const f = r => (!q || r.sym.includes(q)) && (!rsFilt.has('nh') || r.nh) && (!rsFilt.has('nl') || r.nl) &&
+    (!rsFilt.has('up') || r.trend === 'up') && (!rsFilt.has('hold') || (r.edge != null && r.edge >= 0.005)) && (!rsFilt.has('fresh') || (r.ext < 0.15 && r.ext > -0.15));
+  const ord = {up: 2, mixed: 1, flat: 1, down: 0};
+  const val = (r, k) => k === 'sym' ? r.sym : k === 'trend' || k === 'rsTrend' ? ord[r[k]] : typeof r[k] === 'boolean' ? +r[k] : r[k];
+  const rows = rsData.rows.filter(f).sort((a, b) => {
+    const x = val(a, rsSort.k), y = val(b, rsSort.k);
+    if (x == null) return 1; if (y == null) return -1;
+    return (typeof x === 'string' ? x.localeCompare(y) : x - y) * rsSort.dir;
+  });
+  const rank = new Map([...rsData.rows].sort((a, b) => b.rating - a.rating || b.score - a.score).map((r, i) => [r.sym, i + 1]));
+  $('rs-count').textContent = `${rows.length} of ${rsData.rows.length} coins`;
+  $('rs-table').innerHTML = '<thead><tr>' + RS_COLS.map(([k, l]) =>
+      `<th scope="col" data-k="${k}" aria-sort="${rsSort.k === k ? (rsSort.dir < 0 ? 'descending' : 'ascending') : 'none'}">${l}</th>`).join('') + '</tr></thead><tbody>' +
+    rows.map(r => `<tr><td><small>${rank.get(r.sym)}</small><b>${esc(r.sym)}</b></td>
+      <td><span class="${r.rating >= 80 ? 'bull' : r.rating <= 20 ? 'bear' : ''}"><b>${r.rating}</b></span></td>
+      <td>${pctCell(r.r1)}</td><td>${pctCell(r.r7)}</td><td>${pctCell(r.r30)}</td><td>${pctCell(r.r90)}</td>
+      <td>${pctCell(r.p7)}</td><td>${pctCell(r.p30)}</td>
+      <td>${({up: '<span class="bull">Rising</span>', down: '<span class="bear">Falling</span>', flat: '<span class="dim">Flat</span>'})[r.rsTrend]}${r.nh ? ' <span class="bull">▲</span>' : r.nl ? ' <span class="bear">▼</span>' : ''}</td><td>${trendWord(r.trend)}</td><td>${emaCell(r.a20)}</td><td>${emaCell(r.a50)}</td><td>${emaCell(r.a200)}</td>
+      <td><span class="${r.ext >= .25 ? 'neutral' : ''}">${(r.ext >= 0 ? '+' : '') + (r.ext * 100).toFixed(1)}%</span></td>
+      <td>${pctCell(r.off)}</td>
+      <td>${r.beta == null ? '–' : r.beta.toFixed(2)}</td>
+      <td>${r.edge == null ? '<span class="dim">–</span>' : pctCell(r.edge, 2)}</td>
+      <td><span class="${r.volTr >= 1.5 ? 'neutral' : ''}">${r.volTr == null ? '–' : r.volTr.toFixed(2) + '×'}</span></td>
+      <td>${fmtUsd(r.usd)}</td></tr>`).join('') + '</tbody>';
 }
 
 function setConn(ok, detail){ const c = $('conn'); c.className = 'conn ' + (ok ? 'bull' : 'bear'); c.textContent = ok ? 'OKX connected · ' + detail : 'OKX unreachable'; }
@@ -493,7 +805,31 @@ function buildSettings(){
 }
 
 // ---------- wiring ----------
-$('refresh').addEventListener('click', scan);
+let view = location.hash === '#rs' ? 'rs' : store.get('view', 'alerts');
+const refresh = () => view === 'rs' ? rsScan() : scan();
+function setView(v){
+  view = v; store.set('view', v);
+  document.querySelectorAll('.view').forEach(b => b.setAttribute('aria-selected', b.dataset.view === v));
+  $('view-alerts').hidden = v !== 'alerts'; $('view-rs').hidden = v !== 'rs';
+  $('view-alerts').style.display = v === 'alerts' ? 'grid' : 'none'; $('view-rs').style.display = v === 'rs' ? 'grid' : 'none';
+  if (v === 'rs' && !rsData) rsScan();
+  if (v === 'alerts' && !data) scan();
+  const at = v === 'rs' ? rsData && rsData.at : data && data.at;
+  lastAt = at || null; if (!at) $('stamp').textContent = 'Not loaded yet'; else tickStamp();
+}
+document.querySelectorAll('.view').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+$('rs-table').addEventListener('click', e => {
+  const th = e.target.closest('th'); if (!th) return;
+  const k = th.dataset.k;
+  rsSort = rsSort.k === k ? {k, dir: -rsSort.dir} : {k, dir: k === 'sym' ? 1 : -1};
+  store.set('rsSort', rsSort); renderRSTable();
+});
+$('rs-q').addEventListener('input', renderRSTable);
+document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+  const f = c.dataset.f, on = !rsFilt.has(f);
+  on ? rsFilt.add(f) : rsFilt.delete(f); c.setAttribute('aria-pressed', on); renderRSTable();
+}));
+$('refresh').addEventListener('click', refresh);
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { activeList = t.dataset.list; store.set('tab', activeList); render(false); }));
 $('reset').addEventListener('click', () => { const d = S.dumps; S = Object.assign({}, DEFAULTS, {dumps: d}); store.set('settings', S); buildSettings(); render(false); });
 $('dumps').checked = S.dumps !== false;
@@ -504,13 +840,14 @@ $('sound').addEventListener('change', e => {
   try { if (e.target.checked && 'Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {}
 });
 $('auto').checked = store.get('auto', false);
-const setAuto = () => { clearInterval(timer); if ($('auto').checked) timer = setInterval(scan, 60000); };
+const setAuto = () => { clearInterval(timer); if ($('auto').checked) timer = setInterval(refresh, 60000); };
 $('auto').addEventListener('change', e => { store.set('auto', e.target.checked); setAuto(); });
 
 buildSettings();
 render(false);
 setAuto();
-scan();
+setView(view);
+if (view === 'rs' && data == null) {} // alerts scan runs when that view is opened
 })();
 </script>
 </body>
