@@ -463,9 +463,13 @@ const mainLv = s => (s.lv && s.lv.length ? s.lv[Math.min(1, s.lv.length - 1)] : 
 function setDone(msg, bad) { const el = $('done'); el.textContent = msg; el.style.color = bad ? 'var(--bear)' : ''; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
 
 // ───────────── UI: tabs, overview, scenarios ─────────────
+// tab buttons are built once (so focus and references survive re-renders); renders only update aria-pressed
 function renderTabs() {
-  $('tabs').innerHTML = TFS.map(t => `<button class="btn" type="button" data-tf="${t.k}" aria-pressed="${t.k === S.tf}">${t.k}</button>`).join('');
-  $('tabs').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { S.tf = b.dataset.tf; S.pick = 0; renderAll(); }));
+  if (!$('tabs').children.length) {
+    $('tabs').innerHTML = TFS.map(t => `<button class="btn" type="button" data-tf="${t.k}">${t.k}</button>`).join('');
+    $('tabs').addEventListener('click', e => { const b = e.target.closest('button[data-tf]'); if (b) { S.tf = b.dataset.tf; S.pick = 0; renderAll(); } });
+  }
+  $('tabs').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.tf === S.tf));
 }
 function renderOverview() {
   const tb = $('ov').querySelector('tbody'); tb.innerHTML = '';
