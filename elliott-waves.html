@@ -85,8 +85,11 @@ th{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);f
 /* chart + scenarios */
 .main-grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
 @media (max-width:980px){.main-grid{grid-template-columns:1fr}}
-#chart{position:relative;min-height:320px}
-#chart svg{display:block;width:100%;height:auto}
+#chart{position:relative;min-height:360px}
+#chart svg{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair;user-select:none;-webkit-user-select:none}
+.ctools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 15px;border-bottom:1px solid var(--border)}
+.ctools .btn{min-width:44px;padding:0 10px}
+.ctools .hint{font-size:12.5px;color:var(--dim);margin-left:auto}
 .legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12.5px;color:var(--dim);padding:0 15px 13px}
 .legend i{display:inline-block;width:16px;height:0;border-top:2px solid;margin-right:6px;vertical-align:middle}
 .hover{position:absolute;pointer-events:none;background:var(--surface2);border:1px solid var(--accent);font-size:12.5px;padding:5px 8px;border-radius:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -162,6 +165,14 @@ th{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);f
   <section class="main-grid">
     <div class="card">
       <div class="card-hdr"><span class="card-title" id="chartTitle">Chart</span><span class="card-hint" id="chartHint"></span></div>
+      <div class="ctools" role="toolbar" aria-label="Chart view">
+        <button class="btn" type="button" id="zoomOut" aria-label="Zoom out">−</button>
+        <button class="btn" type="button" id="zoomIn" aria-label="Zoom in">+</button>
+        <button class="btn" type="button" id="fitBtn">Fit count</button>
+        <button class="btn" type="button" id="autoBtn" aria-pressed="true">Auto price</button>
+        <button class="btn" type="button" id="logBtn" aria-pressed="false">Log</button>
+        <span class="hint">Drag = move · wheel / pinch = zoom · drag price scale = stretch</span>
+      </div>
       <div id="chart"></div>
       <div class="legend">
         <span><i style="border-color:var(--bull)"></i>count, next leg up</span>
@@ -508,151 +519,290 @@ function renderScns() {
   box.querySelectorAll('.scn').forEach(b => b.addEventListener('click', () => { S.pick = +b.dataset.i; renderScns(); drawChart(); }));
 }
 
-// ───────────── chart (SVG sized to the container) ─────────────
+// ───────────── chart: TradingView-style pan / zoom, both axes ─────────────
+// View = visible bar range (x0..x1, may run into the future) + price range (y0..y1) + log flag.
+// Drag the plot = move in time and price · wheel / pinch / drag the time scale = zoom time ·
+// drag the price scale = stretch prices (switches Auto off) · double-click the price scale or "Auto price" = refit prices.
 const NS = 'http://www.w3.org/2000/svg';
 const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 function el(tag, a, p) { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
 function txt(p, x, y, s, col, o = {}) { const t = el('text', { x, y, fill: col, 'font-size': o.size || 12.5, 'font-weight': o.bold ? 700 : 400, 'text-anchor': o.anchor || 'start', 'font-family': 'inherit' }, p); t.textContent = s; return t; }
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p; return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p; }
+
+const V = { view: null, key: '', geo: null, drag: null, pointers: new Map(), raf: 0 };
+const curScn = D => (D && !D.err && D.res.sel.length ? D.res.sel[Math.min(S.pick, D.res.sel.length - 1)] : null);
+
+// default view: the whole selected count (and the bigger degree on wide screens) plus every projected leg
+function fitView(D, narrow) {
+  const bars = D.bars, res = D.res, last = bars.length - 1, s = curScn(D);
+  let x0 = last - (narrow ? 120 : 200), x1 = last;
+  if (s) { x0 = Math.min(x0, res.minor.w[s.s].b - 6); (s.path || []).forEach(p => { x1 = Math.max(x1, p[1]); }); }
+  if (!narrow && res.majTop) x0 = Math.min(x0, res.major.w[res.majTop.s].b - 4);
+  x0 = Math.max(-2, x0);
+  const span = Math.max(30, x1 - x0);
+  x1 += span * 0.06 + 3;
+  const view = { x0, x1, y0: 0, y1: 1, autoY: true, log: false };
+  autoY(D, view);
+  view.log = view.y1 / view.y0 > 4;          // very wide ranges (e.g. weekly alts) start on a log scale
+  autoY(D, view);
+  return view;
+}
+
+// Auto price: fit candles in view plus every drawn count point, projected leg and level in view
+function autoY(D, v) {
+  const bars = D.bars, s = curScn(D), res = D.res;
+  let lo = Infinity, hi = -Infinity;
+  const take = p => { if (p > 0 && isFinite(p)) { lo = Math.min(lo, p); hi = Math.max(hi, p); } };
+  for (let i = Math.max(0, Math.floor(v.x0)); i <= Math.min(bars.length - 1, Math.ceil(v.x1)); i++) { take(bars[i].h); take(bars[i].l); }
+  if (!isFinite(lo)) { const b = bars[bars.length - 1]; take(b.h); take(b.l); }
+  const cl = lo, ch = hi;
+  const inX = b => b >= v.x0 && b <= v.x1;
+  if (s) {
+    res.minor.w.slice(s.s).forEach(p => { if (inX(p.b)) take(p.p); });
+    (s.path || []).forEach(p => { if (inX(p[1]) || inX(p[1] - 1)) take(p[0]); });
+    const near = p => p > cl - (ch - cl) * 1.5 && p < ch + (ch - cl) * 1.5;
+    s.lv.forEach(a => { if (near(a[0])) take(a[0]); });
+    if (near(s.inv)) take(s.inv);
+  }
+  if (res.majTop) res.major.w.slice(res.majTop.s).forEach(p => { if (inX(p.b)) take(p.p); });
+  if (v.log) { const pad = Math.pow(hi / lo, 0.06); v.y0 = lo / pad; v.y1 = hi * pad; }
+  else { const pad = (hi - lo) * 0.06 || hi * 0.01; v.y0 = Math.max(lo - pad, lo > 0 ? lo * 0.02 : lo - pad); v.y1 = hi + pad; }
+}
+
+function chartTools() {
+  const v = V.view;
+  if (!v) return;
+  $('autoBtn').setAttribute('aria-pressed', v.autoY);
+  $('logBtn').setAttribute('aria-pressed', v.log);
+}
 
 function drawChart() {
-  const box = $('chart'); box.innerHTML = '';
+  const box = $('chart');
   const D = S.data[S.tf];
-  $('chartTitle').textContent = `${S.coin}-USDT perp · ${S.tf}`;
-  if (!D || D.err) { box.innerHTML = `<p class="dim" style="padding:15px">${D && D.err ? 'Failed to load: ' + D.err : 'Loading…'}</p>`; $('chartHint').textContent = ''; return; }
-  const bars = D.bars, res = D.res, last = bars.length - 1, ref = bars[last].c;
-  const s = res.sel[Math.min(S.pick, res.sel.length - 1)] || null;
-  $('chartHint').textContent = `${bars.length} candles · last ${fmt(ref, ref)}`;
-  const W = Math.max(320, box.clientWidth || 700), H = Math.round(Math.min(560, Math.max(340, W * 0.58)));
-  const narrow = W < 520;
-  const R = narrow ? 58 : 72, Lm = 6, Tp = 16, Bm = 24;
-  // window: from the earliest drawn count start (min 120 bars back) to the furthest projection
-  let first = Math.max(0, last - (narrow ? 140 : 220));
-  if (s) first = Math.min(first, Math.max(0, res.minor.w[s.s].b - 8));
-  if (!narrow && res.majTop) first = Math.min(first, Math.max(0, res.major.w[res.majTop.s].b - 5));   // phones: zoom on the minor count
-  first = Math.max(first, last - 480);
-  let future = Math.round((last - first) * 0.18);
-  const projEnds = [];
-  if (s && s.path) s.path.forEach(p => projEnds.push(p[1]));
-  if (projEnds.length) future = Math.max(future, Math.min(Math.max(...projEnds) - last + 4, Math.round((last - first) * 0.45)));
-  const xMax = last + future;
-  const vis = bars.slice(first);
-  let lo = Math.min(...vis.map(b => b.l)), hi = Math.max(...vis.map(b => b.h));
-  const extra = [];
-  if (s) { extra.push(s.inv, ...s.lv.map(a => a[0]), ...(s.path || []).map(p => p[0])); }
-  for (const v of extra) if (v != null && v > lo - (hi - lo) * 0.6 && v < hi + (hi - lo) * 0.6) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
-  const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
-  const x = i => Lm + (i - first + 0.5) / (xMax - first + 1) * (W - Lm - R);
-  const y = p => Tp + (hi - p) / (hi - lo) * (H - Tp - Bm);
-  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': `${S.coin} ${S.tf} Elliott Wave chart` }, box);
-  el('rect', { x: 0, y: 0, width: W, height: H, fill: cssv('--surface') }, svg);
-  el('rect', { x: x(last + 0.5), y: Tp, width: Math.max(0, W - R - x(last + 0.5)), height: H - Tp - Bm, fill: cssv('--surface2') }, svg);
-  // grid + price axis
-  const step = niceStep((hi - lo) / 5);
-  for (let v = Math.ceil(lo / step) * step; v < hi; v += step) {
-    el('line', { x1: Lm, x2: W - R, y1: y(v), y2: y(v), stroke: cssv('--border'), 'stroke-width': 0.6 }, svg);
-    txt(svg, W - R + 5, y(v) + 4, fmt(v, ref), cssv('--dim'), { size: 12 });
-  }
-  // time axis
-  const tf = tfObj(S.tf);
-  [first, Math.round((first + last) / 2), last].forEach((i, k) => {
-    const d = new Date(bars[i].t * 1000).toISOString();
-    const lab = tf.sec >= 86400 ? d.slice(0, 10) : d.slice(5, 10) + ' ' + d.slice(11, 16);
-    txt(svg, x(i), H - 7, lab, cssv('--dim'), { size: 12, anchor: ['start', 'middle', 'end'][k] });
-  });
-  // candles
-  const cw = Math.max(1, (W - Lm - R) / (xMax - first + 1) * 0.62);
-  for (let i = first; i <= last; i++) {
-    const b = bars[i], col = b.c >= b.o ? cssv('--bull') : cssv('--bear');
-    el('line', { x1: x(i), x2: x(i), y1: y(b.h), y2: y(b.l), stroke: col, 'stroke-width': 0.8, opacity: 0.75 }, svg);
-    el('rect', { x: x(i) - cw / 2, y: y(Math.max(b.o, b.c)), width: cw, height: Math.max(0.8, Math.abs(y(b.o) - y(b.c))), fill: col, opacity: 0.75 }, svg);
-  }
-  // last price
-  el('line', { x1: Lm, x2: W - R, y1: y(ref), y2: y(ref), stroke: cssv('--dim'), 'stroke-width': 0.6, 'stroke-dasharray': '1 3' }, svg);
-  el('rect', { x: W - R + 1, y: y(ref) - 9, width: R - 2, height: 18, rx: 3, fill: cssv('--accent') }, svg);
-  txt(svg, W - R + 5, y(ref) + 4, fmt(ref, ref), cssv('--white'), { size: 12, bold: true });
+  $('chartTitle').textContent = `${S.dataCoin || S.coin}-USDT perp · ${S.tf}`;
+  if (!D || D.err) { box.innerHTML = `<p class="dim" style="padding:15px">${D && D.err ? 'Failed to load: ' + D.err : 'Loading…'}</p>`; $('chartHint').textContent = ''; V.view = null; return; }
+  const W = Math.max(320, box.clientWidth || 700), narrow = W < 520;
+  const key = `${S.dataCoin}|${S.tf}|${S.pick}|${$('minor').value}|${$('major').value}`;
+  if (!V.view || V.key !== key) { V.view = fitView(D, narrow); V.key = key; }
+  else if (V.view.autoY) autoY(D, V.view);
+  chartTools();
+  render(D, W, narrow);
+}
+function redraw() { cancelAnimationFrame(V.raf); V.raf = requestAnimationFrame(() => { const D = S.data[S.tf]; if (!D || D.err || !V.view) return; if (V.view.autoY) autoY(D, V.view); chartTools(); const W = Math.max(320, $('chart').clientWidth || 700); render(D, W, W < 520); }); }
 
+function render(D, W, narrow) {
+  const box = $('chart');
+  const bars = D.bars, res = D.res, last = bars.length - 1, ref = bars[last].c, v = V.view;
+  const s = curScn(D), tf = tfObj(S.tf);
+  const H = Math.round(Math.min(620, Math.max(360, W * 0.6)));
+  const R = narrow ? 62 : 78, Lm = 4, Tp = 12, Bm = 26, PW = W - Lm - R, PH = H - Tp - Bm;
+  V.geo = { W, H, R, Lm, Tp, Bm, PW, PH };
+  const tv = p => (v.log ? Math.log(p) : p);
+  const Y0 = tv(v.y0), Y1 = tv(v.y1);
+  const x = i => Lm + (i - v.x0) / (v.x1 - v.x0) * PW;
+  const y = p => Tp + (Y1 - tv(p)) / (Y1 - Y0) * PH;
+  $('chartHint').textContent = `${bars.length} candles · last ${fmt(ref, ref)}${v.log ? ' · log' : ''}`;
+
+  // one persistent <svg> (keeps pointer capture during a drag); only its contents are redrawn
+  let svg = box.querySelector('svg');
+  if (!svg) {
+    box.innerHTML = '';
+    svg = el('svg', { role: 'img' }, box);
+    const hv = document.createElement('div'); hv.className = 'hover'; hv.hidden = true; box.appendChild(hv);
+    bindChart(svg);
+  }
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.setAttribute('aria-label', `${S.coin} ${S.tf} Elliott Wave chart`);
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const defs = el('defs', {}, svg), cp = el('clipPath', { id: 'plotclip' }, defs);
+  el('rect', { x: Lm, y: Tp, width: PW, height: PH }, cp);
+  el('rect', { x: 0, y: 0, width: W, height: H, fill: cssv('--surface') }, svg);
+  const g = el('g', { 'clip-path': 'url(#plotclip)' }, svg);
+  if (x(last + 0.5) < Lm + PW) el('rect', { x: Math.max(Lm, x(last + 0.5)), y: Tp, width: Lm + PW - Math.max(Lm, x(last + 0.5)), height: PH, fill: cssv('--surface2') }, g);
+
+  // price grid + axis
+  const ticks = [];
+  if (v.log) {
+    const n = 6, a = Math.log(v.y0), b = Math.log(v.y1);
+    for (let k = 1; k < n; k++) { const raw = Math.exp(a + (b - a) * k / n), st = niceStep(raw / 4); ticks.push(Math.round(raw / st) * st); }
+  } else { const st = niceStep((v.y1 - v.y0) / 6); for (let p = Math.ceil(v.y0 / st) * st; p < v.y1; p += st) ticks.push(p); }
+  [...new Set(ticks.map(t => +t.toPrecision(6)))].forEach(p => {
+    if (p <= 0 || y(p) < Tp + 6 || y(p) > Tp + PH - 4) return;
+    el('line', { x1: Lm, x2: Lm + PW, y1: y(p), y2: y(p), stroke: cssv('--border'), 'stroke-width': 0.6 }, g);
+    txt(svg, Lm + PW + 5, y(p) + 4, fmt(p, ref), cssv('--dim'), { size: 12 });
+  });
+  // time axis (future bars get extrapolated times)
+  const tAt = i => (i <= last ? bars[Math.max(0, Math.round(i))].t : bars[last].t + (i - last) * tf.sec);
+  const nT = narrow ? 3 : 5;
+  for (let k = 0; k < nT; k++) {
+    const i = v.x0 + (v.x1 - v.x0) * (k + 0.5) / nT, d = new Date(tAt(i) * 1000).toISOString();
+    const lab = tf.sec >= 86400 ? d.slice(0, 10) : d.slice(5, 10) + ' ' + d.slice(11, 16);
+    el('line', { x1: x(i), x2: x(i), y1: Tp, y2: Tp + PH, stroke: cssv('--border'), 'stroke-width': 0.4 }, g);
+    txt(svg, x(i), H - 8, lab, cssv('--dim'), { size: 12, anchor: 'middle' });
+  }
+  // candles in view
+  const cw = Math.max(1, PW / (v.x1 - v.x0) * 0.64);
+  for (let i = Math.max(0, Math.floor(v.x0)); i <= Math.min(last, Math.ceil(v.x1)); i++) {
+    const b = bars[i], col = b.c >= b.o ? cssv('--bull') : cssv('--bear');
+    el('line', { x1: x(i), x2: x(i), y1: y(b.h), y2: y(b.l), stroke: col, 'stroke-width': 0.9, opacity: 0.75 }, g);
+    el('rect', { x: x(i) - cw / 2, y: y(Math.max(b.o, b.c)), width: cw, height: Math.max(0.8, Math.abs(y(b.o) - y(b.c))), fill: col, opacity: 0.75 }, g);
+  }
   const placed = [];
   const free = (cx, by, w) => !placed.some(b => Math.abs(b.x - cx) < (b.w + w) / 2 + 2 && Math.abs(b.y - by) < 14);
+  const inPlot = (cx, by) => cx > Lm + 4 && cx < Lm + PW - 4 && by > Tp + 10 && by < Tp + PH - 2;
   const label = (cx, py, hiSide, s2, col, outer, size = 13) => {
     const w = s2.length * size * 0.62, dir = hiSide ? -1 : 1;
     for (const off of outer ? [26, 42] : [10, 26, 42]) {
       const by = py + off * dir + (hiSide ? 0 : 10);
-      if (by > Tp && by < H - Bm && free(cx, by, w)) { placed.push({ x: cx, y: by, w }); txt(svg, cx, by, s2, col, { size, bold: true, anchor: 'middle' }); return; }
+      if (inPlot(cx, by) && free(cx, by, w)) { placed.push({ x: cx, y: by, w }); txt(g, cx, by, s2, col, { size, bold: true, anchor: 'middle' }); return; }
     }
   };
-  // major degree
+  // bigger degree
   if (res.majTop) {
     const mj = res.majTop, pts = res.major.w.slice(mj.s), col = cssv('--accent2');
-    const vp = pts.filter(p => p.b >= first);
-    if (vp.length > 1) el('polyline', { points: vp.map(p => `${x(p.b)},${y(p.p)}`).join(' '), fill: 'none', stroke: col, 'stroke-width': 3, opacity: 0.55, 'stroke-linejoin': 'round' }, svg);
-    pts.forEach((p, i) => { if (p.b < first) return; const nm = mj.kind === 'IMP' ? String(i) : ['', 'A', 'B', 'C'][i]; if (nm) label(x(p.b), y(p.p), p.hi, `(${nm})${res.major.prov && i === pts.length - 1 ? '?' : ''}`, col, true, 13); });
+    if (pts.length > 1) el('polyline', { points: pts.map(p => `${x(p.b)},${y(p.p)}`).join(' '), fill: 'none', stroke: col, 'stroke-width': 3, opacity: 0.55, 'stroke-linejoin': 'round' }, g);
+    pts.forEach((p, i) => { const nm = mj.kind === 'IMP' ? String(i) : ['', 'A', 'B', 'C'][i]; if (nm) label(x(p.b), y(p.p), p.hi, `(${nm})${res.major.prov && i === pts.length - 1 ? '?' : ''}`, col, true, 13); });
   }
-  if (!s) return;
-  const col = s.nextDir > 0 ? cssv('--bull') : cssv('--bear');
-  // ghost paths of the alternates
-  if (S.ghost) res.sel.forEach((g, i) => {
-    if (g === s || !g.path || !g.path.length) return;
-    const gc = g.nextDir > 0 ? cssv('--bull') : cssv('--bear');
-    const pts = [[g.lp, g.lb], ...g.path.map(p => [p[0], p[1]])];
-    el('polyline', { points: pts.map(p => `${x(Math.min(p[1], xMax))},${y(p[0])}`).join(' '), fill: 'none', stroke: gc, 'stroke-width': 1.2, 'stroke-dasharray': '2 4', opacity: 0.55 }, svg);
-    const e = pts[pts.length - 1]; txt(svg, x(Math.min(e[1], xMax)) + 4, y(e[0]) + 4, '#' + (i + 1), gc, { size: 12, bold: true });
-  });
-  // fib levels + zone
-  const lx1 = x(s.lb), lx2 = W - R;
-  if (s.lv.length >= 2) el('rect', { x: lx1, y: Math.min(y(s.lv[0][0]), y(s.lv[1][0])), width: Math.max(0, lx2 - lx1), height: Math.abs(y(s.lv[0][0]) - y(s.lv[1][0])), fill: cssv('--neutral'), opacity: 0.08 }, svg);
-  // level lines; their labels sit at the right edge, spread apart so close levels never overlap
-  const tags = [];
-  s.lv.forEach(([v, n]) => {
-    if (v < lo || v > hi) return;
-    el('line', { x1: lx1, x2: lx2, y1: y(v), y2: y(v), stroke: cssv('--neutral'), 'stroke-width': 1, 'stroke-dasharray': '2 3' }, svg);
-    tags.push({ y: y(v), t: narrow ? fmt(v, ref) : `${n} ${fmt(v, ref)}`, c: cssv('--neutral') });
-  });
-  if (s.inv > lo && s.inv < hi) {
-    el('line', { x1: x(s.sb), x2: lx2, y1: y(s.inv), y2: y(s.inv), stroke: cssv('--bear'), 'stroke-width': 1.3, 'stroke-dasharray': '6 4' }, svg);
+  if (s) {
+    const col = s.nextDir > 0 ? cssv('--bull') : cssv('--bear');
+    if (S.ghost) res.sel.forEach((gs, i) => {
+      if (gs === s || !gs.path || !gs.path.length) return;
+      const gc = gs.nextDir > 0 ? cssv('--bull') : cssv('--bear');
+      const pts = [[gs.lp, gs.lb], ...gs.path.map(p => [p[0], p[1]])];
+      el('polyline', { points: pts.map(p => `${x(p[1])},${y(p[0])}`).join(' '), fill: 'none', stroke: gc, 'stroke-width': 1.2, 'stroke-dasharray': '2 4', opacity: 0.55 }, g);
+      const e = pts[pts.length - 1]; if (inPlot(x(e[1]) + 10, y(e[0]) + 4)) txt(g, x(e[1]) + 4, y(e[0]) + 4, '#' + (i + 1), gc, { size: 12, bold: true });
+    });
+    // levels: lines across, labels spread apart at the right edge of the plot
+    const lx1 = Math.max(Lm, x(s.lb)), lx2 = Lm + PW, tags = [];
+    if (s.lv.length >= 2) el('rect', { x: lx1, y: Math.min(y(s.lv[0][0]), y(s.lv[1][0])), width: Math.max(0, lx2 - lx1), height: Math.abs(y(s.lv[0][0]) - y(s.lv[1][0])), fill: cssv('--neutral'), opacity: 0.08 }, g);
+    s.lv.forEach(([lvv, n]) => {
+      el('line', { x1: lx1, x2: lx2, y1: y(lvv), y2: y(lvv), stroke: cssv('--neutral'), 'stroke-width': 1, 'stroke-dasharray': '2 3' }, g);
+      tags.push({ y: y(lvv), t: narrow ? fmt(lvv, ref) : `${n} ${fmt(lvv, ref)}`, c: cssv('--neutral') });
+    });
+    el('line', { x1: Math.max(Lm, x(s.sb)), x2: lx2, y1: y(s.inv), y2: y(s.inv), stroke: cssv('--bear'), 'stroke-width': 1.3, 'stroke-dasharray': '6 4' }, g);
     tags.push({ y: y(s.inv), t: `invalid ${fmt(s.inv, ref)}`, c: cssv('--bear') });
+    const vt = tags.filter(t => t.y > Tp + 8 && t.y < Tp + PH - 2).sort((a, b) => a.y - b.y);
+    for (let i = 1; i < vt.length; i++) if (vt[i].y - vt[i - 1].y < 15) vt[i].y = vt[i - 1].y + 15;
+    const over = vt.length ? Math.max(0, vt[vt.length - 1].y - (Tp + PH - 4)) : 0;
+    for (const t of vt) {
+      const ty = t.y - over - 3, w = t.t.length * 7.3 + 8;
+      el('rect', { x: lx2 - w - 2, y: ty - 11, width: w, height: 14, rx: 2, fill: cssv('--surface'), opacity: 0.85 }, g);
+      txt(g, lx2 - 6, ty, t.t, t.c, { size: 12, anchor: 'end' });
+      placed.push({ x: lx2 - w / 2, y: ty, w });
+    }
+    // the count
+    const pts = res.minor.w.slice(s.s);
+    el('polyline', { points: pts.map(p => `${x(p.b)},${y(p.p)}`).join(' '), fill: 'none', stroke: col, 'stroke-width': 2.2, 'stroke-linejoin': 'round' }, g);
+    pts.forEach((p, i) => {
+      el('circle', { cx: x(p.b), cy: y(p.p), r: 3, fill: col }, g);
+      const nm = s.kind === 'IMP' ? String(i) : ['', 'A', 'B', 'C'][i];
+      if (nm) label(x(p.b), y(p.p), p.hi, nm + (res.minor.prov && i === pts.length - 1 ? '?' : ''), col, false, 14);
+    });
+    // projected legs
+    if (s.path && s.path.length) {
+      const pp = [[s.lp, s.lb], ...s.path.map(p => [p[0], p[1], p[2]])];
+      el('polyline', { points: pp.map(p => `${x(p[1])},${y(p[0])}`).join(' '), fill: 'none', stroke: col, 'stroke-width': 2, 'stroke-dasharray': '7 5', opacity: 0.85 }, g);
+      pp.slice(1).forEach((p, k) => { el('circle', { cx: x(p[1]), cy: y(p[0]), r: 2.5, fill: col, opacity: 0.85 }, g); label(x(p[1]), y(p[0]), p[0] > pp[k][0], '→' + p[2], col, false, 13); });
+    }
   }
-  tags.sort((a, b) => a.y - b.y);
-  for (let i = 1; i < tags.length; i++) if (tags[i].y - tags[i - 1].y < 15) tags[i].y = tags[i - 1].y + 15;
-  const over = tags.length ? Math.max(0, tags[tags.length - 1].y - (H - Bm - 4)) : 0;
-  for (const g of tags) {
-    const ty = g.y - over - 3, w = g.t.length * 7.3 + 8;
-    el('rect', { x: lx2 - w - 2, y: ty - 11, width: w, height: 14, rx: 2, fill: cssv('--surface'), opacity: 0.85 }, svg);
-    txt(svg, lx2 - 6, ty, g.t, g.c, { size: 12, anchor: 'end' });
-    placed.push({ x: lx2 - w / 2, y: ty, w });
+  // last price tag on the axis
+  if (y(ref) > Tp && y(ref) < Tp + PH) {
+    el('line', { x1: Lm, x2: Lm + PW, y1: y(ref), y2: y(ref), stroke: cssv('--dim'), 'stroke-width': 0.6, 'stroke-dasharray': '1 3' }, g);
+    el('rect', { x: Lm + PW + 1, y: y(ref) - 9, width: R - 2, height: 18, rx: 3, fill: cssv('--accent') }, svg);
+    txt(svg, Lm + PW + 5, y(ref) + 4, fmt(ref, ref), cssv('--white'), { size: 12, bold: true });
   }
-  // the count
-  const pts = res.minor.w.slice(s.s);
-  el('polyline', { points: pts.map(p => `${x(p.b)},${y(p.p)}`).join(' '), fill: 'none', stroke: col, 'stroke-width': 2.2, 'stroke-linejoin': 'round' }, svg);
-  pts.forEach((p, i) => {
-    el('circle', { cx: x(p.b), cy: y(p.p), r: 3, fill: col }, svg);
-    const nm = s.kind === 'IMP' ? String(i) : ['', 'A', 'B', 'C'][i];
-    if (nm) label(x(p.b), y(p.p), p.hi, nm + (res.minor.prov && i === pts.length - 1 ? '?' : ''), col, false, 14);
-  });
-  // projection
-  if (s.path && s.path.length) {
-    const pp = [[s.lp, s.lb], ...s.path.map(p => [p[0], Math.min(p[1], xMax), p[2]])];
-    el('polyline', { points: pp.map(p => `${x(p[1])},${y(p[0])}`).join(' '), fill: 'none', stroke: col, 'stroke-width': 2, 'stroke-dasharray': '7 5', opacity: 0.85 }, svg);
-    pp.slice(1).forEach((p, k) => { const prev = pp[k]; label(x(p[1]), y(p[0]), p[0] > prev[0], '→' + p[2], col, false, 13); });
-  }
-  // hover readout
-  const hv = document.createElement('div'); hv.className = 'hover'; hv.hidden = true; box.appendChild(hv);
-  svg.addEventListener('pointermove', e => {
-    const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width;
-    const i = Math.round(first + (px - Lm) / (W - Lm - R) * (xMax - first + 1) - 0.5);
-    if (i < first || i > last) { hv.hidden = true; return; }
-    const b = bars[i], d = new Date(b.t * 1000).toISOString().slice(0, 16).replace('T', ' ');
-    hv.textContent = `${d} · O ${fmt(b.o, ref)} H ${fmt(b.h, ref)} L ${fmt(b.l, ref)} C ${fmt(b.c, ref)}`;
-    hv.hidden = false; hv.style.left = Math.min(r.width - hv.offsetWidth - 4, Math.max(4, e.clientX - r.left + 10)) + 'px'; hv.style.top = '6px';
-  });
-  svg.addEventListener('pointerleave', () => { hv.hidden = true; });
+  el('line', { x1: Lm + PW, x2: Lm + PW, y1: Tp, y2: Tp + PH, stroke: cssv('--border'), 'stroke-width': 1 }, svg);
+  el('line', { x1: Lm, x2: Lm + PW, y1: Tp + PH, y2: Tp + PH, stroke: cssv('--border'), 'stroke-width': 1 }, svg);
+
 }
-function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p; return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p; }
+
+// ───────────── chart interaction ─────────────
+function zoomX(f, anchorFrac) {           // f < 1 = zoom in; anchorFrac = where on the plot (0..1) stays put
+  const v = V.view, D = S.data[S.tf]; if (!v || !D) return;
+  const span = v.x1 - v.x0, ns = Math.min(Math.max(12, span * f), D.bars.length + 400);
+  const a = v.x0 + span * anchorFrac;
+  v.x0 = a - ns * anchorFrac; v.x1 = v.x0 + ns; clampX(); redraw();
+}
+function clampX() {
+  const v = V.view, n = S.data[S.tf].bars.length, span = v.x1 - v.x0;
+  if (v.x1 < 10) { v.x1 = 10; v.x0 = 10 - span; }
+  if (v.x0 > n - 10) { v.x0 = n - 10; v.x1 = v.x0 + span; }
+  if (v.x1 > n + 500) { v.x1 = n + 500; v.x0 = v.x1 - span; }
+}
+function panY(dyPx) {                      // drag down = see higher prices
+  const v = V.view, G = V.geo, tv = p => (v.log ? Math.log(p) : p), fv = q => (v.log ? Math.exp(q) : q);
+  const d = (tv(v.y1) - tv(v.y0)) * dyPx / G.PH;
+  v.y0 = fv(tv(v.y0) + d); v.y1 = fv(tv(v.y1) + d);
+}
+function scaleY(f) {                       // f > 1 = squash (more price range)
+  const v = V.view, tv = p => (v.log ? Math.log(p) : p), fv = q => (v.log ? Math.exp(q) : q);
+  const c = (tv(v.y0) + tv(v.y1)) / 2, h = (tv(v.y1) - tv(v.y0)) / 2 * f;
+  v.y0 = fv(c - h); v.y1 = fv(c + h);
+  if (!v.log && v.y0 <= 0) v.y0 = v.y1 * 0.001;
+}
+function bindChart(svg) {
+  const pt = e => { const r = svg.getBoundingClientRect(), G = V.geo; return { x: (e.clientX - r.left) * G.W / r.width, y: (e.clientY - r.top) * G.H / r.height, k: G.W / r.width }; };
+  const zone = p => { const G = V.geo; return p.x > G.Lm + G.PW ? 'price' : p.y > G.Tp + G.PH ? 'time' : 'plot'; };
+  svg.addEventListener('pointerdown', e => {
+    if (!V.view) return;
+    svg.setPointerCapture(e.pointerId);
+    V.pointers.set(e.pointerId, pt(e));
+    if (V.pointers.size === 2) { const [a, b] = [...V.pointers.values()]; V.drag = { pinch: Math.abs(a.x - b.x) || 1, mid: (a.x + b.x) / 2, view: { ...V.view } }; return; }
+    const p = pt(e);
+    V.drag = { zone: zone(p), x: p.x, y: p.y, view: { ...V.view } };
+    if (V.drag.zone === 'plot') svg.style.cursor = 'grabbing';
+  });
+  svg.addEventListener('pointermove', e => {
+    const p = pt(e), G = V.geo, v = V.view;
+    showHover(e, p, svg);
+    if (!V.drag || !v) return;
+    if (V.pointers.has(e.pointerId)) V.pointers.set(e.pointerId, p);
+    if (V.drag.pinch && V.pointers.size === 2) {                 // two-finger pinch: zoom time around the fingers
+      const [a, b] = [...V.pointers.values()], dist = Math.abs(a.x - b.x) || 1, o = V.drag.view;
+      const span = (o.x1 - o.x0) * V.drag.pinch / dist, frac = (V.drag.mid - G.Lm) / G.PW, anchor = o.x0 + (o.x1 - o.x0) * frac;
+      v.x0 = anchor - span * frac; v.x1 = v.x0 + span; clampX(); redraw(); return;
+    }
+    const d = V.drag, o = d.view, dx = p.x - d.x, dy = p.y - d.y;
+    if (d.zone === 'plot') {
+      const shift = dx / G.PW * (o.x1 - o.x0);
+      v.x0 = o.x0 - shift; v.x1 = o.x1 - shift; clampX();
+      if (Math.abs(dy) > 3 || !v.autoY) { v.autoY = false; v.y0 = o.y0; v.y1 = o.y1; panY(dy); }
+    } else if (d.zone === 'price') {
+      v.autoY = false; v.y0 = o.y0; v.y1 = o.y1; scaleY(Math.exp(dy * 0.006));
+    } else {
+      const span = Math.min(Math.max(12, (o.x1 - o.x0) * Math.exp(-dx * 0.006)), S.data[S.tf].bars.length + 400);
+      v.x1 = o.x1; v.x0 = o.x1 - span; clampX();
+    }
+    redraw();
+  });
+  const end = e => { V.pointers.delete(e.pointerId); if (V.pointers.size === 0) V.drag = null; svg.style.cursor = ''; };
+  svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+  svg.addEventListener('pointerleave', () => { const hv = $('chart').querySelector('.hover'); if (hv) hv.hidden = true; });
+  svg.addEventListener('wheel', e => {
+    if (!V.view) return;
+    e.preventDefault();
+    const p = pt(e), G = V.geo;
+    if (zone(p) === 'price') { V.view.autoY = false; scaleY(Math.exp(e.deltaY * 0.0015)); redraw(); return; }
+    zoomX(Math.exp(e.deltaY * 0.0015), Math.min(1, Math.max(0, (p.x - G.Lm) / G.PW)));
+  }, { passive: false });
+  svg.addEventListener('dblclick', e => { const p = pt(e); if (zone(p) !== 'plot') { V.view.autoY = true; redraw(); } });
+}
+function showHover(e, p, svg) {
+  const hv = $('chart').querySelector('.hover'), D = S.data[S.tf], G = V.geo, v = V.view;
+  if (!hv || !D || !v || V.drag) { if (hv) hv.hidden = true; return; }
+  const i = Math.round(v.x0 + (p.x - G.Lm) / G.PW * (v.x1 - v.x0)), ref = D.bars[D.bars.length - 1].c;
+  if (i < 0 || i >= D.bars.length || p.x > G.Lm + G.PW) { hv.hidden = true; return; }
+  const b = D.bars[i], d = new Date(b.t * 1000).toISOString().slice(0, 16).replace('T', ' ');
+  hv.textContent = `${d} · O ${fmt(b.o, ref)} H ${fmt(b.h, ref)} L ${fmt(b.l, ref)} C ${fmt(b.c, ref)}`;
+  const r = svg.getBoundingClientRect();
+  hv.hidden = false; hv.style.left = Math.min(r.width - hv.offsetWidth - 4, Math.max(4, e.clientX - r.left + 12)) + 'px'; hv.style.top = '6px';
+}
 
 function renderAll() { renderTabs(); renderOverview(); renderScns(); drawChart(); }
 
 // ───────────── refresh ─────────────
 async function refresh() {
-  if (S.busy) return;
+  if (S.busy) { S.again = true; return; }   // coin/settings changed mid-load: run again when this one ends
   S.busy = true;
   const btn = $('refresh'); btn.disabled = true;
   const coin = S.coin, t0 = performance.now();
@@ -669,9 +819,9 @@ async function refresh() {
       if (ms === null) ms = Math.round(performance.now() - a);
       data[t.k] = { bars, res: analyse(bars, minorLen, majorLen) };
     } catch (e) { fails++; data[t.k] = { err: e.message || String(e) }; }
-    if (k === 0) { S.data = data; renderAll(); }
+    if (k === 0) { S.data = data; S.dataCoin = coin; renderAll(); }
   }
-  S.data = data;
+  S.data = data; S.dataCoin = coin;
   if (fails < order.length) {
     S.lastAt = Date.now();
     $('conn').className = 'conn ok'; $('conn').textContent = `OKX connected · ${ms} ms`;
@@ -682,6 +832,7 @@ async function refresh() {
   }
   btn.textContent = 'Refresh'; btn.disabled = false; S.busy = false;
   renderAll(); tick();
+  if (S.again) { S.again = false; refresh(); }
 }
 function tick() { if (S.lastAt) $('stamp').textContent = 'Updated ' + utc(S.lastAt) + ' · ' + ago(S.lastAt); }
 setInterval(tick, 1000);
@@ -692,9 +843,14 @@ $('coin').addEventListener('change', () => {
 });
 $('other').addEventListener('keydown', e => { if (e.key === 'Enter') { const v = $('other').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''); if (v) { S.coin = v; S.pick = 0; refresh(); } } });
 $('refresh').addEventListener('click', () => { if ($('coin').value === 'other') { const v = $('other').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''); if (v) S.coin = v; } refresh(); });
+$('zoomIn').addEventListener('click', () => zoomX(0.7, 0.85));
+$('zoomOut').addEventListener('click', () => zoomX(1.4, 0.85));
+$('fitBtn').addEventListener('click', () => { V.view = null; drawChart(); });
+$('autoBtn').addEventListener('click', () => { if (V.view) { V.view.autoY = true; redraw(); } });
+$('logBtn').addEventListener('click', () => { if (V.view) { V.view.log = !V.view.log; V.view.autoY = true; redraw(); } });
 $('ghost').addEventListener('click', () => { S.ghost = !S.ghost; $('ghost').setAttribute('aria-pressed', S.ghost); drawChart(); });
 ['minor', 'major'].forEach(id => $(id).addEventListener('change', refresh));
-let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(drawChart, 150); });
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(redraw, 150); });
 
 try { const h = location.hash.slice(1).toUpperCase(); if (TFS.some(t => t.k.toUpperCase() === h)) S.tf = TFS.find(t => t.k.toUpperCase() === h).k; } catch (e) { /* no hash */ }
 renderAll();
