@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Elliott Wave Map</title>
+<meta name="description" content="Live Elliott Wave counts on OKX data for 15m to 1W, with alternate scenarios, fib levels and invalidation levels. Information only, not financial advice.">
+<style>
+/* Layout: Crypto Daily brand, one column. Disclaimer bar → controls (coin, timeframe tabs, refresh) → all-timeframes overview → chart + scenario list → trader's guide → disclaimer. Single dark theme by design. */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0d12;--surface:#13161f;--surface2:#1a1e2d;--border:#2a2f48;
+  --text:#e2e5f0;--dim:#8891b0;
+  --bull:#00d97e;--bear:#ff3d5a;--neutral:#f5a623;
+  --bull-bg:rgba(0,217,126,.08);--bear-bg:rgba(255,61,90,.08);--neutral-bg:rgba(245,166,35,.08);
+  --accent:#4e7fff;--accent2:#9b59f5;--white:#ffffff;
+  --mono:'SF Mono','Fira Code','Courier New',monospace;
+  color-scheme:dark;
+}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:16px;line-height:1.6}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+b{color:var(--white)}
+.brand-sticky{background:var(--surface);border-bottom:1px solid var(--border);padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));padding-top:calc(10px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.brand-block{display:flex;align-items:center;gap:12px;border:2px solid var(--accent);border-radius:10px;padding:8px 14px;box-shadow:0 0 12px rgba(78,127,255,.3)}
+.brand-ape{width:70px;height:70px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;object-position:top;box-shadow:0 0 12px rgba(78,127,255,.4);flex-shrink:0}
+.brand-title{font-size:20px;font-weight:700;color:var(--white);letter-spacing:1px}
+.brand-sub{font-size:15px;color:var(--accent2);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;font-weight:600}
+.stamp{margin-left:auto;font-size:13px;color:var(--dim);text-align:right;line-height:1.6}
+@media (max-width:600px){.brand-sticky{position:static}.stamp{margin-left:0;text-align:left}.brand-ape{width:52px;height:52px}.brand-title{font-size:18px}.brand-sub{font-size:13px}}
+.disc-bar{background:var(--neutral-bg);border-bottom:1px solid rgba(245,166,35,.35);padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));font-size:13px;color:var(--text)}
+.disc-bar b{color:var(--neutral)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 60px;display:grid;gap:18px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;min-width:0}
+.card-hdr{padding:11px 15px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.card-title{font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--white)}
+.card-hint{font-size:13px;color:var(--dim)}
+.card-body{padding:15px;display:grid;gap:12px;min-width:0}
+.dim{color:var(--dim)}
+.bias{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:4px;width:max-content;white-space:nowrap}
+.bias-bull{background:var(--bull-bg);color:var(--bull);border:1px solid var(--bull)}
+.bias-bear{background:var(--bear-bg);color:var(--bear);border:1px solid var(--bear)}
+.bias-neutral{background:var(--neutral-bg);color:var(--neutral);border:1px solid var(--neutral)}
+.bias::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.note{background:var(--surface2);border-left:3px solid var(--neutral);padding:10px 13px;border-radius:0 4px 4px 0;font-size:14.5px;line-height:1.6}
+.tip{background:var(--surface2);border-left:3px solid var(--accent);padding:10px 13px;border-radius:0 4px 4px 0;font-size:14.5px;line-height:1.6}
+
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end;padding:13px 15px}
+.field{display:grid;gap:4px;min-width:0}
+.field label,.field .lbl{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);font-weight:700}
+select,input[type=text],input[type=number]{min-height:44px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font:700 15px var(--mono);padding:0 10px}
+input[type=number]{width:74px}
+input[type=text]{width:110px;text-transform:uppercase}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.btn{min-height:44px;min-width:56px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font:700 14px var(--mono);letter-spacing:1px;cursor:pointer;padding:0 12px;text-transform:uppercase}
+.btn[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 10px rgba(78,127,255,.35);color:var(--white)}
+.btn:disabled{opacity:.55;cursor:progress}
+.btn-go{border-color:var(--accent);color:var(--white)}
+.statusline{display:flex;gap:10px 16px;flex-wrap:wrap;align-items:center;padding:0 15px 13px;font-size:13.5px}
+.done{color:var(--text)}
+.done.flash{animation:fl 1.2s ease}
+@keyframes fl{0%{background:rgba(78,127,255,.35)}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.done.flash{animation:none}}
+.conn{font-size:13px}
+.conn.ok{color:var(--bull)}.conn.bad{color:var(--bear)}
+
+/* overview */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
+th{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:700;white-space:nowrap}
+#ov tbody tr{cursor:pointer}
+#ov tbody tr:hover,#ov tbody tr:focus-visible{background:var(--surface2)}
+#ov tbody tr.sel{background:rgba(78,127,255,.10);box-shadow:inset 3px 0 0 var(--accent)}
+.tfcell{font-weight:700;color:var(--white);font-size:15px}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.inv{color:var(--bear)}
+.lvl{color:var(--neutral)}
+.maj{color:var(--accent2)}
+.align{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:14.5px}
+
+/* chart + scenarios */
+.main-grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
+@media (max-width:980px){.main-grid{grid-template-columns:1fr}}
+#chart{position:relative;min-height:320px}
+#chart svg{display:block;width:100%;height:auto}
+.legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12.5px;color:var(--dim);padding:0 15px 13px}
+.legend i{display:inline-block;width:16px;height:0;border-top:2px solid;margin-right:6px;vertical-align:middle}
+.hover{position:absolute;pointer-events:none;background:var(--surface2);border:1px solid var(--accent);font-size:12.5px;padding:5px 8px;border-radius:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.scns{display:grid;gap:10px}
+.scn{display:grid;gap:6px;text-align:left;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 12px;color:var(--text);font:inherit;cursor:pointer;width:100%}
+.scn[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 10px rgba(78,127,255,.3)}
+.scn .top{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.scn .nm{font-size:14.5px;font-weight:700;color:var(--white)}
+.scn .rk{font-size:13px;color:var(--dim)}
+.scn .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:13.5px}
+.scn .kv dt{color:var(--dim)}
+.scn .kv dd{font-variant-numeric:tabular-nums;min-width:0;overflow-wrap:anywhere}
+.fitbar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.fitbar i{display:block;height:100%;background:var(--accent)}
+.settings{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+
+/* guide */
+.guide{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px}
+.guide .card-body p,.guide li{font-size:14.5px}
+.guide ul,.guide ol{padding-left:20px;display:grid;gap:6px}
+.kbd{font-weight:700;color:var(--white)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stats div{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;display:grid;gap:2px}
+.stats .k{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
+.stats .v{font-size:22px;font-weight:700;color:var(--white);font-variant-numeric:tabular-nums}
+.stats p{font-size:13px;color:var(--dim)}
+@media (max-width:700px){.stats{grid-template-columns:1fr}}
+.disc-foot{font-size:13px;color:var(--dim);line-height:1.7;display:grid;gap:8px;border-top:1px solid var(--border);padding-top:16px}
+.disc-foot h2{font-size:14px;letter-spacing:1.5px;text-transform:uppercase;color:var(--white)}
+</style>
+</head>
+<body>
+
+<div class="brand-sticky">
+  <div class="brand-block">
+    <img class="brand-ape" src="BASC.png" alt="Mr UFO">
+    <div>
+      <div class="brand-title">CRYPTO DAILY</div>
+      <div class="brand-sub">Elliott Wave Map</div>
+    </div>
+  </div>
+  <div class="stamp"><span id="stamp">Not loaded yet</span><br>Live OKX perpetual candles · engine = EW Scenarios indicator</div>
+</div>
+<div class="disc-bar" role="note"><b>⚠ Information only — not financial advice.</b> Wave counts are mechanical pattern readings from market data. They spot possible structure; they do not recommend buying, selling or holding any crypto-asset. Crypto-assets are high risk and you can lose all the money you put in. <a href="#disclaimer">Full disclaimer</a></div>
+
+<main class="wrap">
+  <section class="card" aria-label="Controls">
+    <div class="controls">
+      <div class="field"><label for="coin">Coin</label>
+        <select id="coin">
+          <option>BTC</option><option>ETH</option><option>SOL</option><option>XRP</option><option>BNB</option><option>DOGE</option>
+          <option>ADA</option><option>LINK</option><option>AVAX</option><option>SUI</option><option>TIA</option><option value="other">Other…</option>
+        </select>
+      </div>
+      <div class="field" id="otherWrap" hidden><label for="other">OKX symbol</label><input type="text" id="other" placeholder="e.g. PEPE" maxlength="12" autocomplete="off"></div>
+      <div class="field"><span class="lbl">Timeframe</span><div class="tabs" id="tabs" role="group" aria-label="Timeframe"></div></div>
+      <div class="field"><span class="lbl">&nbsp;</span><button class="btn btn-go" id="refresh" type="button">Refresh</button></div>
+    </div>
+    <div class="statusline">
+      <span class="done" id="done" role="status" aria-live="polite">Loading…</span>
+      <span class="conn" id="conn">OKX: not checked</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-hdr"><span class="card-title">All timeframes</span><span class="card-hint">Tap a row to open that timeframe</span></div>
+    <div class="card-body">
+      <div class="align" id="align"></div>
+      <div class="tbl-wrap"><table id="ov"><thead><tr><th>TF</th><th>#1 count</th><th>Next leg</th><th>Main fib level</th><th>Invalidation</th><th>Bigger degree</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="main-grid">
+    <div class="card">
+      <div class="card-hdr"><span class="card-title" id="chartTitle">Chart</span><span class="card-hint" id="chartHint"></span></div>
+      <div id="chart"></div>
+      <div class="legend">
+        <span><i style="border-color:var(--bull)"></i>count, next leg up</span>
+        <span><i style="border-color:var(--bear)"></i>count, next leg down</span>
+        <span><i style="border-color:var(--accent2)"></i>bigger degree (1)(2)…</span>
+        <span><i style="border-color:var(--neutral);border-top-style:dotted"></i>fib levels</span>
+        <span><i style="border-color:var(--bear);border-top-style:dashed"></i>invalidation</span>
+        <span>→3 = projected leg · 3? = live, unconfirmed leg</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">Scenarios</span><span class="card-hint">Tap one to draw it</span></div>
+      <div class="card-body">
+        <div class="scns" id="scns"></div>
+        <div class="settings">
+          <div class="field"><label for="minor">Minor pivot</label><input type="number" id="minor" min="2" max="50" value="5"></div>
+          <div class="field"><label for="major">Major pivot</label><input type="number" id="major" min="5" max="150" value="20"></div>
+          <div class="field"><span class="lbl">&nbsp;</span><button class="btn" type="button" id="ghost" aria-pressed="true">Ghost paths</button></div>
+        </div>
+        <p class="dim" style="font-size:13px">Fit % ranks how well each count obeys the rules and ratios. It is relative, not a probability.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-hdr"><span class="card-title">How good is this map?</span><span class="bias bias-neutral">Read the list, not just #1</span></div>
+    <div class="card-body">
+      <p style="font-size:14.5px">The engine was checked on 15 Oct 2026 against 8 published BTC counts by professional Elliott Wave analysts, and replayed on every bar of OKX BTC history from 2020 to 2026.</p>
+      <div class="stats">
+        <div><span class="k">Same wave structure as the pros</span><span class="v">5 of 8</span><p>plus 2 partial and 1 miss</p></div>
+        <div><span class="k">Their count was in the list</span><span class="v">8 of 8</span><p>#1 agreed 5 of 8 on their timeframe</p></div>
+        <div><span class="k">#1 fib level before invalidation</span><span class="v">≈ chance</span><p>43.7% vs 43.8% random walk (1H, 3,312 counts)</p></div>
+      </div>
+      <div class="note">It finds the swing points the pros label, and its invalidation levels sit close to theirs. It ranks "wave done" too high in strong trends, so a "still extending" count lower in the list is often the one that plays out. "Five waves done" counts scored below chance in the replay.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="card-title" style="margin-bottom:12px">What an Elliott Wave trader needs to know</h2>
+    <div class="guide">
+      <article class="card"><div class="card-hdr"><span class="card-title">1 · Start from the top</span></div><div class="card-body">
+        <ol><li>Count the weekly and daily first. They set the degree and the main trend.</li><li>Then drop to 4H and 1H to see where you are inside that bigger wave.</li><li>A lower-timeframe count that fights the bigger degree is a correction until proven otherwise.</li><li>Always say which degree you mean. "Wave 3" on 15m is a ripple inside a daily wave.</li></ol>
+      </div></article>
+      <article class="card"><div class="card-hdr"><span class="card-title">2 · Three rules, no exceptions</span></div><div class="card-body">
+        <ol><li><span class="kbd">Wave 2</span> never goes past the start of wave 1.</li><li><span class="kbd">Wave 3</span> is never the shortest of waves 1, 3 and 5.</li><li><span class="kbd">Wave 4</span> never enters wave 1's price territory (diagonals excepted).</li></ol>
+        <p class="dim">Break one and the count is wrong. That price is the count's invalidation level, which is why it is drawn in red.</p>
+      </div></article>
+      <article class="card"><div class="card-hdr"><span class="card-title">3 · Guidelines are tendencies</span></div><div class="card-body">
+        <ul><li>Wave 2 often retraces 50–61.8% of wave 1. Wave 3 is often about 1.618× wave 1 and carries the most volume.</li><li>Wave 4 often retraces about 38.2% of wave 3. Wave 5 is often about the size of wave 1.</li><li>Alternation: a sharp wave 2 tends to come with a sideways wave 4, and the other way round.</li><li>In crypto, one motive wave usually extends, often the 3rd, and 5th-wave blow-offs happen in euphoria.</li></ul>
+        <p class="dim">An academic test found Fibonacci ratios in the Dow no more often than chance (Batchelor &amp; Ramyar, 2006). Treat fib levels as zones that need other confluence.</p>
+      </div></article>
+      <article class="card"><div class="card-hdr"><span class="card-title">4 · Corrective patterns</span></div><div class="card-body">
+        <ul><li><span class="kbd">Zigzag</span> 5-3-5: sharp; C goes beyond the end of A.</li><li><span class="kbd">Flat</span> 3-3-5: sideways; B retraces ~90%+ of A. In an <i>expanded</i> flat B goes past A's start, a classic stop-hunt shape.</li><li><span class="kbd">Triangle</span> 3-3-3-3-3: in wave 4 or B, just before the last move.</li><li><span class="kbd">Combination</span> W-X-Y: two or three simple corrections joined.</li><li><span class="kbd">Diagonal</span>: a wedge where wave 4 may overlap wave 1. An ending diagonal in wave 5 or C signals exhaustion.</li></ul>
+      </div></article>
+      <article class="card"><div class="card-hdr"><span class="card-title">5 · Always carry an alternate</span></div><div class="card-body">
+        <ul><li>A count with no invalidation level is a story, not analysis.</li><li>Pros publish a primary count, an alternate count and the exact price that kills the primary.</li><li>If two reasonable counts point opposite ways, the honest read is "no edge from Elliott here".</li><li>Never relabel the waves after a rule breaks to keep an idea alive. Recount from a clean sheet.</li></ul>
+      </div></article>
+      <article class="card"><div class="card-hdr"><span class="card-title">6 · Where the structure is clearest</span></div><div class="card-body">
+        <ul><li><span class="kbd">After a completed wave 2 or B:</span> the rule level is close and the next wave (3 or C) is usually the largest, so the structure is easiest to judge.</li><li><span class="kbd">Wave 5:</span> the weakest place to start. It is the shortest remaining move and the most likely to fail or truncate.</li><li><span class="kbd">5th waves with RSI divergence</span> or an ending-diagonal shape point to exhaustion. They are not a reversal by themselves; wait for structure to confirm.</li></ul>
+      </div></article>
+      <article class="card"><div class="card-hdr"><span class="card-title">7 · Add confluence</span></div><div class="card-body">
+        <ul><li><span class="kbd">Volume:</span> wave 3 should carry the heaviest volume; a 5th on falling volume is tired.</li><li><span class="kbd">Wyckoff:</span> a spring / LPS near a wave-2 low, or a UTAD / LPSY near a 5th-wave high, tells the same story from a different angle.</li><li><span class="kbd">BTC first:</span> an alt's wave count rarely survives a BTC count pointing the other way.</li><li><span class="kbd">Positioning:</span> funding, open interest and liquidation clusters show who is trapped at a wave end.</li></ul>
+      </div></article>
+      <article class="card"><div class="card-hdr"><span class="card-title">8 · Mistakes that cost the most</span></div><div class="card-body">
+        <ul><li>Calling the top of a 3rd wave. This was the map's own main error in the replay.</li><li>Forcing a count on a choppy, illiquid coin. If no count fits cleanly, there is no count.</li><li>Counting on one timeframe only.</li><li>Moving the invalidation level when price reaches it.</li><li>Treating fib ratios as exact targets instead of zones.</li></ul>
+      </div></article>
+      <article class="card"><div class="card-hdr"><span class="card-title">9 · Risk comes first</span></div><div class="card-body">
+        <ul><li>Elliott Wave is subjective. Analysts often disagree on the same chart, and published counts get revised.</li><li>The pros in our check were right on direction 7 of 8 times, and one count still failed in a single crash day.</li><li>Experienced traders decide their maximum loss before anything else and keep it small. A wave count never replaces that.</li></ul>
+      </div></article>
+    </div>
+  </section>
+
+  <footer class="disc-foot" id="disclaimer">
+    <h2>Disclaimer</h2>
+    <p>This page is an automated chart tool for educational and informational purposes only. It draws mechanical Elliott Wave readings from market data. Those readings describe possible price structure; they are not a forecast, a rating or a recommendation.</p>
+    <p>Nothing on this page is investment, financial, legal or tax advice, a personal recommendation, or an offer or solicitation to buy or sell any crypto-asset, and no crypto-asset service is provided here. Wave labels, fib levels and invalidation levels are calculations from third-party market data (OKX) that may be delayed, incomplete or wrong.</p>
+    <p>Past performance is not a reliable indicator of future results. Crypto-assets are highly volatile, can be illiquid, and are generally not covered by investor-compensation or deposit-guarantee schemes. You could lose all of the money you put in. Only use money you can afford to lose, do your own research, and where needed consult an independent licensed adviser.</p>
+    <p>Whether a crypto-asset or trading platform is available to you, and what rules apply, depends on your country. The author may hold some of the crypto-assets shown on this page.</p>
+  </footer>
+</main>
+
+<script>
+(() => {
+'use strict';
+const API = 'https://www.okx.com/api/v5/market';
+const TFS = [
+  { k: '15m', bar: '15m', sec: 900 },
+  { k: '1H', bar: '1H', sec: 3600 },
+  { k: '4H', bar: '4H', sec: 14400 },
+  { k: '1D', bar: '1Dutc', sec: 86400 },
+  { k: '1W', bar: '1Wutc', sec: 604800 },
+];
+const $ = id => document.getElementById(id);
+const S = { coin: 'BTC', tf: '4H', pick: 0, ghost: true, data: {}, lastAt: null, busy: false };
+
+// ───────────── engine: port of Elliott_Wave_Scenarios.pine ─────────────
+class Degree {
+  constructor(len) { this.len = len; this.zz = []; this.hS = null; this.lS = null; }
+  add(np) {
+    const zz = this.zz;
+    if (!zz.length) { zz.push(np); return true; }
+    const last = zz[zz.length - 1];
+    if (last.hi === np.hi) {
+      if ((np.hi && np.p > last.p) || (!np.hi && np.p < last.p)) { zz[zz.length - 1] = np; return true; }
+      return false;
+    }
+    zz.push(np); if (zz.length > 40) zz.shift(); return true;
+  }
+  step(bars, i) {
+    const L = this.len; let ph = null, pl = null;
+    if (i >= 2 * L) {
+      const p = i - L; let isH = true, isL = true;
+      for (let k = 1; k <= L; k++) {
+        if (!(bars[p].h > bars[p - k].h) || !(bars[p].h >= bars[p + k].h)) isH = false;
+        if (!(bars[p].l < bars[p - k].l) || !(bars[p].l <= bars[p + k].l)) isL = false;
+        if (!isH && !isL) break;
+      }
+      if (isH) ph = bars[p].h; if (isL) pl = bars[p].l;
+    }
+    let hasH = ph !== null, hasL = pl !== null;
+    if (hasH && hasL) { const lastHi = this.zz.length ? this.zz[this.zz.length - 1].hi : false; if (lastHi) hasH = false; else hasL = false; }
+    let ch = false;
+    if (hasH) ch = this.add({ p: ph, b: i - L, hi: true }) || ch;
+    if (hasL) ch = this.add({ p: pl, b: i - L, hi: false }) || ch;
+    if (this.zz.length) {
+      const lp = this.zz[this.zz.length - 1];
+      if (ch) {
+        this.hS = null; this.lS = null;
+        for (let j = 0; j < i - lp.b; j++) {
+          const b = bars[i - j];
+          if (this.hS === null || b.h > this.hS) { this.hS = b.h; this.hB = i - j; }
+          if (this.lS === null || b.l < this.lS) { this.lS = b.l; this.lB = i - j; }
+        }
+      } else if (i > lp.b) {
+        const b = bars[i];
+        if (this.hS === null || b.h > this.hS) { this.hS = b.h; this.hB = i; }
+        if (this.lS === null || b.l < this.lS) { this.lS = b.l; this.lB = i; }
+      }
+    }
+  }
+  points() {
+    const w = this.zz.slice(), n = w.length;
+    if (n) {
+      const lp = w[n - 1];
+      if (lp.hi) {
+        if (this.hS !== null && this.hS > lp.p) { w[n - 1] = { p: this.hS, b: this.hB, hi: true }; if (this.lS !== null && this.lB > this.hB) w.push({ p: this.lS, b: this.lB, hi: false }); }
+        else if (this.lS !== null && this.lS < lp.p && this.lB > lp.b) w.push({ p: this.lS, b: this.lB, hi: false });
+      } else {
+        if (this.lS !== null && this.lS < lp.p) { w[n - 1] = { p: this.lS, b: this.lB, hi: false }; if (this.hS !== null && this.hB > this.lB) w.push({ p: this.hS, b: this.hB, hi: true }); }
+        else if (this.hS !== null && this.hS > lp.p && this.hB > lp.b) w.push({ p: this.hS, b: this.hB, hi: true });
+      }
+    }
+    const nz = this.zz.length;
+    const prov = w.length !== nz || (w.length > 0 && w[w.length - 1].b !== this.zz[nz - 1].b);
+    return { w, prov };
+  }
+}
+const near = (x, lo, hi) => x != null && x >= lo && x <= hi;
+const arw = d => (d > 0 ? '▲' : '▼');
+function fExt(base, unit, d, lastP) {
+  const rs = [1.0, 1.618, 2.0, 2.618, 3.618, 4.236, 6.854, 11.09], lv = [], rr = [];
+  for (const r of rs) { const v = base + d * unit * r; if (d * (v - lastP) > 0 && lv.length < 3) { lv.push(v); rr.push(r); } }
+  while (lv.length < 3) { lv.push(null); rr.push(null); }
+  return [lv, rr];
+}
+const rn = (p, r, u) => (r === null ? p : `${p} ${+r.toFixed(3)}${u}`);
+
+function build(w, majDir, minLen, prov) {
+  const out = [], n = w.length;
+  if (n < 2) return out;
+  for (let s = n - 2; s >= Math.max(0, n - 6); s--) {
+    const m = n - 1 - s, d = w[s].hi ? -1 : 1, P = [], B = [];
+    for (let j = s; j < n; j++) { P.push(w[j].p); B.push(w[j].b); }
+    const [P0, P1, P2, P3, P4, P5] = [P[0], P[1], P[2] ?? null, P[3] ?? null, P[4] ?? null, P[5] ?? null];
+    const L1 = Math.abs(P1 - P0), L2 = m >= 2 ? Math.abs(P2 - P1) : null, L3 = m >= 3 ? Math.abs(P3 - P2) : null, L4 = m >= 4 ? Math.abs(P4 - P3) : null, L5 = m >= 5 ? Math.abs(P5 - P4) : null;
+    const lastB = B[m], lastP = P[m], ab = Math.max(minLen, Math.round((lastB - B[0]) / m));
+    let sig = 0; if (s >= 2) sig = d * (w[s - 2].p - P0) > 0 ? 8 : -6;
+    const base = { s, m, d, sb: B[0], lb: lastB, lp: lastP };
+    const align = nd => (majDir === 0 ? 0 : nd === majDir ? 6 : -4);
+    if (L1 > 0) {
+      let ok = true;
+      if (m >= 2) ok = ok && d * (P2 - P0) > 0;
+      if (m >= 3) ok = ok && d * (P3 - P1) > 0;
+      if (m >= 4) ok = ok && d * (P4 - P1) > 0;
+      if (m >= 5) ok = ok && d * (P5 - P3) > 0 && (L3 > L1 || L3 > L5);
+      if (ok) {
+        let sc = 50 + 3 * m + sig;
+        if (m === 1) sc -= 12;
+        if (m >= 2) { const r2 = L2 / L1; sc += near(r2, 0.5, 0.65) ? 10 : near(r2, 0.382, 0.786) ? 5 : r2 > 0.886 ? -6 : 0; }
+        if (m >= 3) { const r3 = L3 / L1; sc += near(r3, 1.5, 1.75) ? 10 : near(r3, 1.0, 2.75) ? 4 : -4; sc += (L3 / Math.max(1, B[3] - B[2])) > (L1 / Math.max(1, B[1] - B[0])) ? 4 : 0; }
+        if (m >= 4) { const r4 = L4 / L3; sc += near(r4, 0.236, 0.5) ? 8 : r4 > 0.618 ? -5 : 0; const b2 = B[2] - B[1], b4 = B[4] - B[3]; sc += (Math.abs(L2 / L1 - r4) > 0.15 || b4 > 1.5 * b2 || b2 > 1.5 * b4) ? 5 : 0; }
+        if (m === 5) { sc += (L3 >= L1 && L3 >= L5) ? 8 : 0; const r5 = L5 / L1; sc += (near(r5, 0.8, 1.25) || near(r5, 1.5, 1.75)) ? 5 : 0; }
+        const x = { ...base, kind: 'IMP', name: `Impulse ${arw(d)} · ` + (m === 5 ? '5 waves done' : `W${m} done`) };
+        if (m === 1) Object.assign(x, { nextDir: -d, next: 'W2', lv: [[P1 - d * L1 * 0.5, 'W2 0.5'], [P1 - d * L1 * 0.618, 'W2 0.618'], [P1 - d * L1 * 0.786, 'W2 0.786']], inv: P0, invTxt: "W2 can't pass W1 start",
+          path: [[P1 - d * L1 * 0.618, lastB + ab, '2'], [P1 - d * L1 * 0.618 + d * L1 * 1.618, lastB + ab + Math.round(ab * 1.6), '3'], [P1 - d * L1 * 0.618 + d * L1 * 1.618 * 0.618, lastB + ab + Math.round(ab * 2.4), '4']] });
+        else if (m === 2) { const p1 = P2 + d * L1 * 1.618, p2 = p1 - d * L1 * 1.618 * 0.382;
+          Object.assign(x, { nextDir: d, next: 'W3', lv: [[P2 + d * L1, 'W3 1.0'], [P2 + d * L1 * 1.618, 'W3 1.618'], [P2 + d * L1 * 2.618, 'W3 2.618']], inv: P0, invTxt: "W2 can't pass W1 start",
+            path: [[p1, lastB + Math.round(ab * 1.6), '3'], [p2, lastB + Math.round(ab * 2.6), '4'], [p2 + d * L1, lastB + Math.round(ab * 3.6), '5']] }); }
+        else if (m === 3) { const p1 = P3 - d * L3 * 0.382, w5 = p1 + d * L1, p2 = d * (w5 - P3) > 0 ? w5 : P3 + d * L1 * 0.236;
+          Object.assign(x, { nextDir: -d, next: 'W4', lv: [[P3 - d * L3 * 0.236, 'W4 0.236'], [P3 - d * L3 * 0.382, 'W4 0.382'], [P3 - d * L3 * 0.5, d * (P3 - d * L3 * 0.5 - P1) <= 0 ? 'W4 0.5 ⚠ overlaps W1' : 'W4 0.5']], inv: P1, invTxt: "W4 can't enter W1 territory",
+            path: [[p1, lastB + ab, '4'], [p2, lastB + 2 * ab, '5'], [p2 - d * Math.abs(p2 - P0) * 0.382, lastB + 3 * ab, 'A']] }); }
+        else if (m === 4) { const t2 = P4 + d * L1, p1 = d * (t2 - P3) > 0 ? t2 : P3 + d * L1 * 0.1, p2 = p1 - d * Math.abs(p1 - P0) * 0.382;
+          Object.assign(x, { nextDir: d, next: 'W5', lv: [[P4 + d * L1 * 0.618, 'W5 0.618×W1'], [t2, 'W5 = W1'], [P4 + d * Math.abs(P3 - P0) * 0.618, 'W5 0.618×(0→3)']], inv: P1, invTxt: "W4 can't enter W1 territory",
+            path: [[p1, lastB + ab, '5'], [p2, lastB + 2 * ab, 'A'], [p2 + d * Math.abs(p1 - p2) * 0.5, lastB + 2 * ab + Math.round(ab * 0.6), 'B']] }); }
+        else { const lt = Math.abs(P5 - P0), p1 = P5 - d * lt * 0.382, p2 = p1 + d * lt * 0.382 * 0.5;
+          Object.assign(x, { nextDir: -d, next: 'ABC', lv: [[p1, '0.382 of 0→5'], [P5 - d * lt * 0.5, '0.5 of 0→5'], [P5 - d * lt * 0.618, '0.618 of 0→5']], inv: P5, invTxt: 'beyond = W5 still extending',
+            path: [[p1, lastB + ab, 'A'], [p2, lastB + ab + Math.round(ab * 0.7), 'B'], [p2 - d * lt * 0.382, lastB + 2 * ab + Math.round(ab * 0.7), 'C']] }); }
+        x.score = sc + align(x.nextDir);
+        out.push(x);
+        if (prov && (m === 3 || m === 5)) {
+          const [lv, rr] = m === 3 ? fExt(P2, L1, d, lastP) : fExt(P4, Math.abs(P3 - P0), d, lastP);
+          const u = m === 3 ? '×W1' : '×(0→3)', nm = 'W' + m;
+          out.push({ ...base, kind: 'IMP', ext: true, name: `Impulse ${arw(d)} · W${m} extending`, nextDir: d, next: `W${m} ext`,
+            lv: lv.map((v, i) => [v, rn(nm, rr[i], u)]).filter(a => a[0] != null), inv: m === 3 ? P2 : P4, invTxt: m === 3 ? 'back through W2 end = no extension' : 'back through W4 end = W5 over',
+            path: lv[0] != null ? [[lv[0], lastB + ab, String(m)]] : [], score: sc - 6 + align(d) });
+        }
+      }
+    }
+    if (m <= 3 && L1 > 0 && (s < 2 || sig > 0)) {
+      const rB = m >= 2 ? L2 / L1 : null;
+      let ok2 = true;
+      if (m >= 2) ok2 = rB <= 1.382;
+      if (m >= 3) ok2 = ok2 && (rB < 0.9 ? d * (P3 - P1) > 0 : L3 >= 0.9 * L1) && L3 <= 2.618 * L1;
+      if (ok2) {
+        const ct = m >= 2 ? (rB < 0.9 ? ' zigzag' : rB > 1.0 ? ' expanded flat' : ' flat') : '';
+        let sc2 = 46 + 2 * m;
+        if (m === 1) sc2 -= 10;
+        if (m >= 2) sc2 += near(rB, 0.382, 0.786) ? 6 : near(rB, 0.9, 1.382) ? 4 : 0;
+        if (m === 3) { const rC = L3 / L1; sc2 += near(rC, 0.9, 1.1) ? 8 : near(rC, 1.5, 1.75) ? 5 : 0; }
+        if (s >= 1) sc2 += L1 < Math.abs(P0 - w[s - 1].p) ? 4 : -3;
+        const y = { ...base, kind: 'COR', name: `ABC ${arw(d)}${ct} · ` + (m === 1 ? 'A done' : m === 2 ? 'A-B done' : 'complete') };
+        if (m === 1) { const p1 = P1 - d * L1 * 0.5, p2 = p1 + d * L1;
+          Object.assign(y, { nextDir: -d, next: 'B', lv: [[P1 - d * L1 * 0.382, 'B 0.382'], [p1, 'B 0.5'], [P1 - d * L1 * 0.618, 'B 0.618']], inv: P0 - d * L1 * 0.382, invTxt: 'B > 1.382×A = not a correction',
+            path: [[p1, lastB + Math.round(ab * 0.8), 'B'], [p2, lastB + Math.round(ab * 1.8), 'C'], [p2 - d * Math.abs(P0 - p2) * 0.618, lastB + Math.round(ab * 2.8), '1']] }); }
+        else if (m === 2) { const p1 = P2 + d * L1;
+          Object.assign(y, { nextDir: d, next: 'C', lv: [[P2 + d * L1 * 0.618, 'C 0.618×A'], [p1, 'C = A'], [P2 + d * L1 * 1.618, 'C 1.618×A']], inv: d < 0 ? Math.max(P0, P2) : Math.min(P0, P2), invTxt: 'beyond = trend resumed, no C',
+            path: [[p1, lastB + ab, 'C'], [P0, lastB + 3 * ab, '→']] }); }
+        else { const lc = Math.abs(P0 - P3), p1 = P3 - d * lc * 0.5, p2 = p1 + d * lc * 0.5 * 0.618;
+          Object.assign(y, { nextDir: -d, next: 'trend', lv: [[P3 - d * lc * 0.618, '0.618 retrace'], [P3 - d * lc, 'back to A start'], [P3 - d * lc * 1.272, '1.272 ext']], inv: P3, invTxt: 'beyond = C extending / complex',
+            path: [[p1, lastB + ab, '1'], [p2, lastB + ab + Math.round(ab * 0.6), '2'], [p2 - d * lc * 0.5 * 1.618, lastB + ab + Math.round(ab * 1.9), '3']] }); }
+        y.score = sc2 + align(y.nextDir);
+        out.push(y);
+        if (prov && m === 3) {
+          const [lv, rr] = fExt(P2, L1, d, lastP);
+          out.push({ ...base, kind: 'COR', ext: true, name: `ABC ${arw(d)}${ct} · C extending`, nextDir: d, next: 'C ext',
+            lv: lv.map((v, i) => [v, rn('C', rr[i], '×A')]).filter(a => a[0] != null), inv: P2, invTxt: 'back through B end = C over',
+            path: lv[0] != null ? [[lv[0], lastB + ab, 'C']] : [], score: sc2 - 6 + align(d) });
+        }
+      }
+    }
+  }
+  return out;
+}
+function sortScn(a) { for (let i = 0; i < a.length - 1; i++) for (let j = i + 1; j < a.length; j++) if (a[j].score > a[i].score) { const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function select(a, k) {
+  const sel = a.slice(0, Math.min(k, a.length));
+  if (sel.length && a.length > k) { const d0 = sel[0].nextDir; if (!sel.some(x => x.nextDir !== d0)) { const o = a.slice(k).find(x => x.nextDir !== d0); if (o) sel[k - 1] = o; } }
+  return sel;
+}
+function analyse(bars, minorLen, majorLen) {
+  const mi = new Degree(minorLen), ma = new Degree(majorLen);
+  for (let i = 0; i < bars.length; i++) { mi.step(bars, i); ma.step(bars, i); }
+  const PM = ma.points(), scMaj = sortScn(build(PM.w, 0, majorLen, PM.prov)), majTop = scMaj[0] || null;
+  const Pm = mi.points(), all = sortScn(build(Pm.w, majTop ? majTop.nextDir : 0, minorLen, Pm.prov));
+  const sel = select(all, 4);
+  const mx = sel.length ? Math.max(...sel.map(s => s.score)) : 0, tot = sel.reduce((a, s) => a + Math.exp((s.score - mx) / 8), 0);
+  sel.forEach(s => { s.fit = Math.round(Math.exp((s.score - mx) / 8) / tot * 100); });
+  return { minor: Pm, major: PM, majTop, sel };
+}
+
+// ───────────── data ─────────────
+async function getJSON(url) {
+  const r = await fetch(url, { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  if (j.code !== '0') throw new Error(j.msg || ('OKX code ' + j.code));
+  return j.data;
+}
+async function loadBars(coin, tf) {
+  const inst = `${coin}-USDT-SWAP`;
+  let rows = await getJSON(`${API}/candles?instId=${inst}&bar=${tf.bar}&limit=300`);
+  if (!rows.length) throw new Error(`No ${inst} candles on OKX`);
+  for (let p = 0; p < 2; p++) {           // two more pages of history = up to 500 bars
+    const more = await getJSON(`${API}/history-candles?instId=${inst}&bar=${tf.bar}&limit=100&after=${rows[rows.length - 1][0]}`);
+    if (!more.length) break;
+    rows = rows.concat(more);
+  }
+  return rows.reverse().map(r => ({ t: +r[0] / 1000, o: +r[1], h: +r[2], l: +r[3], c: +r[4], live: r[8] === '0' }));
+}
+
+// ───────────── formatting ─────────────
+const dec = v => (v >= 1000 ? 0 : v >= 100 ? 1 : v >= 1 ? 3 : v >= 0.01 ? 5 : 7);
+const fmt = (v, ref) => (v == null ? '–' : v.toLocaleString('en-US', { minimumFractionDigits: dec(ref ?? v), maximumFractionDigits: dec(ref ?? v) }));
+const utc = d => new Date(d).toISOString().slice(11, 19) + ' UTC';
+const ago = d => { const s = Math.round((Date.now() - d) / 1000); return s < 60 ? s + 's ago' : Math.floor(s / 60) + 'm ' + (s % 60) + 's ago'; };
+const tfObj = k => TFS.find(t => t.k === k);
+const pill = d => `<span class="bias ${d > 0 ? 'bias-bull' : 'bias-bear'}">${d > 0 ? 'Up' : 'Down'}</span>`;
+const mainLv = s => (s.lv && s.lv.length ? s.lv[Math.min(1, s.lv.length - 1)] : null);
+function setDone(msg, bad) { const el = $('done'); el.textContent = msg; el.style.color = bad ? 'var(--bear)' : ''; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+
+// ───────────── UI: tabs, overview, scenarios ─────────────
+function renderTabs() {
+  $('tabs').innerHTML = TFS.map(t => `<button class="btn" type="button" data-tf="${t.k}" aria-pressed="${t.k === S.tf}">${t.k}</button>`).join('');
+  $('tabs').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { S.tf = b.dataset.tf; S.pick = 0; renderAll(); }));
+}
+function renderOverview() {
+  const tb = $('ov').querySelector('tbody'); tb.innerHTML = '';
+  let up = 0, dn = 0, have = 0;
+  for (const t of TFS) {
+    const D = S.data[t.k], tr = document.createElement('tr');
+    tr.tabIndex = 0; if (t.k === S.tf) tr.className = 'sel';
+    if (!D || D.err) {
+      tr.innerHTML = `<td class="tfcell">${t.k}</td><td colspan="5" class="dim">${D && D.err ? 'Failed: ' + D.err : 'Not loaded'}</td>`;
+    } else {
+      const s = D.res.sel[0], ref = D.bars[D.bars.length - 1].c, mj = D.res.majTop;
+      if (s) { have++; s.nextDir > 0 ? up++ : dn++; }
+      const lv = s && mainLv(s);
+      tr.innerHTML = s ? `<td class="tfcell">${t.k}</td><td>${s.name}</td><td>${pill(s.nextDir)} <span class="dim">${s.next}</span></td><td class="num lvl">${lv ? fmt(lv[0], ref) : '–'}</td><td class="num inv">${fmt(s.inv, ref)}</td><td class="maj">${mj ? mj.name.replace(' · ', ' ') + ' → ' + arw(mj.nextDir) : '–'}</td>`
+        : `<td class="tfcell">${t.k}</td><td colspan="5" class="dim">No clean count. Too few swings at these pivot settings.</td>`;
+    }
+    const go = () => { S.tf = t.k; S.pick = 0; renderAll(); document.getElementById('chartTitle').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+    tr.addEventListener('click', go); tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    tb.appendChild(tr);
+  }
+  $('align').innerHTML = have ? `<span class="bias ${up > dn ? 'bias-bull' : dn > up ? 'bias-bear' : 'bias-neutral'}">${up} of ${have} next leg up</span><span class="dim">${dn} of ${have} point down. When the big timeframes disagree with the small ones, the small ones are usually counting a correction.</span>` : '';
+}
+function renderScns() {
+  const D = S.data[S.tf], box = $('scns');
+  if (!D || D.err || !D.res.sel.length) { box.innerHTML = `<p class="dim">${D && D.err ? 'Could not load this timeframe.' : 'No valid count at these pivot settings. Try a smaller minor pivot.'}</p>`; return; }
+  const ref = D.bars[D.bars.length - 1].c;
+  box.innerHTML = D.res.sel.map((s, i) => `
+    <button class="scn" type="button" data-i="${i}" aria-pressed="${i === S.pick}">
+      <span class="top"><span class="nm">#${i + 1} ${s.name}</span>${pill(s.nextDir)}</span>
+      <dl class="kv"><dt>Next</dt><dd>${s.next} ${arw(s.nextDir)}</dd>
+      <dt>Fib levels</dt><dd class="lvl">${s.lv.map(a => fmt(a[0], ref)).join(' · ') || '–'}</dd>
+      <dt>Invalid</dt><dd class="inv">${fmt(s.inv, ref)} <span class="dim">${s.invTxt}</span></dd>
+      <dt>Fit</dt><dd>${s.fit}%</dd></dl>
+      <span class="fitbar"><i style="width:${s.fit}%"></i></span>
+    </button>`).join('');
+  box.querySelectorAll('.scn').forEach(b => b.addEventListener('click', () => { S.pick = +b.dataset.i; renderScns(); drawChart(); }));
+}
+
+// ───────────── chart (SVG sized to the container) ─────────────
+const NS = 'http://www.w3.org/2000/svg';
+const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function el(tag, a, p) { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
+function txt(p, x, y, s, col, o = {}) { const t = el('text', { x, y, fill: col, 'font-size': o.size || 12.5, 'font-weight': o.bold ? 700 : 400, 'text-anchor': o.anchor || 'start', 'font-family': 'inherit' }, p); t.textContent = s; return t; }
+
+function drawChart() {
+  const box = $('chart'); box.innerHTML = '';
+  const D = S.data[S.tf];
+  $('chartTitle').textContent = `${S.coin}-USDT perp · ${S.tf}`;
+  if (!D || D.err) { box.innerHTML = `<p class="dim" style="padding:15px">${D && D.err ? 'Failed to load: ' + D.err : 'Loading…'}</p>`; $('chartHint').textContent = ''; return; }
+  const bars = D.bars, res = D.res, last = bars.length - 1, ref = bars[last].c;
+  const s = res.sel[Math.min(S.pick, res.sel.length - 1)] || null;
+  $('chartHint').textContent = `${bars.length} candles · last ${fmt(ref, ref)}`;
+  const W = Math.max(320, box.clientWidth || 700), H = Math.round(Math.min(560, Math.max(340, W * 0.58)));
+  const narrow = W < 520;
+  const R = narrow ? 58 : 72, Lm = 6, Tp = 16, Bm = 24;
+  // window: from the earliest drawn count start (min 120 bars back) to the furthest projection
+  let first = Math.max(0, last - (narrow ? 140 : 220));
+  if (s) first = Math.min(first, Math.max(0, res.minor.w[s.s].b - 8));
+  if (!narrow && res.majTop) first = Math.min(first, Math.max(0, res.major.w[res.majTop.s].b - 5));   // phones: zoom on the minor count
+  first = Math.max(first, last - 480);
+  let future = Math.round((last - first) * 0.18);
+  const projEnds = [];
+  if (s && s.path) s.path.forEach(p => projEnds.push(p[1]));
+  if (projEnds.length) future = Math.max(future, Math.min(Math.max(...projEnds) - last + 4, Math.round((last - first) * 0.45)));
+  const xMax = last + future;
+  const vis = bars.slice(first);
+  let lo = Math.min(...vis.map(b => b.l)), hi = Math.max(...vis.map(b => b.h));
+  const extra = [];
+  if (s) { extra.push(s.inv, ...s.lv.map(a => a[0]), ...(s.path || []).map(p => p[0])); }
+  for (const v of extra) if (v != null && v > lo - (hi - lo) * 0.6 && v < hi + (hi - lo) * 0.6) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+  const x = i => Lm + (i - first + 0.5) / (xMax - first + 1) * (W - Lm - R);
+  const y = p => Tp + (hi - p) / (hi - lo) * (H - Tp - Bm);
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': `${S.coin} ${S.tf} Elliott Wave chart` }, box);
+  el('rect', { x: 0, y: 0, width: W, height: H, fill: cssv('--surface') }, svg);
+  el('rect', { x: x(last + 0.5), y: Tp, width: Math.max(0, W - R - x(last + 0.5)), height: H - Tp - Bm, fill: cssv('--surface2') }, svg);
+  // grid + price axis
+  const step = niceStep((hi - lo) / 5);
+  for (let v = Math.ceil(lo / step) * step; v < hi; v += step) {
+    el('line', { x1: Lm, x2: W - R, y1: y(v), y2: y(v), stroke: cssv('--border'), 'stroke-width': 0.6 }, svg);
+    txt(svg, W - R + 5, y(v) + 4, fmt(v, ref), cssv('--dim'), { size: 12 });
+  }
+  // time axis
+  const tf = tfObj(S.tf);
+  [first, Math.round((first + last) / 2), last].forEach((i, k) => {
+    const d = new Date(bars[i].t * 1000).toISOString();
+    const lab = tf.sec >= 86400 ? d.slice(0, 10) : d.slice(5, 10) + ' ' + d.slice(11, 16);
+    txt(svg, x(i), H - 7, lab, cssv('--dim'), { size: 12, anchor: ['start', 'middle', 'end'][k] });
+  });
+  // candles
+  const cw = Math.max(1, (W - Lm - R) / (xMax - first + 1) * 0.62);
+  for (let i = first; i <= last; i++) {
+    const b = bars[i], col = b.c >= b.o ? cssv('--bull') : cssv('--bear');
+    el('line', { x1: x(i), x2: x(i), y1: y(b.h), y2: y(b.l), stroke: col, 'stroke-width': 0.8, opacity: 0.75 }, svg);
+    el('rect', { x: x(i) - cw / 2, y: y(Math.max(b.o, b.c)), width: cw, height: Math.max(0.8, Math.abs(y(b.o) - y(b.c))), fill: col, opacity: 0.75 }, svg);
+  }
+  // last price
+  el('line', { x1: Lm, x2: W - R, y1: y(ref), y2: y(ref), stroke: cssv('--dim'), 'stroke-width': 0.6, 'stroke-dasharray': '1 3' }, svg);
+  el('rect', { x: W - R + 1, y: y(ref) - 9, width: R - 2, height: 18, rx: 3, fill: cssv('--accent') }, svg);
+  txt(svg, W - R + 5, y(ref) + 4, fmt(ref, ref), cssv('--white'), { size: 12, bold: true });
+
+  const placed = [];
+  const free = (cx, by, w) => !placed.some(b => Math.abs(b.x - cx) < (b.w + w) / 2 + 2 && Math.abs(b.y - by) < 14);
+  const label = (cx, py, hiSide, s2, col, outer, size = 13) => {
+    const w = s2.length * size * 0.62, dir = hiSide ? -1 : 1;
+    for (const off of outer ? [26, 42] : [10, 26, 42]) {
+      const by = py + off * dir + (hiSide ? 0 : 10);
+      if (by > Tp && by < H - Bm && free(cx, by, w)) { placed.push({ x: cx, y: by, w }); txt(svg, cx, by, s2, col, { size, bold: true, anchor: 'middle' }); return; }
+    }
+  };
+  // major degree
+  if (res.majTop) {
+    const mj = res.majTop, pts = res.major.w.slice(mj.s), col = cssv('--accent2');
+    const vp = pts.filter(p => p.b >= first);
+    if (vp.length > 1) el('polyline', { points: vp.map(p => `${x(p.b)},${y(p.p)}`).join(' '), fill: 'none', stroke: col, 'stroke-width': 3, opacity: 0.55, 'stroke-linejoin': 'round' }, svg);
+    pts.forEach((p, i) => { if (p.b < first) return; const nm = mj.kind === 'IMP' ? String(i) : ['', 'A', 'B', 'C'][i]; if (nm) label(x(p.b), y(p.p), p.hi, `(${nm})${res.major.prov && i === pts.length - 1 ? '?' : ''}`, col, true, 13); });
+  }
+  if (!s) return;
+  const col = s.nextDir > 0 ? cssv('--bull') : cssv('--bear');
+  // ghost paths of the alternates
+  if (S.ghost) res.sel.forEach((g, i) => {
+    if (g === s || !g.path || !g.path.length) return;
+    const gc = g.nextDir > 0 ? cssv('--bull') : cssv('--bear');
+    const pts = [[g.lp, g.lb], ...g.path.map(p => [p[0], p[1]])];
+    el('polyline', { points: pts.map(p => `${x(Math.min(p[1], xMax))},${y(p[0])}`).join(' '), fill: 'none', stroke: gc, 'stroke-width': 1.2, 'stroke-dasharray': '2 4', opacity: 0.55 }, svg);
+    const e = pts[pts.length - 1]; txt(svg, x(Math.min(e[1], xMax)) + 4, y(e[0]) + 4, '#' + (i + 1), gc, { size: 12, bold: true });
+  });
+  // fib levels + zone
+  const lx1 = x(s.lb), lx2 = W - R;
+  if (s.lv.length >= 2) el('rect', { x: lx1, y: Math.min(y(s.lv[0][0]), y(s.lv[1][0])), width: Math.max(0, lx2 - lx1), height: Math.abs(y(s.lv[0][0]) - y(s.lv[1][0])), fill: cssv('--neutral'), opacity: 0.08 }, svg);
+  // level lines; their labels sit at the right edge, spread apart so close levels never overlap
+  const tags = [];
+  s.lv.forEach(([v, n]) => {
+    if (v < lo || v > hi) return;
+    el('line', { x1: lx1, x2: lx2, y1: y(v), y2: y(v), stroke: cssv('--neutral'), 'stroke-width': 1, 'stroke-dasharray': '2 3' }, svg);
+    tags.push({ y: y(v), t: narrow ? fmt(v, ref) : `${n} ${fmt(v, ref)}`, c: cssv('--neutral') });
+  });
+  if (s.inv > lo && s.inv < hi) {
+    el('line', { x1: x(s.sb), x2: lx2, y1: y(s.inv), y2: y(s.inv), stroke: cssv('--bear'), 'stroke-width': 1.3, 'stroke-dasharray': '6 4' }, svg);
+    tags.push({ y: y(s.inv), t: `invalid ${fmt(s.inv, ref)}`, c: cssv('--bear') });
+  }
+  tags.sort((a, b) => a.y - b.y);
+  for (let i = 1; i < tags.length; i++) if (tags[i].y - tags[i - 1].y < 15) tags[i].y = tags[i - 1].y + 15;
+  const over = tags.length ? Math.max(0, tags[tags.length - 1].y - (H - Bm - 4)) : 0;
+  for (const g of tags) {
+    const ty = g.y - over - 3, w = g.t.length * 7.3 + 8;
+    el('rect', { x: lx2 - w - 2, y: ty - 11, width: w, height: 14, rx: 2, fill: cssv('--surface'), opacity: 0.85 }, svg);
+    txt(svg, lx2 - 6, ty, g.t, g.c, { size: 12, anchor: 'end' });
+    placed.push({ x: lx2 - w / 2, y: ty, w });
+  }
+  // the count
+  const pts = res.minor.w.slice(s.s);
+  el('polyline', { points: pts.map(p => `${x(p.b)},${y(p.p)}`).join(' '), fill: 'none', stroke: col, 'stroke-width': 2.2, 'stroke-linejoin': 'round' }, svg);
+  pts.forEach((p, i) => {
+    el('circle', { cx: x(p.b), cy: y(p.p), r: 3, fill: col }, svg);
+    const nm = s.kind === 'IMP' ? String(i) : ['', 'A', 'B', 'C'][i];
+    if (nm) label(x(p.b), y(p.p), p.hi, nm + (res.minor.prov && i === pts.length - 1 ? '?' : ''), col, false, 14);
+  });
+  // projection
+  if (s.path && s.path.length) {
+    const pp = [[s.lp, s.lb], ...s.path.map(p => [p[0], Math.min(p[1], xMax), p[2]])];
+    el('polyline', { points: pp.map(p => `${x(p[1])},${y(p[0])}`).join(' '), fill: 'none', stroke: col, 'stroke-width': 2, 'stroke-dasharray': '7 5', opacity: 0.85 }, svg);
+    pp.slice(1).forEach((p, k) => { const prev = pp[k]; label(x(p[1]), y(p[0]), p[0] > prev[0], '→' + p[2], col, false, 13); });
+  }
+  // hover readout
+  const hv = document.createElement('div'); hv.className = 'hover'; hv.hidden = true; box.appendChild(hv);
+  svg.addEventListener('pointermove', e => {
+    const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width;
+    const i = Math.round(first + (px - Lm) / (W - Lm - R) * (xMax - first + 1) - 0.5);
+    if (i < first || i > last) { hv.hidden = true; return; }
+    const b = bars[i], d = new Date(b.t * 1000).toISOString().slice(0, 16).replace('T', ' ');
+    hv.textContent = `${d} · O ${fmt(b.o, ref)} H ${fmt(b.h, ref)} L ${fmt(b.l, ref)} C ${fmt(b.c, ref)}`;
+    hv.hidden = false; hv.style.left = Math.min(r.width - hv.offsetWidth - 4, Math.max(4, e.clientX - r.left + 10)) + 'px'; hv.style.top = '6px';
+  });
+  svg.addEventListener('pointerleave', () => { hv.hidden = true; });
+}
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p; return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p; }
+
+function renderAll() { renderTabs(); renderOverview(); renderScns(); drawChart(); }
+
+// ───────────── refresh ─────────────
+async function refresh() {
+  if (S.busy) return;
+  S.busy = true;
+  const btn = $('refresh'); btn.disabled = true;
+  const coin = S.coin, t0 = performance.now();
+  const minorLen = Math.max(2, +$('minor').value || 5), majorLen = Math.max(minorLen + 1, +$('major').value || 20);
+  const order = [tfObj(S.tf), ...TFS.filter(t => t.k !== S.tf)];   // current timeframe first, so the chart appears fast
+  let fails = 0, ms = null;
+  const data = {};
+  for (let k = 0; k < order.length; k++) {
+    const t = order[k];
+    btn.textContent = `Loading ${k + 1}/${order.length}`;
+    try {
+      const a = performance.now();
+      const bars = await loadBars(coin, t);
+      if (ms === null) ms = Math.round(performance.now() - a);
+      data[t.k] = { bars, res: analyse(bars, minorLen, majorLen) };
+    } catch (e) { fails++; data[t.k] = { err: e.message || String(e) }; }
+    if (k === 0) { S.data = data; renderAll(); }
+  }
+  S.data = data;
+  if (fails < order.length) {
+    S.lastAt = Date.now();
+    $('conn').className = 'conn ok'; $('conn').textContent = `OKX connected · ${ms} ms`;
+    setDone(`✓ Refreshed ${coin} at ${utc(S.lastAt)} in ${((performance.now() - t0) / 1000).toFixed(1)}s · ${order.length - fails} of ${order.length} timeframes` + (fails ? ` · ${fails} failed` : ''), fails > 0);
+  } else {
+    $('conn').className = 'conn bad'; $('conn').textContent = 'OKX unreachable';
+    setDone(`✗ Refresh failed: ${data[order[0].k].err}. Check the coin has a USDT perpetual on OKX, then press Refresh.`, true);
+  }
+  btn.textContent = 'Refresh'; btn.disabled = false; S.busy = false;
+  renderAll(); tick();
+}
+function tick() { if (S.lastAt) $('stamp').textContent = 'Updated ' + utc(S.lastAt) + ' · ' + ago(S.lastAt); }
+setInterval(tick, 1000);
+
+$('coin').addEventListener('change', () => {
+  const v = $('coin').value; $('otherWrap').hidden = v !== 'other';
+  if (v !== 'other') { S.coin = v; S.pick = 0; refresh(); } else $('other').focus();
+});
+$('other').addEventListener('keydown', e => { if (e.key === 'Enter') { const v = $('other').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''); if (v) { S.coin = v; S.pick = 0; refresh(); } } });
+$('refresh').addEventListener('click', () => { if ($('coin').value === 'other') { const v = $('other').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''); if (v) S.coin = v; } refresh(); });
+$('ghost').addEventListener('click', () => { S.ghost = !S.ghost; $('ghost').setAttribute('aria-pressed', S.ghost); drawChart(); });
+['minor', 'major'].forEach(id => $(id).addEventListener('change', refresh));
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(drawChart, 150); });
+
+try { const h = location.hash.slice(1).toUpperCase(); if (TFS.some(t => t.k.toUpperCase() === h)) S.tf = TFS.find(t => t.k.toUpperCase() === h).k; } catch (e) { /* no hash */ }
+renderAll();
+refresh();
+})();
+</script>
+</body>
+</html>
