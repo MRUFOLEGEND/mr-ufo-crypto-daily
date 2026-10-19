@@ -170,7 +170,7 @@ $('#refresh').addEventListener('click', async () => {
   while (true) { await sleep(3000);
     try { st = await (await tfetch(HELPER + '/status')).json(); } catch (e) { return done('✗ Lost contact with the laptop during the update (did it go to sleep?). Press Refresh again.', false); }
     if (!st.running) break;
-    m.textContent = 'Updating on the laptop: strategy ' + st.progress + (st.total ? ' / ' + st.total : '') + ' · ' + mmss((Date.now() - Date.parse(st.startedAt)) / 1000); }
+    m.textContent = 'Updating on the laptop: ' + (st.total ? 'strategy ' + st.progress + ' / ' + st.total : 'fetching new candles') + ' · ' + mmss((Date.now() - Date.parse(st.startedAt)) / 1000); }
   const L = st.lastRun || {};
   if (!L.ok && !(location.protocol === 'file:' && L.lastBar)) return done('✗ Update failed on the laptop: ' + (L.error || 'unknown error') + '. See results\\refresh_helper.log.', false);
   if (location.protocol === 'file:') { m.textContent = '✓ Updated (candles to ' + L.lastBar + '), reloading…'; return reload(); }
