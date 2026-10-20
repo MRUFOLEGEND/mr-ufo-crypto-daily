@@ -441,6 +441,49 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .fmb-pos{background:rgba(255,61,90,.12);color:var(--bear);border:1px solid rgba(255,61,90,.3)}
 .fmb-neg{background:rgba(0,217,126,.12);color:var(--bull);border:1px solid rgba(0,217,126,.3)}
 .fmb-neu{background:var(--surface);color:var(--dim);border:1px solid var(--border)}
+
+/* ── US RED FOLDERS (ForexFactory) ─────────────────────── */
+.rf-bar{margin:10px 18px 0;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--dim);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.rf-bar.rf-red{border-color:rgba(255,61,90,.45);border-left-color:var(--bear);background:linear-gradient(90deg,var(--bear-bg),var(--surface) 70%)}
+.rf-bar.rf-done,.rf-bar.rf-warn{border-left-color:var(--neutral);background:linear-gradient(90deg,var(--neutral-bg),var(--surface) 70%)}
+.rf-bar.rf-clear{border-left-color:var(--bull);background:linear-gradient(90deg,var(--bull-bg),var(--surface) 70%)}
+.rf-icon{width:38px;height:30px;flex-shrink:0}
+.rf-main{flex:1;min-width:0}
+.rf-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rf-title{font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--white)}
+.rf-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 10px;border-radius:999px;border:1px solid}
+.rf-pill::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.rf-pill.p-bear{color:var(--bear);background:var(--bear-bg);border-color:rgba(255,61,90,.4)}
+.rf-pill.p-bull{color:var(--bull);background:var(--bull-bg);border-color:rgba(0,217,126,.4)}
+.rf-pill.p-neu{color:var(--neutral);background:var(--neutral-bg);border-color:rgba(245,166,35,.4)}
+.rf-red .rf-pill.p-bear::before{animation:rfPulse 1.6s ease-in-out infinite}
+@keyframes rfPulse{50%{opacity:.25}}
+.rf-msg{font-size:14.5px;color:var(--text);margin-top:4px}
+.rf-msg a{color:var(--accent)}
+.rf-events{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.rf-ev{display:inline-flex;align-items:baseline;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:13px;font-variant-numeric:tabular-nums;min-width:0}
+.rf-ev b{color:var(--white);font-weight:700}
+.rf-ev .rf-t{color:var(--dim)}
+.rf-ev .rf-cd{color:var(--bear);font-weight:700}
+.rf-ev.rf-past{opacity:.6}
+.rf-ev.rf-past .rf-cd{color:var(--dim);font-weight:400}
+.rf-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.rf-week-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;letter-spacing:1px;text-transform:uppercase;border-radius:6px;padding:0 12px;min-height:44px;cursor:pointer;white-space:nowrap}
+.rf-week-btn:hover{border-color:var(--accent)}
+.rf-stamp{font-size:12px;color:var(--dim);text-align:right}
+.rf-stamp a{color:var(--accent);text-decoration:none}
+.rf-week{flex-basis:100%;display:none;border-top:1px solid var(--border);padding-top:8px}
+.rf-week.open{display:block}
+.rf-week-row{display:flex;gap:10px;font-size:13px;padding:3px 0;font-variant-numeric:tabular-nums}
+.rf-week-row .d{color:var(--dim);flex-shrink:0;width:150px;white-space:nowrap}
+.rf-week-row.today .d{color:var(--neutral)}
+.rf-week-row.gone{opacity:.5}
+@media(max-width:600px){
+  .rf-bar{margin:8px 10px 0;padding:10px 12px}
+  .rf-icon{display:none}
+  .rf-side{flex-direction:row;align-items:center;justify-content:space-between;width:100%}
+  .rf-stamp{text-align:left}
+}
 </style>
 </head>
 <body>
@@ -454,6 +497,24 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <div class="brand-sub">Market Bias</div>
     </div>
   </div>
+</div>
+
+<!-- ═══════════════════════ US RED FOLDERS (ForexFactory) ═══════════════════════ -->
+<div class="rf-bar" id="rf-bar" role="status" aria-live="polite">
+  <svg class="rf-icon" viewBox="0 0 38 30" aria-hidden="true"><path id="rf-folder" d="M2 6a3 3 0 0 1 3-3h9l4 4h15a3 3 0 0 1 3 3v15a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3z" fill="#8891b0"/></svg>
+  <div class="rf-main">
+    <div class="rf-head">
+      <span class="rf-title">US Red Folders</span>
+      <span class="rf-pill p-neu" id="rf-pill">Loading</span>
+    </div>
+    <div class="rf-msg" id="rf-msg">Checking the ForexFactory calendar…</div>
+    <div class="rf-events" id="rf-events"></div>
+  </div>
+  <div class="rf-side">
+    <button class="rf-week-btn" id="rf-week-btn" onclick="rfToggleWeek()" aria-expanded="false">This week ▾</button>
+    <div class="rf-stamp" id="rf-stamp"><a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener">ForexFactory</a></div>
+  </div>
+  <div class="rf-week" id="rf-week"></div>
 </div>
 
 <!-- ═══════════════════════ HEADER ═══════════════════════ -->
@@ -2450,6 +2511,7 @@ async function fetchMarketMetrics() {
 async function refreshAll() {
   document.getElementById('last-upd').textContent='Refreshing…';
   setStatus('');
+  loadRedFolders();
   const TF_IDS=TFS.map(t=>t.id);
   const tfResults={};
   let loadedTFs=0;
@@ -3495,6 +3557,111 @@ if(location.protocol==='file:'){
   warn.innerHTML='⚠ Opened from file:// — API data will not load. Open via a local server: right-click index.html → Open With → a web server, or run <strong>python -m http.server 8080</strong> and visit <strong>http://localhost:8080</strong>';
   document.body.prepend(warn);
 }
+
+// ─── US RED FOLDERS (ForexFactory high-impact USD events) ───
+// FF's feed has no CORS header, so a GitHub Action caches it every 3h on the ff-data branch.
+const RF_URL = 'https://raw.githubusercontent.com/MRUFOLEGEND/mr-ufo-crypto-daily/ff-data/ff-calendar.json';
+let RF = null;
+const rfEsc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rfSameDay = (a, b) => a.toDateString() === b.toDateString();
+const rfTime = d => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+const rfDay = d => d.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'});
+function rfIn(ms) {
+  const m = Math.round(ms / 60000), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60);
+  return d ? `in ${d}d ${h}h` : h ? `in ${h}h ${m % 60}m` : `in ${m}m`;
+}
+
+async function loadRedFolders() {
+  try {
+    const r = await fetch(RF_URL, {cache:'no-store'});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    if (!Array.isArray(j.events)) throw new Error('bad feed');
+    RF = {
+      fetched: new Date(j.fetched),
+      events: j.events.filter(e => e.country === 'USD' && (e.impact === 'High' || e.impact === 'Holiday'))
+                      .map(e => ({...e, t: new Date(e.date)})).sort((a, b) => a.t - b.t)
+    };
+  } catch (e) {
+    console.warn('red folders', e);
+    RF = RF ? {...RF, err: e.message} : {err: e.message};
+  }
+  rfRender();
+}
+
+function rfRender() {
+  const bar = document.getElementById('rf-bar');
+  if (!bar || !RF) return;
+  const pill = document.getElementById('rf-pill'), msg = document.getElementById('rf-msg'),
+        evBox = document.getElementById('rf-events'), stamp = document.getElementById('rf-stamp'),
+        week = document.getElementById('rf-week'), folder = document.getElementById('rf-folder');
+  const setState = (cls, pillCls, pillTxt, color) => {
+    bar.className = 'rf-bar ' + cls; pill.className = 'rf-pill ' + pillCls; pill.textContent = pillTxt; folder.setAttribute('fill', color);
+  };
+  const ffLink = '<a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener">ForexFactory</a>';
+
+  if (!RF.events) {
+    setState('rf-warn', 'p-neu', 'Unavailable', '#f5a623');
+    msg.innerHTML = `Couldn't load the calendar (${rfEsc(RF.err)}). Check ${ffLink} before trading.`;
+    evBox.innerHTML = ''; week.innerHTML = '';
+    stamp.innerHTML = ffLink + ' · not loaded';
+    return;
+  }
+
+  const now = new Date();
+  const high = RF.events.filter(e => e.impact === 'High');
+  const today = high.filter(e => rfSameDay(e.t, now));
+  const live = today.filter(e => now - e.t < 60 * 60000);   // upcoming, or released < 1h ago
+  const next = high.find(e => e.t > now);
+  const holiday = RF.events.find(e => e.impact === 'Holiday' && rfSameDay(e.t, now));
+  const names = list => [...new Set(list.map(e => e.title))].map(rfEsc).join(', ');
+
+  if (live.length) {
+    setState('rf-red', 'p-bear', 'Volatility warning', '#ff3d5a');
+    msg.innerHTML = `Warning: volatility expected around <b>${names(today)}</b>. Wider wicks, fake breakouts, spreads blow out. Size down or wait.`;
+  } else if (today.length) {
+    setState('rf-done', 'p-neu', 'Released', '#f5a623');
+    msg.innerHTML = `Today's red folders are out (<b>${names(today)}</b>). Volatility can linger for a few hours.`;
+  } else {
+    setState('rf-clear', 'p-bull', 'Clear', '#00d97e');
+    msg.innerHTML = 'No red folders today. ' + (next
+      ? `Next: <b>${rfEsc(next.title)}</b> · ${rfDay(next.t)} ${rfTime(next.t)} (${rfIn(next.t - now)})`
+      : 'None left this week.');
+  }
+  if (holiday) msg.innerHTML += ` <span style="color:var(--neutral)">US holiday (${rfEsc(holiday.title)}): thin liquidity.</span>`;
+
+  evBox.innerHTML = today.map(e => {
+    const ms = e.t - now, past = ms < -5 * 60000;
+    const cd = ms > 0 ? rfIn(ms) : past ? 'released' : 'now';
+    return `<span class="rf-ev${past ? ' rf-past' : ''}"><b>${rfEsc(e.title)}</b><span class="rf-t">${rfTime(e.t)}</span><span class="rf-cd">${cd}</span></span>`;
+  }).join('');
+
+  week.innerHTML = RF.events.length
+    ? RF.events.map(e => `<div class="rf-week-row${rfSameDay(e.t, now) ? ' today' : ''}${e.t < now && !rfSameDay(e.t, now) ? ' gone' : ''}">
+        <span class="d">${rfDay(e.t)} ${e.impact === 'Holiday' ? 'all day' : rfTime(e.t)}</span><span>${e.impact === 'Holiday' ? '🏦 ' : '🔴 '}${rfEsc(e.title)}</span></div>`).join('')
+    : '<div class="rf-week-row">No US red folders this week.</div>';
+
+  const ageH = (now - RF.fetched) / 3600000;
+  stamp.innerHTML = `${ffLink} · feed ${RF.fetched.toISOString().slice(11, 16)} UTC` +
+    (RF.err ? ' · <span style="color:var(--neutral)">refresh failed</span>' : ageH > 12 ? ' · <span style="color:var(--neutral)">stale</span>' : '') +
+    '<br>times = your local time';
+
+  // Pre-fill the Macro "Key event" box with the next red folder, unless typed by hand
+  const ke = document.getElementById('key-event');
+  if (ke && next && (!ke.value || ke.dataset.rfAuto)) {
+    ke.value = `${rfDay(next.t).split(' ')[0]} ${next.title}`; ke.dataset.rfAuto = '1';
+    if (!ke.dataset.rfHooked) { ke.dataset.rfHooked = '1'; ke.addEventListener('input', () => delete ke.dataset.rfAuto); }
+  }
+}
+
+function rfToggleWeek() {
+  const w = document.getElementById('rf-week'), b = document.getElementById('rf-week-btn');
+  const open = w.classList.toggle('open');
+  b.textContent = open ? 'This week ▴' : 'This week ▾';
+  b.setAttribute('aria-expanded', open);
+}
+
+setInterval(rfRender, 30 * 1000);   // keep countdowns / state current
 
 // Auto-refresh every 5 min
 setInterval(refreshAll, 5*60*1000);

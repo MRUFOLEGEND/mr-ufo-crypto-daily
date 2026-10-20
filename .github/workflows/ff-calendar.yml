@@ -1,0 +1,38 @@
+# Caches ForexFactory's weekly calendar feed for the Crypto Daily "red folder" banner.
+# The feed has no CORS header (browsers can't read it) and rate-limits repeat hits,
+# so we fetch it here every 3h and store it on the separate `ff-data` branch.
+# The page reads it from raw.githubusercontent.com (CORS: *). Nothing is committed to main,
+# so the laptop's daily paper-trading push never conflicts with this job.
+name: ForexFactory calendar cache
+
+on:
+  schedule:
+    - cron: '7 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch feed
+        run: |
+          curl -sSf --retry 3 --retry-delay 20 -A "mr-ufo-crypto-daily (GitHub Actions)" \
+            -o raw.json https://nfs.faireconomy.media/ff_calendar_thisweek.json
+          # Reject the HTML "Rate Limited" page or anything that isn't a non-empty event array
+          jq -e 'type=="array" and length>0 and (.[0]|has("impact"))' raw.json > /dev/null
+          jq --arg t "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{fetched:$t, source:"ForexFactory (nfs.faireconomy.media)", events:.}' raw.json > ff-calendar.json
+
+      - name: Publish to ff-data branch
+        run: |
+          git init -q pub && cd pub
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git checkout -q --orphan ff-data
+          cp ../ff-calendar.json .
+          git add ff-calendar.json
+          git commit -qm "FF calendar $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -qf origin ff-data
