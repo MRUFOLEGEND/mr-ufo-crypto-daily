@@ -160,15 +160,18 @@ const mmss = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart
 $('#refresh').addEventListener('click', async () => {
   const b = $('#refresh'), m = $('#refreshMsg'), done = (txt, ok) => { m.textContent = txt; m.style.color = ok === false ? 'var(--bear)' : ok ? 'var(--bull)' : ''; b.disabled = false; b.textContent = '↻ Refresh'; };
   b.disabled = true; b.textContent = 'Working…'; m.style.color = ''; m.textContent = 'Contacting the laptop…';
-  let st = null; try { st = await (await tfetch(HELPER + '/status')).json(); } catch (e) {}
+  // 3 tries x 6s: right after wake-up the laptop is busy (catch-up run), and the old single 2.5s try reported "not reachable" (2026-10-23)
+  let st = null, why = '';
+  for (let i = 1; i <= 3 && !st; i++) { if (i > 1) m.textContent = 'Laptop slow to answer, trying again (' + i + '/3)…';
+    try { st = await (await tfetch(HELPER + '/status', {}, 6000)).json(); } catch (e) { why = e.name === 'AbortError' ? 'no answer within 6s' : 'connection refused or blocked by the browser'; } }
   if (!st) { // laptop asleep or helper not running: fall back to checking the published copy
     try { const g = await publishedGen(); if (g && Date.parse(g) > Date.parse(D.generatedAt)) { m.textContent = 'Newer update found, reloading…'; return reload(); }
-      return done('✗ Laptop not reachable (asleep, or helper not running), so nothing was recalculated. This is the latest published run.', false);
+      return done('✗ Laptop not reachable (' + why + '): asleep, or the helper is not running. Nothing was recalculated; this is the latest published run.', false);
     } catch (e) { return done('✗ Laptop not reachable and the published page could not be checked: ' + e.message, false); } }
-  try { if (!st.running) st = await (await tfetch(HELPER + '/run', { method: 'POST' })).json(); } catch (e) { return done('✗ Could not start the update on the laptop: ' + e.message, false); }
-  const t0 = Date.now();
+  try { if (!st.running) st = await (await tfetch(HELPER + '/run', { method: 'POST' }, 10000)).json(); } catch (e) { return done('✗ Could not start the update on the laptop: ' + e.message, false); }
+  const t0 = Date.now(); let misses = 0;
   while (true) { await sleep(3000);
-    try { st = await (await tfetch(HELPER + '/status')).json(); } catch (e) { return done('✗ Lost contact with the laptop during the update (did it go to sleep?). Press Refresh again.', false); }
+    try { st = await (await tfetch(HELPER + '/status', {}, 6000)).json(); misses = 0; } catch (e) { if (++misses < 5) continue; return done('✗ Lost contact with the laptop during the update (did it go to sleep?). Press Refresh again.', false); }
     if (!st.running) break;
     m.textContent = 'Updating on the laptop: ' + (st.external ? 'daily run already in progress, following it' : st.total ? 'strategy ' + st.progress + ' / ' + st.total : 'fetching new candles') + ' · ' + mmss((Date.now() - Date.parse(st.startedAt)) / 1000); }
   const L = st.lastRun || {};
