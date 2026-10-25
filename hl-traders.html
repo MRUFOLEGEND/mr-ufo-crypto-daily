@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hyperliquid Whale Watch</title>
+<style>
+/* Crypto Daily brand. Single dark theme by design. Phone-first: nothing under 12px, grids stack at ≤600px. */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0d12;--surface:#13161f;--surface2:#1a1e2d;--border:#2a2f48;
+  --text:#e2e5f0;--dim:#8891b0;
+  --bull:#00d97e;--bear:#ff3d5a;--neutral:#f5a623;
+  --bull-bg:rgba(0,217,126,.08);--bear-bg:rgba(255,61,90,.08);--neutral-bg:rgba(245,166,35,.08);
+  --accent:#4e7fff;--accent2:#9b59f5;--white:#ffffff;
+  --mono:'SF Mono','Fira Code','Courier New',monospace;
+  color-scheme:dark;
+}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:16px;line-height:1.6}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+b{color:var(--white)}
+.brand-sticky{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.brand-block{display:flex;align-items:center;gap:12px;border:2px solid var(--accent);border-radius:10px;padding:8px 14px;box-shadow:0 0 12px rgba(78,127,255,.3)}
+.brand-ape{width:70px;height:70px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;object-position:top;box-shadow:0 0 12px rgba(78,127,255,.4);flex-shrink:0}
+.brand-title{font-size:20px;font-weight:700;color:var(--white);letter-spacing:1px}
+.brand-sub{font-size:15px;color:var(--accent2);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;font-weight:600}
+.stamp{margin-left:auto;font-size:13px;color:var(--dim);text-align:right;line-height:1.6}
+@media (max-width:600px){.brand-sticky{position:static}.stamp{margin-left:0;text-align:left}.brand-ape{width:52px;height:52px}.brand-title{font-size:18px}.brand-sub{font-size:13px}}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:20px 60px;display:grid;gap:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;min-width:0}
+.card-hdr{padding:11px 15px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.card-title{font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--white)}
+.card-hint{font-size:13px;color:var(--dim)}
+.card-body{padding:15px;display:grid;gap:12px;min-width:0}
+.dim{color:var(--dim)}.bull{color:var(--bull)}.bear{color:var(--bear)}.neutral{color:var(--neutral)}
+.bias{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:4px;width:max-content;white-space:nowrap}
+.bias-bull{background:var(--bull-bg);color:var(--bull);border:1px solid var(--bull)}
+.bias-bear{background:var(--bear-bg);color:var(--bear);border:1px solid var(--bear)}
+.bias-neutral{background:var(--neutral-bg);color:var(--neutral);border:1px solid var(--neutral)}
+.bias::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.tag{font-size:12.5px;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:.5px;background:rgba(78,127,255,.12);color:var(--accent);border:1px solid rgba(78,127,255,.3);white-space:nowrap}
+.tag-p{background:rgba(155,89,245,.12);color:var(--accent2);border-color:rgba(155,89,245,.3)}
+.tag-o{background:var(--neutral-bg);color:var(--neutral);border-color:rgba(245,166,35,.3)}
+.note{background:var(--surface2);border-left:3px solid var(--neutral);padding:10px 13px;border-radius:0 4px 4px 0;font-size:14.5px;line-height:1.6}
+.tip{background:var(--surface2);border-left:3px solid var(--accent);padding:10px 13px;border-radius:0 4px 4px 0;font-size:14.5px;line-height:1.6}
+.nav{display:flex;flex-wrap:wrap;gap:8px}
+.nav a,button,select{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;min-height:44px;padding:0 14px;display:inline-flex;align-items:center;text-decoration:none;cursor:pointer}
+.nav a:hover,button:hover{border-color:var(--accent)}
+button.primary{border-color:var(--accent);color:var(--white);background:rgba(78,127,255,.15)}
+button:disabled{opacity:.6;cursor:wait}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.conn{font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:7px}
+.conn::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor}
+#status{font-size:14px;padding:6px 10px;border-radius:4px;transition:background 1.5s}
+#status.flash{background:rgba(78,127,255,.25)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;min-width:0}
+.kpi .lbl{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
+.kpi .big{font-size:24px;font-weight:700;color:var(--white);line-height:1.3;font-variant-numeric:tabular-nums}
+.kpi p{font-size:13px;color:var(--dim)}
+@media (max-width:800px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface)}
+td{padding:8px 10px;border-bottom:1px solid rgba(42,47,72,.6);white-space:nowrap;vertical-align:middle}
+td.r,th.r{text-align:right}
+tr.live td{background:rgba(78,127,255,.07)}
+.lean{display:flex;height:10px;width:110px;border-radius:3px;overflow:hidden;background:var(--surface2);border:1px solid var(--border)}
+.lean i{display:block;height:100%}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--dim)}
+details summary{cursor:pointer;color:var(--accent);font-size:13px}
+.pos{font-size:13px;line-height:1.7;white-space:normal;min-width:240px}
+@media (max-width:600px){.hp{display:none}.lean{width:70px}td,th{padding:8px 7px}}
+.foot{font-size:13px;color:var(--dim);line-height:1.7}
+.empty{font-size:14.5px;color:var(--dim);padding:6px 0;white-space:normal}
+</style>
+</head>
+<body>
+<div class="brand-sticky">
+  <div class="brand-block">
+    <img class="brand-ape" src="BASC.png" alt="Mr UFO">
+    <div>
+      <div class="brand-title">CRYPTO DAILY</div>
+      <div class="brand-sub">Whale Watch · Hyperliquid</div>
+    </div>
+  </div>
+  <div class="stamp" id="stamp">Loading…</div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="card-body">
+      <div class="bar">
+        <button class="primary" id="liveBtn">↻ Live refresh</button>
+        <span class="conn dim" id="conn">Hyperliquid: not checked</span>
+      </div>
+      <div id="status" role="status">Showing the latest saved snapshot. Tap Live refresh to pull the traders' positions right now.</div>
+      <nav class="nav" aria-label="Sections">
+        <a href="#lean">Crowd lean</a><a href="#changes">Position changes</a><a href="#traders">Traders</a><a href="#forward">Forward test</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr"><span class="card-title">What this is</span><span class="card-hint" id="critHint"></span></div>
+    <div class="card-body">
+      <p style="font-size:14.5px">We follow the <b id="nTop">50</b> best Hyperliquid traders of the last 30 days and show what they hold. Market makers and small accounts are filtered out: <span id="critText"></span></p>
+      <div class="note"><b>Read this first.</b> Ranking by 30-day PnL picks whoever was on the right side of last month's move. When the crowd leans hard one way, that is often just last month's trend. Whether following the lean actually makes money is being tested below. Until the forward test has 30+ days, treat this as context, not a reason to trade.</div>
+    </div>
+  </div>
+
+  <div class="card" id="lean">
+    <div class="card-hdr"><span class="card-title">Crowd lean per coin</span><span class="card-hint" id="leanHint"></span></div>
+    <div class="card-body">
+      <div class="filters">
+        <label>Min traders <select id="minN"><option>3</option><option selected>5</option><option>10</option></select></label>
+        <label>Show <select id="leanShow"><option value="25" selected>Top 25</option><option value="999">All</option></select></label>
+      </div>
+      <div class="tw"><table><thead><tr><th>Coin</th><th>Crowd</th><th>Longs / shorts</th><th>Lean ($)</th><th class="r hp">Long $</th><th class="r hp">Short $</th><th class="r">Price</th></tr></thead><tbody id="leanBody"></tbody></table></div>
+      <p class="card-hint">Lean = (long $ − short $) / total $. "Crowd LONG/SHORT" needs ≥<span id="mt">5</span> traders and ≥60% of the dollars on one side, with the head count agreeing.</p>
+    </div>
+  </div>
+
+  <div class="card" id="changes">
+    <div class="card-hdr"><span class="card-title">Position changes</span><span class="card-hint">last 14 days · blue rows = found by Live refresh</span></div>
+    <div class="card-body">
+      <div class="filters">
+        <label>Coin <select id="chCoin"><option value="">All</option></select></label>
+        <label>Min size <select id="chMin"><option value="0">Any</option><option value="100000" selected>$100k+</option><option value="1000000">$1M+</option></select></label>
+      </div>
+      <div class="tw"><table><thead><tr><th>Time (UTC)</th><th>Trader</th><th>Event</th><th>Coin</th><th class="r">Size $</th><th class="r">Price</th></tr></thead><tbody id="chBody"></tbody></table></div>
+      <p class="card-hint">OPEN / CLOSE / FLIP = new, gone or reversed position. ADD / CUT = size up ≥50% / down ≥50% between snapshots (taken every 4 hours).</p>
+    </div>
+  </div>
+
+  <div class="card" id="traders">
+    <div class="card-hdr"><span class="card-title">Tracked traders</span><span class="card-hint">sorted by 30-day PnL</span></div>
+    <div class="card-body">
+      <div class="tw"><table><thead><tr><th>#</th><th>Trader</th><th class="r">Account</th><th class="r">30d PnL</th><th class="r">7d PnL</th><th class="r">All-time</th><th class="r">Turnover 30d</th><th>Positions</th></tr></thead><tbody id="trBody"></tbody></table></div>
+      <p class="card-hint">Turnover = 30-day volume ÷ account (×). Addresses link to the official Hyperliquid explorer.</p>
+    </div>
+  </div>
+
+  <div class="card" id="forward">
+    <div class="card-hdr"><span class="card-title">Forward test: follow the crowd?</span><span id="fwdPill"></span></div>
+    <div class="card-body">
+      <div class="kpis">
+        <div class="kpi"><div class="lbl">Days collected</div><div class="big" id="kDays">–</div><p>goal: 30+</p></div>
+        <div class="kpi"><div class="lbl">Leans scored</div><div class="big" id="kEval">–</div><p id="kSig"></p></div>
+        <div class="kpi"><div class="lbl">Right after 24h</div><div class="big" id="kWin">–</div><p>share of leans that moved their way</p></div>
+        <div class="kpi"><div class="lbl">Avg 24h move</div><div class="big" id="kAvg">–</div><p>gross · fees ≈ 0.09% round trip</p></div>
+      </div>
+      <div class="tip">Each UTC day, the first snapshot's crowd leans are logged with the price. 24 hours later we check whether the price moved the crowd's way. This is a forward test with no hindsight. When the crowd is short on everything, it is mostly one market bet, so check the long/short mix in the table.</div>
+      <div class="tw"><table><thead><tr><th>Day</th><th>Coin</th><th>Crowd</th><th class="r">Traders</th><th class="r">Price</th><th class="r">24h later</th><th class="r">Result</th></tr></thead><tbody id="fwdBody"></tbody></table></div>
+    </div>
+  </div>
+
+  <p class="foot">Data: Hyperliquid public API (leaderboard, clearinghouseState, allMids, candles). Snapshots run every 4 hours from Marc's PC when it is on. Perp positions on the main Hyperliquid dex only; spot and builder dexes are not included. This page spots what large traders do. It is not backtested, not a signal service and not financial advice. Copying another trader means taking their risk without knowing their plan, stop or size. Recheck before acting and keep live risk at 0.5–1% per trade.</p>
+</div>
+
+<script>
+const INFO='https://api.hyperliquid.xyz/info';
+let D=null, live=null, liveAt=null, liveChanges=[];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const usd=v=>{if(v==null)return'–';const a=Math.abs(v),s=v<0?'−':'';return a>=1e9?s+'$'+(a/1e9).toFixed(2)+'B':a>=1e6?s+'$'+(a/1e6).toFixed(1)+'M':a>=1e3?s+'$'+(a/1e3).toFixed(0)+'k':s+'$'+a.toFixed(0)};
+const sgn=v=>`<span class="${v>0?'bull':v<0?'bear':'dim'}">${v>0?'+':''}${usd(v)}</span>`;
+const px=v=>v==null?'–':v>=1000?v.toLocaleString('en-US',{maximumFractionDigits:0}):v>=1?v.toFixed(v>=100?1:3):v.toPrecision(4);
+const short=a=>a.slice(0,6)+'…'+a.slice(-4);
+const tlink=(t)=>`<a href="https://app.hyperliquid.xyz/explorer/address/${esc(t.addr)}" target="_blank" rel="noopener">${esc(t.name||short(t.addr))}</a>`;
+const utc=t=>new Date(t).toISOString().slice(5,16).replace('T',' ');
+function ago(t){const s=Math.round((Date.now()-Date.parse(t))/1000);return s<90?s+'s ago':s<5400?Math.round(s/60)+'m ago':s<172800?Math.round(s/3600)+'h ago':Math.round(s/86400)+'d ago'}
+function stamp(){if(!D)return;const t=liveAt||D.snapshotAt;$('stamp').innerHTML=`${liveAt?'<b class="bull">LIVE</b>':'Snapshot'} ${new Date(t).toISOString().slice(0,19).replace('T',' ')} UTC · <span>${ago(t)}</span><br>Hyperliquid public API · ${D.leaderboardRows.toLocaleString()} wallets scanned`}
+setInterval(stamp,1000);
+
+function consensus(traders){const m={};for(const t of traders)for(const p of t.positions||[]){const c=m[p.coin]||(m[p.coin]={coin:p.coin,nL:0,nS:0,vL:0,vS:0});if(p.side==='L'){c.nL++;c.vL+=p.value}else{c.nS++;c.vS+=p.value}}
+  const cr=D.crit;return Object.values(m).map(c=>{const n=c.nL+c.nS,v=c.vL+c.vS,lean=v?(c.vL-c.vS)/v:0,cl=n?(c.nL-c.nS)/n:0;
+  return{...c,n,v,lean,countLean:cl,signal:n>=cr.minTraders&&Math.abs(lean)>=cr.minLean&&Math.sign(cl)===Math.sign(lean)?(lean>0?'LONG':'SHORT'):null}}).sort((a,b)=>b.n-a.n||b.v-a.v)}
+
+function renderLean(){const traders=live||D.traders,mids=live?liveMids:null;const cons=live?consensus(traders).map(c=>({...c,px:mids[c.coin]?+mids[c.coin]:null})):D.consensus;
+  const minN=+$('minN').value,lim=+$('leanShow').value;$('mt').textContent=D.crit.minTraders;
+  const rows=cons.filter(c=>c.n>=minN).slice(0,lim);
+  const nL=cons.filter(c=>c.signal==='LONG').length,nS=cons.filter(c=>c.signal==='SHORT').length;
+  $('leanHint').textContent=`${cons.length} coins held · crowd LONG on ${nL}, SHORT on ${nS}`;
+  $('leanBody').innerHTML=rows.length?rows.map(c=>{const lw=c.v?c.vL/c.v*100:0;
+    const pill=c.signal?`<span class="bias ${c.signal==='LONG'?'bias-bull':'bias-bear'}">${c.signal}</span>`:`<span class="bias bias-neutral">Mixed</span>`;
+    return`<tr><td><b>${esc(c.coin)}</b></td><td>${pill}</td><td><span class="bull">${c.nL}</span> / <span class="bear">${c.nS}</span></td><td><div class="lean" title="${(c.lean*100).toFixed(0)}%"><i style="width:${lw}%;background:var(--bull)"></i><i style="width:${100-lw}%;background:var(--bear)"></i></div></td><td class="r hp">${usd(c.vL)}</td><td class="r hp">${usd(c.vS)}</td><td class="r">${px(c.px)}</td></tr>`}).join(''):`<tr><td colspan="7" class="empty">No coin is held by ${minN}+ traders.</td></tr>`}
+
+function renderChanges(){const all=liveChanges.concat(D.changes),coin=$('chCoin').value,min=+$('chMin').value;
+  const tm=new Map((live||D.traders).map(t=>[t.addr,t]));
+  const rows=all.filter(c=>(!coin||c.coin===coin)&&(c.value||0)>=min).slice(0,150);
+  const ev={OPEN:'bias-bull',ADD:'bias-bull',CLOSE:'bias-neutral',CUT:'bias-neutral',FLIP:'bias-bear'};
+  $('chBody').innerHTML=rows.length?rows.map(c=>`<tr class="${c.live?'live':''}"><td>${utc(c.t)}</td><td>${tlink(tm.get(c.addr)||{addr:c.addr})}</td><td><span class="bias ${ev[c.ev]}">${c.ev}</span></td><td><b>${esc(c.coin)}</b> <span class="${c.side==='L'?'bull':'bear'}">${c.side==='L'?'long':'short'}</span></td><td class="r">${usd(c.value)}</td><td class="r">${px(c.px)}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">${D.snapshots<2?'Changes appear from the second snapshot on (every 4 hours). Live refresh compares right now with the last snapshot.':'No changes match this filter.'}</td></tr>`}
+
+function renderTraders(){const ts=live||D.traders;
+  $('trBody').innerHTML=ts.map((t,i)=>{const ps=(t.positions||[]).slice().sort((a,b)=>b.value-a.value);
+    const top=ps.slice(0,3).map(p=>`<span class="${p.side==='L'?'bull':'bear'}">${esc(p.coin)} ${p.side==='L'?'L':'S'} ${usd(p.value)}</span>`).join(' · ');
+    const more=ps.length>3?`<details><summary>all ${ps.length}</summary><div class="pos">${ps.map(p=>`<span class="${p.side==='L'?'bull':'bear'}">${esc(p.coin)} ${p.side==='L'?'long':'short'} ${usd(p.value)}</span> <span class="dim">@ ${px(p.entry)}${p.lev?' · '+p.lev+'×':''} · uPnL ${usd(p.upnl)}</span>`).join('<br>')}</div></details>`:'';
+    return`<tr><td class="dim">${i+1}</td><td>${tlink(t)}</td><td class="r">${usd(t.equity||t.acct)}</td><td class="r">${sgn(t.pnl.m)}</td><td class="r">${sgn(t.pnl.w)}</td><td class="r">${sgn(t.pnl.all)}</td><td class="r">${t.turnM}×</td><td class="pos">${t.positions==null?'<span class="neutral">failed to load</span>':ps.length?top+more:'<span class="dim">flat</span>'}</td></tr>`}).join('')}
+
+function renderForward(){const f=D.forward;$('kDays').textContent=f.days;$('kEval').textContent=f.evaluated;$('kSig').textContent=`of ${f.signals} logged`;
+  $('kWin').innerHTML=f.winRate==null?'–':`<span class="${f.winRate>.5?'bull':'bear'}">${(f.winRate*100).toFixed(0)}%</span>`;
+  $('kAvg').innerHTML=f.avgRet==null?'–':`<span class="${f.avgRet>0.0009?'bull':'bear'}">${f.avgRet>0?'+':''}${(f.avgRet*100).toFixed(2)}%</span>`;
+  const ok=f.days>=30&&f.evaluated>=100;
+  $('fwdPill').innerHTML=!ok?`<span class="bias bias-neutral">Collecting data · ${f.days}/30 days</span>`:f.avgRet>0.0009?`<span class="bias bias-bull">Beats fees so far</span>`:`<span class="bias bias-bear">No edge after fees</span>`;
+  $('fwdBody').innerHTML=f.recent.length?f.recent.map(s=>`<tr><td>${s.day}</td><td><b>${esc(s.coin)}</b></td><td><span class="bias ${s.side==='LONG'?'bias-bull':'bias-bear'}">${s.side}</span></td><td class="r">${s.n}</td><td class="r">${px(s.px)}</td><td class="r">${s.px2?px(s.px2):'<span class="dim">pending</span>'}</td><td class="r">${s.ret==null?'<span class="dim">–</span>':`<span class="${s.ret>0?'bull':'bear'}">${s.ret>0?'+':''}${(s.ret*100).toFixed(2)}%</span>`}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">No leans logged yet.</td></tr>'}
+
+function renderAll(){renderLean();renderChanges();renderTraders();stamp()}
+function setStatus(html){const s=$('status');s.innerHTML=html;s.classList.add('flash');setTimeout(()=>s.classList.remove('flash'),1500)}
+
+async function post(body){const r=await fetch(INFO,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
+let liveMids={};
+async function liveRefresh(){const btn=$('liveBtn'),t0=performance.now();btn.disabled=true;
+  try{
+    const p0=performance.now();liveMids=await post({type:'allMids'});const ms=Math.round(performance.now()-p0);
+    $('conn').className='conn bull';$('conn').textContent=`Hyperliquid connected · ${ms} ms`;
+    const out=D.traders.map(t=>({...t,positions:null}));let done=0,failed=0,i=0;
+    const work=async()=>{while(i<out.length){const t=out[i++];
+      try{const s=await post({type:'clearinghouseState',user:t.addr});t.equity=Math.round(+s.marginSummary.accountValue);
+        t.positions=s.assetPositions.map(a=>a.position).filter(p=>+p.szi!==0).map(p=>({coin:p.coin,side:+p.szi>0?'L':'S',size:Math.abs(+p.szi),entry:+p.entryPx,value:+p.positionValue,upnl:+p.unrealizedPnl,lev:p.leverage?p.leverage.value:null}))}
+      catch(e){failed++}
+      done++;btn.textContent=`Fetching ${done}/${out.length}`}};
+    await Promise.all([work(),work(),work(),work()]);
+    if(failed===out.length)throw new Error('all traders failed to load');
+    // diff vs saved snapshot
+    const now=new Date().toISOString(),prev=new Map(D.traders.map(t=>[t.addr,t]));liveChanges=[];
+    for(const t of out){const o=prev.get(t.addr);if(!o||!o.positions||!t.positions)continue;const a=new Map(o.positions.map(p=>[p.coin,p])),b=new Map(t.positions.map(p=>[p.coin,p]));
+      for(const[c,p]of b){const q=a.get(c),m=liveMids[c]?+liveMids[c]:null;
+        if(!q)liveChanges.push({t:now,addr:t.addr,coin:c,ev:'OPEN',side:p.side,value:p.value,px:p.entry,live:1});
+        else if(q.side!==p.side)liveChanges.push({t:now,addr:t.addr,coin:c,ev:'FLIP',side:p.side,value:p.value,px:p.entry,live:1});
+        else if(p.size>=q.size*1.5)liveChanges.push({t:now,addr:t.addr,coin:c,ev:'ADD',side:p.side,value:p.value,px:m,live:1});
+        else if(p.size<=q.size*.5)liveChanges.push({t:now,addr:t.addr,coin:c,ev:'CUT',side:p.side,value:p.value,px:m,live:1})}
+      for(const[c,q]of a)if(!b.has(c))liveChanges.push({t:now,addr:t.addr,coin:c,ev:'CLOSE',side:q.side,value:q.value,px:liveMids[c]?+liveMids[c]:null,live:1})}
+    live=out;liveAt=now;fillCoins();renderAll();
+    const secs=((performance.now()-t0)/1000).toFixed(1);
+    setStatus(`<span class="bull">✓</span> Refreshed at ${now.slice(11,19)} UTC in ${secs}s · ${out.length-failed} traders · <b>${liveChanges.length}</b> changes since the ${ago(D.snapshotAt)} snapshot${failed?` · <span class="neutral">${failed} of ${out.length} traders failed</span>`:''}`);
+  }catch(e){$('conn').className='conn bear';$('conn').textContent='Hyperliquid unreachable';setStatus(`<span class="bear">✗ Refresh failed:</span> ${esc(e.message)}. Still showing the saved snapshot.`)}
+  finally{btn.disabled=false;btn.textContent='↻ Live refresh'}}
+
+function fillCoins(){const sel=$('chCoin'),cur=sel.value,coins=[...new Set(liveChanges.concat(D.changes).map(c=>c.coin))].sort();sel.innerHTML='<option value="">All</option>'+coins.map(c=>`<option${c===cur?' selected':''}>${esc(c)}</option>`).join('')}
+
+async function load(){try{const r=await fetch('hl-traders.json?'+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);D=await r.json()}
+  catch(e){$('stamp').textContent='No snapshot';setStatus(`<span class="bear">✗ Could not load the saved snapshot:</span> ${esc(e.message)}`);return}
+  const c=D.crit;$('nTop').textContent=c.top;
+  $('critText').textContent=`account ≥ ${usd(c.minAcct)}, all-time PnL ≥ ${usd(c.minAllTimePnl)}, profitable last 30 days, and 30-day volume ≤ ${c.maxMonthTurnover}× the account (market makers trade hundreds of times their account).`;
+  $('critHint').textContent=`${D.eligible} of ${D.leaderboardRows.toLocaleString()} wallets qualify · ${D.snapshots} snapshots so far`;
+  fillCoins();renderAll();renderForward()}
+for(const id of['minN','leanShow'])$(id).addEventListener('change',renderLean);
+for(const id of['chCoin','chMin'])$(id).addEventListener('change',renderChanges);
+$('liveBtn').addEventListener('click',liveRefresh);
+load();
+</script>
+</body>
+</html>
