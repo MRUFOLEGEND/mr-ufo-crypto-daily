@@ -1,0 +1,40 @@
+# Daily paper-trading report to Telegram (alerts/paper_daily.js). Runs in the cloud, so it arrives even if the laptop is off;
+# the numbers come from alerts/paper_summary.json, which the laptop's 06:15 Top-25 paper run pushes. Stale data is flagged in the message.
+# 06:30 UTC = 07:30 Amsterdam in winter, 08:30 in summer (GitHub cron can start a few min late).
+# Secrets needed (repo Settings > Secrets and variables > Actions): TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (same as vol-alerts.yml).
+name: Paper trading report (Telegram)
+
+on:
+  schedule:
+    - cron: '30 6 * * *'
+  workflow_dispatch:
+    inputs:
+      test:
+        description: 'Only send one test message'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: alerts
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Send report
+        working-directory: alerts
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then echo "::warning::Telegram secrets not set yet - skipping"; node paper_daily.js --dry; exit 0; fi
+          if [ "${{ inputs.test }}" = "true" ]; then node paper_daily.js --test; else node paper_daily.js; fi

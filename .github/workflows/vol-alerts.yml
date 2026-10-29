@@ -1,0 +1,61 @@
+# Telegram alerts for big volatility spikes (alerts/vol_alerts.js). Runs in the cloud so the laptop can be off.
+# Each run scans OKX every 3 min for ~29 min; a new run starts every 30 min (GitHub cron can start a few min late).
+# Cooldowns are kept on the separate `alerts-state` branch, so nothing is committed to main.
+# Secrets needed (repo Settings > Secrets and variables > Actions): TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID.
+name: Volatility alerts (Telegram)
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      test:
+        description: 'Only send one test message'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vol-alerts
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: alerts
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Load cooldown state
+        run: |
+          git fetch -q --depth 1 origin alerts-state && git show FETCH_HEAD:vol_alerts_state.json > alerts/vol_alerts_state.json || echo '{}' > alerts/vol_alerts_state.json
+
+      - name: Scan and alert
+        working-directory: alerts
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ "${{ inputs.test }}" = "true" ]; then node vol_alerts.js --test; else node vol_alerts.js --loop 28; fi
+
+      - name: Save cooldown state
+        if: always() && inputs.test != true
+        run: |
+          [ -f alerts/vol_alerts_state.json ] || exit 0
+          git init -q pub && cd pub
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git checkout -q --orphan alerts-state
+          cp ../alerts/vol_alerts_state.json .
+          git add vol_alerts_state.json
+          git commit -qm "vol alerts state $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -qf origin alerts-state
