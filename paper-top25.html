@@ -123,6 +123,7 @@ table.ov{width:100%;border-collapse:collapse;font-size:14px;min-width:720px}
         <button class="btn" data-k="rank" aria-pressed="true">Rank</button>
         <button class="btn" data-k="paper">Paper P&amp;L</button>
         <button class="btn" data-k="dd">Lowest DD</button>
+        <button class="btn" data-k="first">First trade</button>
         <button class="btn" data-k="win">Win rate</button>
         <button class="btn" data-k="trades">Most trades</button>
         <button class="btn" data-k="hist">History $/month</button>
@@ -198,6 +199,8 @@ function spark(s) {
     + '<line x1="0" x2="' + W + '" y1="' + y(1) + '" y2="' + y(1) + '" stroke="#2a2f48" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>'
     + (v.some(x => x !== 1) ? '<path d="' + line + 'L' + W + ',' + H + 'L0,' + H + 'Z" fill="url(#' + id + ')"/>' : '') + '<path d="' + line + '" fill="none" stroke="' + c + '" stroke-width="1.8" vector-effect="non-scaling-stroke"/></svg>';
 }
+const firstT = p => Math.min(...p.closedList.map(t => t.entryTime), ...p.open.map(o => o.entryTime), Infinity);
+const firstCell = s => { const t = firstT(s.paper); return t === Infinity ? '<span class="dim">–</span>' : '<span title="Paper start ' + (s.paperStart || D.paperStart).slice(0, 10) + '">' + dt(t) + '</span>'; };
 const statBadge = p => p.open.length ? '<span class="stat stat-open">● In trade · ' + p.open.length + '</span>' : '<span class="stat stat-flat">Flat</span>';
 const statText = p => '<div class="st-cell">' + (p.open.length ? '<span class="stat stat-open">● Open · ' + p.open.length + '</span>' + p.open.map(o => '<span class="chip ' + (o.dir === 'Long' ? 'chip-l' : 'chip-s') + '"><b class="' + (o.dir === 'Long' ? 'bull' : 'bear') + '">' + o.coin + ' ' + o.dir + '</b><span class="' + cls(o.retPct) + '">' + pct(o.retPct, 2) + '</span></span>').join('')
   : '<span class="stat stat-flat">Flat</span><span class="dim">' + (p.trades ? 'all closed (' + p.trades + ' trade' + (p.trades > 1 ? 's' : '') + ')' : 'no trades yet') + '</span>') + '</div>';
@@ -211,9 +214,9 @@ function overview() {
     + kpi('In a trade', live.length + ' / ' + S.length) + kpi('Open positions', S.reduce((a, s) => a + s.paper.open.length, 0)) + kpi('Closed trades', sum('trades'));
   $('#ovh').textContent = (S.length < ALL.length ? 'showing ' + S.length + ' of ' + ALL.length + ' · ' : '') + (live.length ? live.length + ' in a trade · ' + (S.length - live.length) + ' flat' : 'all flat');
   const rows = S.slice().sort((a, b) => (b.paper.open.length > 0) - (a.paper.open.length > 0) || b.paper.pnlUsd - a.paper.pnlUsd || a.rank - b.rank);
-  $('#ov').innerHTML = '<thead><tr><th>#</th><th>Strategy</th><th>Verdict</th><th class="r">P&amp;L</th><th class="r">%</th><th class="r">Realized</th><th class="r" title="Share of closed paper trades that made money · number of closed trades">Win rate</th><th class="r" title="Profit factor = gross profit ÷ gross loss of closed paper trades">PF</th><th>Status</th></tr></thead><tbody>'
-    + rows.map(s => { const p = s.paper; return '<tr data-r="' + s.rank + '"' + (p.open.length ? ' class="live"' : '') + '><td>' + s.rank + '</td><td>' + short(s.name) + '</td><td>' + vdBadge(s) + '</td><td class="r ' + cls(p.pnlUsd) + '">' + usd(p.pnlUsd, true) + '</td><td class="r ' + cls(p.pnlPct) + '">' + pct(p.pnlPct, 2) + '</td><td class="r ' + cls(p.realizedUsd) + '">' + (p.realizedUsd == null ? '–' : usd(p.realizedUsd, true)) + '</td><td class="r">' + winCell(p) + '</td><td class="r">' + pfCell(p) + '</td><td>' + statText(p) + '</td></tr>'; }).join('')
-    + '</tbody><tfoot><tr><td></td><td>Total · ' + S.length + ' accounts × $10k</td><td></td><td class="r ' + cls(tot) + '">' + usd(tot, true) + '</td><td class="r ' + cls(tot) + '">' + pct(100 * tot / cap, 2) + '</td><td class="r">' + usd(sum('realizedUsd'), true) + '</td><td class="r">' + (() => { const cl = S.flatMap(x => x.paper.closedList || []), w = cl.filter(t => t.retPct > 0).length; return cl.length ? Math.round(100 * w / cl.length) + '% · ' + cl.length : '–'; })() + '</td><td></td><td>' + live.length + ' in a trade</td></tr></tfoot>';
+  $('#ov').innerHTML = '<thead><tr><th>#</th><th>Strategy</th><th>Verdict</th><th class="r">P&amp;L</th><th class="r">%</th><th class="r">Realized</th><th class="r" title="Share of closed paper trades that made money · number of closed trades">Win rate</th><th class="r" title="Profit factor = gross profit ÷ gross loss of closed paper trades">PF</th><th class="r" title="Entry date of the first paper trade (hover for the paper start date)">1st trade</th><th>Status</th></tr></thead><tbody>'
+    + rows.map(s => { const p = s.paper; return '<tr data-r="' + s.rank + '"' + (p.open.length ? ' class="live"' : '') + '><td>' + s.rank + '</td><td>' + short(s.name) + '</td><td>' + vdBadge(s) + '</td><td class="r ' + cls(p.pnlUsd) + '">' + usd(p.pnlUsd, true) + '</td><td class="r ' + cls(p.pnlPct) + '">' + pct(p.pnlPct, 2) + '</td><td class="r ' + cls(p.realizedUsd) + '">' + (p.realizedUsd == null ? '–' : usd(p.realizedUsd, true)) + '</td><td class="r">' + winCell(p) + '</td><td class="r">' + pfCell(p) + '</td><td class="r">' + firstCell(s) + '</td><td>' + statText(p) + '</td></tr>'; }).join('')
+    + '</tbody><tfoot><tr><td></td><td>Total · ' + S.length + ' accounts × $10k</td><td></td><td class="r ' + cls(tot) + '">' + usd(tot, true) + '</td><td class="r ' + cls(tot) + '">' + pct(100 * tot / cap, 2) + '</td><td class="r">' + usd(sum('realizedUsd'), true) + '</td><td class="r">' + (() => { const cl = S.flatMap(x => x.paper.closedList || []), w = cl.filter(t => t.retPct > 0).length; return cl.length ? Math.round(100 * w / cl.length) + '% · ' + cl.length : '–'; })() + '</td><td></td><td></td><td>' + live.length + ' in a trade</td></tr></tfoot>';
 }
 $('#ov').addEventListener('click', e => { const tr = e.target.closest('tr[data-r]'); if (tr) { const el = document.getElementById('s' + tr.dataset.r); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
 function card(s) {
@@ -224,7 +227,7 @@ function card(s) {
   const st = (l, v, c = '') => '<div><div class="l">' + l + '</div><div class="v ' + c + '">' + v + '</div></div>';
   return '<article class="sc' + (s.top25 !== false && s.rank <= 5 ? ' top' : '') + '" id="s' + s.rank + '"><div class="sc-h"><div style="min-width:0"><div class="sc-name">#' + s.rank + ' ' + short(s.name) + '</div><div class="sc-sub">' + (s.top25 === false ? 'Added' : 'Top 25') + ' · ' + s.coins + ' · ' + ((/\b(4H|1H)\b/.exec(s.note || '') || ['1D'])[0]) + ' · ' + s.kind + '</div></div><div class="sc-badges"><span class="bias ' + (ok ? 'bias-bull' : 'bias-neutral') + '">' + (ok ? 'Acceptable' : 'Weak edge') + '</span>' + statBadge(p) + '</div></div>'
     + '<div class="big num ' + cls(p.pnlUsd) + '">' + usd(p.equityUsd) + '<small>paper equity</small></div>'
-    + '<div class="num ' + cls(p.pnlUsd) + '" style="font-size:15px;font-weight:700">' + usd(p.pnlUsd, true) + ' (' + pct(p.pnlPct, 2) + ') since ' + (s.paperStart || D.paperStart).slice(5, 10) + '</div>'
+    + '<div class="num ' + cls(p.pnlUsd) + '" style="font-size:15px;font-weight:700">' + usd(p.pnlUsd, true) + ' (' + pct(p.pnlPct, 2) + ') since ' + (s.paperStart || D.paperStart).slice(5, 10) + ' · 1st trade ' + (firstT(p) === Infinity ? 'none yet' : dt(firstT(p)).slice(5)) + '</div>'
     + (p.realizedUsd != null ? '<div class="num dim" style="font-size:13px">Realized <span class="' + cls(p.realizedUsd) + '">' + usd(p.realizedUsd, true) + '</span> · open trades <span class="' + cls(p.openUsd) + '">' + usd(p.openUsd, true) + '</span></div>' : '') + spark(s)
     + '<div class="m num">' + st('P&amp;L', pct(p.pnlPct, 2), cls(p.pnlPct)) + st('Max DD', p.mddPct.toFixed(1) + '%') + st('Trades', p.trades) + st('Win rate', p.winPct == null ? '–' : p.winPct.toFixed(0) + '%')
     + st('PF', p.pf ?? '–') + st('Open', p.open.length) + st('B&amp;H', pct(p.bhPct, 2), cls(p.bhPct)) + st('vs B&amp;H', pct(p.pnlPct - p.bhPct, 2), cls(p.pnlPct - p.bhPct)) + '</div>'
@@ -232,7 +235,7 @@ function card(s) {
     + '<div class="paper"><div class="ps num"><span class="pl" style="color:var(--dim)">History</span> ≈ <b class="' + cls(b.monthlyUsd) + '">' + usd(b.monthlyUsd, true) + ' / month</b> on $10k (' + pct(b.monthlyPct, 2) + '/mo avg over ' + b.months + ' months) · PF ' + (b.pf ?? '–') + ' · max DD ' + b.mddPct + '% · win ' + b.winPct + '% · ' + b.trades + ' trades</div></div>'
     + (s.note ? '<div class="sc-sub">' + s.note + '</div>' : '') + '</article>';
 }
-const keys = { rank: s => s.rank, paper: s => -s.paper.pnlPct, dd: s => s.paper.mddPct, win: s => -(s.paper.winPct ?? -1), trades: s => -s.paper.trades, hist: s => -s.backtest.monthlyUsd };
+const keys = { rank: s => s.rank, paper: s => -s.paper.pnlPct, dd: s => s.paper.mddPct, first: s => firstT(s.paper),win: s => -(s.paper.winPct ?? -1), trades: s => -s.paper.trades, hist: s => -s.backtest.monthlyUsd };
 let sortK = 'rank'; try { sortK = localStorage.getItem('pfsort') || 'rank'; } catch (e) {}
 function render() {
   S = ALL.filter(pass); overview();
