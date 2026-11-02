@@ -16,7 +16,7 @@ const PAGE = 'https://mrufolegend.github.io/mr-ufo-crypto-daily/volatility.html'
 const STATE_FILE = process.env.STATE_FILE || 'vol_alerts_state.json';
 
 const CFG = {
-  topN: 100, memeLiq: 50e6, minAgeDays: 14,
+  minUsd: 1e6, breadthN: 100, memeLiq: 50e6, minAgeDays: 14,   // scan every perp with ≥$1M 24h volume; market-wide check uses the top 100
   everyMin: 3,
   cooldownMin: 60,          // same coin + same alert type stays quiet this long...
   escalate: 1.6,            // ...unless the move grows to this × the move we last alerted
@@ -102,12 +102,12 @@ async function universe() {
     const m = instCache.map.get(t.instId);
     if (!m || !t.instId.endsWith('-USDT-SWAP') || m.state !== 'live' || m.instCategory !== '1') continue;
     const sym = t.instId.replace('-USDT-SWAP', ''), usd = +t.volCcy24h * +t.last;
-    if (STABLES.has(sym) || (MEMES.has(sym) && usd < CFG.memeLiq) || Date.now() - +m.listTime < CFG.minAgeDays * 864e5) continue;
+    if (usd < CFG.minUsd || STABLES.has(sym) || (MEMES.has(sym) && usd < CFG.memeLiq) || Date.now() - +m.listTime < CFG.minAgeDays * 864e5) continue;
     out.push({ id: t.instId, sym, usd });
   }
   out.sort((a, b) => b.usd - a.usd);
   const majors = Object.keys(CFG.majors);
-  return [...out.filter(x => majors.includes(x.sym)), ...out.filter(x => !majors.includes(x.sym)).slice(0, CFG.topN)];
+  return [...out.filter(x => majors.includes(x.sym)), ...out.filter(x => !majors.includes(x.sym))];
 }
 
 // Open interest (USD, all OKX contracts for that coin) 15m ago vs now, plus current funding
@@ -194,23 +194,24 @@ async function scan() {
 
   // 🌊 Market-wide
   const alts = res.filter(r => !CFG.majors[r.sym]);
+  const top = [...alts].sort((a, b) => b.usd - a.usd).slice(0, CFG.breadthN); // thin coins would dilute the breadth read
   let wide = null;
-  if (alts.length >= 50) {
-    const up = alts.filter(r => r.m15.pct >= CFG.breadthPct), dn = alts.filter(r => r.m15.pct <= -CFG.breadthPct);
+  if (top.length >= 50) {
+    const up = top.filter(r => r.m15.pct >= CFG.breadthPct), dn = top.filter(r => r.m15.pct <= -CFG.breadthPct);
     const side = up.length >= dn.length ? { dir: 'up', list: up } : { dir: 'dn', list: dn };
-    const share = side.list.length / alts.length;
+    const share = side.list.length / top.length;
     if (share >= CFG.breadthShare) {
       wide = side.dir;
       const key = `wide:${side.dir}`;
       if (allowed(key, share)) {
         mark(key, share);
-        const btc = by.get('BTC'), avg = median(alts.map(r => r.m15.pct));
-        const top = [...side.list].sort((a, b) => side.dir === 'up' ? b.m15.pct - a.m15.pct : a.m15.pct - b.m15.pct).slice(0, 5);
+        const btc = by.get('BTC'), avg = median(top.map(r => r.m15.pct));
+        const big = [...side.list].sort((a, b) => side.dir === 'up' ? b.m15.pct - a.m15.pct : a.m15.pct - b.m15.pct).slice(0, 5);
         const L = [];
         L.push(`🌊 <b>Market-wide ${side.dir === 'up' ? 'PUMP' : 'DUMP'}</b>`);
-        L.push(`${side.list.length}/${alts.length} top coins ${side.dir === 'up' ? 'up' : 'down'} ≥${CFG.breadthPct}% in 15m`);
+        L.push(`${side.list.length}/${top.length} top coins ${side.dir === 'up' ? 'up' : 'down'} ≥${CFG.breadthPct}% in 15m`);
         L.push(`Median alt ${sg(avg, 2)}%${btc ? ` · BTC ${sg(btc.m15.pct, 2)}%` : ''}`);
-        L.push(`Biggest: ${top.map(r => `${esc(r.sym)} ${sg(r.m15.pct, 1)}%`).join(', ')}`);
+        L.push(`Biggest: ${big.map(r => `${esc(r.sym)} ${sg(r.m15.pct, 1)}%`).join(', ')}`);
         L.push(`💡 ${side.dir === 'dn' ? 'Looks like a liquidation cascade. Wait for the flush to finish before buying the dip; check the Cascade playbook.' : 'Broad squeeze/risk-on burst. Late entries here often get faded.'}`);
         L.push(`${hhmm(now)} · <a href="${PAGE}">scanner</a>`);
         msgs.push(L.join('\n'));
@@ -219,7 +220,7 @@ async function scan() {
   }
 
   // ⚡ Alt spikes (during a market-wide move only coins going against it, or 2× the median, are news)
-  const medAlt = median(alts.map(r => Math.abs(r.m15.pct)));
+  const medAlt = median(top.map(r => Math.abs(r.m15.pct)));
   const spikes = [];
   for (const r of alts) {
     const a = CFG.alt15, b = CFG.alt1h;
