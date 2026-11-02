@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # lets each run start the next one (see last step)
 
 concurrency:
   group: vol-alerts
@@ -60,3 +61,12 @@ jobs:
           git add vol_alerts_state.json
           git commit -qm "vol alerts state $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -qf origin alerts-state
+
+      # Chain: start the next run straight away, so scanning doesn't depend on GitHub's unreliable cron
+      # (it went 7h without a scheduled start on 2026-11-02). The hourly cron stays as a backup if the chain breaks.
+      # Only after a successful full run, so a broken job can't loop. To stop everything: Actions > this workflow > Disable.
+      - name: Start next run
+        if: success() && inputs.test != true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run vol-alerts.yml --repo "${{ github.repository }}" --ref main
