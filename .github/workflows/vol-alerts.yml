@@ -1,12 +1,13 @@
 # Telegram alerts for big volatility spikes (alerts/vol_alerts.js). Runs in the cloud so the laptop can be off.
-# Each run scans OKX every 3 min for ~29 min; a new run starts every 30 min (GitHub cron can start a few min late).
+# Each run scans OKX every 3 min for ~5h40m; a new start is queued every hour as backup (GitHub cron often starts hours late),
+# so the next run is usually waiting when the current one ends. Queued extras show as "cancelled" in Actions - that's normal.
 # Cooldowns are kept on the separate `alerts-state` branch, so nothing is committed to main.
 # Secrets needed (repo Settings > Secrets and variables > Actions): TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID.
 name: Volatility alerts (Telegram)
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '7 * * * *'
   workflow_dispatch:
     inputs:
       test:
@@ -24,7 +25,7 @@ concurrency:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,7 +45,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          if [ "${{ inputs.test }}" = "true" ]; then node vol_alerts.js --test; else node vol_alerts.js --loop 28; fi
+          if [ "${{ inputs.test }}" = "true" ]; then node vol_alerts.js --test; else node vol_alerts.js --loop 340; fi
 
       - name: Save cooldown state
         if: always() && inputs.test != true
