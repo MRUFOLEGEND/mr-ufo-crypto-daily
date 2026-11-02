@@ -26,6 +26,7 @@ const CFG = {
   oiFlag: 1.0,              // % OI change in 15m that counts as "big"
   breadthPct: 1.5, breadthShare: 0.35,
   alt15: { volX: 5, pct: 4, z: 4 }, alt1h: { volX: 4, pct: 8 },
+  altQuietH: 2, altVolRepeat: 2, altMaxPerDay: 3,   // alt repeats: quiet 2h unless volume doubles or it reverses; max 3 per coin per 24h
   maxAltRows: 6,
 };
 const MEMES = new Set(('DOGE PEPE SHIB BONK WIF FLOKI BOME MEME NEIRO NEIROETH TURBO PNUT MOODENG POPCAT MEW BRETT TRUMP MELANIA FARTCOIN GOAT PENGU SPX ' +
@@ -135,6 +136,23 @@ function allowed(key, mag) {
   return !p || Date.now() - p.t > CFG.cooldownMin * 60e3 || Math.abs(mag) >= Math.abs(p.mag) * CFG.escalate;
 }
 const mark = (key, mag) => { state[key] = { t: Date.now(), mag }; };
+// Alts: one record per coin. Quiet for altQuietH after an alert; inside that window only a reversal or a
+// doubling of volume (same window as the last alert) gets through. Never more than altMaxPerDay per rolling 24h.
+function altKind(r, w, win, now) {
+  const p = state[`alt:${r.sym}`], dir = w.pct > 0 ? 'up' : 'dn';
+  const ts = p && p.ts ? p.ts.filter(t => now - t < 24 * 3600e3) : [];
+  if (ts.length >= CFG.altMaxPerDay) return null;
+  if (!p || !p.ts || now - p.t > CFG.altQuietH * 3600e3) return 'new';
+  if (dir !== p.dir) return 'rev';
+  if (r[p.win].volX >= p.volX * CFG.altVolRepeat) return 'vol';
+  return null;
+}
+function markAlt(r, w, win, kind, now) {
+  const p = state[`alt:${r.sym}`], ts = p && p.ts ? p.ts.filter(t => now - t < 24 * 3600e3) : [];
+  const chain = kind === 'vol';  // a volume repeat keeps the first alert as reference; new or reversal starts over
+  state[`alt:${r.sym}`] = { t: now, dir: w.pct > 0 ? 'up' : 'dn', pct: w.pct, win, volX: w.volX,
+    t0: chain ? p.t0 : now, px0: chain ? p.px0 : r.price, ts: [...ts, now] };
+}
 const saveState = () => {
   for (const k of Object.keys(state)) if (Date.now() - state[k].t > 24 * 3600e3) delete state[k];
   fs.writeFileSync(STATE_FILE, JSON.stringify(state));
@@ -210,19 +228,31 @@ async function scan() {
     if (!f15 && !f1h) continue;
     const w = f15 ? r.m15 : r.h1, tf = f15 ? '15m' : '1h';
     if (wide && (w.pct > 0) === (wide === 'up') && Math.abs(w.pct) < 2 * medAlt + a.pct) continue;
-    const key = `alt:${r.sym}:${w.pct > 0 ? 'up' : 'dn'}`;
-    if (!allowed(key, w.pct)) continue;
-    spikes.push({ r, w, tf, key });
+    const kind = altKind(r, w, f15 ? 'm15' : 'h1', now);
+    if (kind) spikes.push({ r, w, tf, kind });
   }
   if (spikes.length) {
     spikes.sort((x, y) => Math.abs(y.w.pct) - Math.abs(x.w.pct));
     const shown = spikes.slice(0, CFG.maxAltRows);
-    shown.forEach(s => mark(s.key, s.w.pct));
     const L = [`⚡ <b>Alt volatility spike${shown.length > 1 ? 's' : ''}</b>`];
-    for (const { r, w, tf } of shown) {
-      L.push(`${w.pct > 0 ? '🟢' : '🔴'} ${okxLink(r.sym)} <b>${sg(w.pct, 1)}%</b> in ${tf} · vol ${w.volX.toFixed(1)}× · ${w.z.toFixed(1)}× normal move`);
-      L.push(`    ${fmtPx(r.price)} · 24h ${sg(r.ch24, 1)}% · ${fmtUsd(r.usd)} 24h vol`);
+    for (const { r, w, tf, kind } of shown) {
+      const p = state[`alt:${r.sym}`], dot = w.pct > 0 ? '🟢' : '🔴';
+      if (kind === 'new') {
+        L.push(`${dot} ${okxLink(r.sym)} <b>${sg(w.pct, 1)}%</b> in ${tf} · vol ${w.volX.toFixed(1)}× · ${w.z.toFixed(1)}× normal move`);
+        L.push(`    ${fmtPx(r.price)} · 24h ${sg(r.ch24, 1)}% · ${fmtUsd(r.usd)} 24h vol`);
+      } else if (kind === 'vol') {
+        L.push(`🔁 ${okxLink(r.sym)} <b>again — volume doubled</b>`);
+        const since = (r.price / p.px0 - 1) * 100;
+        L.push(`    ${since > 0 ? '🟢' : '🔴'} ${sg(since, 1)}% since first alert (${hhmm(p.t0)})`);
+        L.push(`    Volume now ${r[p.win].volX.toFixed(0)}× normal (was ${p.volX.toFixed(0)}×)`);
+        L.push(`    ${fmtPx(r.price)} · 24h ${sg(r.ch24, 1)}% · alert ${p.ts.filter(t => now - t < 24 * 3600e3).length + 1} of max ${CFG.altMaxPerDay} in 24h`);
+      } else {
+        L.push(`↩️ ${okxLink(r.sym)} <b>reversing</b>`);
+        L.push(`    ${dot} <b>${sg(w.pct, 1)}%</b> in ${tf} after ${sg(p.pct, 1)}% ${p.dir === 'up' ? 'pump' : 'dump'} (${hhmm(p.t)})`);
+        L.push(`    Volume ${w.volX.toFixed(1)}× normal · ${fmtPx(r.price)}`);
+      }
     }
+    shown.forEach(s => markAlt(s.r, s.w, s.tf === '15m' ? 'm15' : 'h1', s.kind, now));
     if (spikes.length > shown.length) L.push(`…and ${spikes.length - shown.length} more`);
     L.push(`${hhmm(now)} · <a href="${PAGE}">scanner</a>`);
     msgs.push(L.join('\n'));
@@ -254,13 +284,13 @@ async function main() {
   const li = args.indexOf('--loop'), mins = li >= 0 ? +args[li + 1] || 29 : 0;
   const end = Date.now() + mins * 60e3;
   do {
-    const t0 = Date.now();
+    const t0 = Date.now(), before = JSON.stringify(state);
     try {
       const { msgs, n } = await scan();
       for (const m of msgs) await send(m);
       if (!DRY) saveState();
       console.log(`${new Date().toISOString()} scanned ${n} coins, ${msgs.length} alert(s), ${((Date.now() - t0) / 1000).toFixed(0)}s`);
-    } catch (e) { console.error(new Date().toISOString(), e.message); }
+    } catch (e) { state = JSON.parse(before); console.error(new Date().toISOString(), e.message); } // failed send: forget this scan's cooldowns
     const next = t0 + CFG.everyMin * 60e3;
     if (next >= end) break;
     await sleep(next - Date.now());
