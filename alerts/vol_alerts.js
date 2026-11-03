@@ -180,15 +180,16 @@ async function scan() {
     mark(key, w.pct);
     const d = await derivs(sym);
     const L = [];
-    L.push(`🚨 <b>${sym} ${w.pct > 0 ? 'PUMP' : 'DUMP'} ${sg(w.pct, 2)}% in ${tf}</b>`);
-    L.push(`Price ${fmtPx(r.price)} · ${w.z.toFixed(1)}× a normal ${tf} move`);
-    L.push(`Range ${w.range.toFixed(2)}% · volume ${w.volX.toFixed(1)}× normal`);
+    L.push(`🚨 <b>${sym} ${w.pct > 0 ? 'PUMP 🟢' : 'DUMP 🔴'} ${sg(w.pct, 2)}%</b> in ${tf}`, '');
+    L.push(`Price <b>${fmtPx(r.price)}</b> (24h ${sg(r.ch24, 1)}%)`);
+    L.push(`Move ${w.z.toFixed(1)}× normal`);
+    L.push(`Volume ${w.volX.toFixed(1)}× normal`);
     if (d) {
-      L.push(`OI ${sg(d.oiCh, 2)}% in 15m (${fmtUsd(d.oi)}) · funding ${sg(d.funding, 4)}%`);
-      L.push(`💡 ${read(w.pct, d.oiCh)}`);
+      L.push(`OI ${sg(d.oiCh, 2)}% in 15m`);
+      L.push(`Funding ${sg(d.funding, 4)}%`);
+      L.push('', `💡 ${read(w.pct, d.oiCh)}`);
     }
-    L.push(`24h ${sg(r.ch24, 1)}% · ${hhmm(now)}`);
-    L.push(`${okxLink(sym)} · <a href="${PAGE}">scanner</a>`);
+    L.push('', `${hhmm(now)} · ${okxLink(sym)} · <a href="${PAGE}">scanner</a>`);
     msgs.push(L.join('\n'));
   }
 
@@ -208,12 +209,12 @@ async function scan() {
         const btc = by.get('BTC'), avg = median(top.map(r => r.m15.pct));
         const big = [...side.list].sort((a, b) => side.dir === 'up' ? b.m15.pct - a.m15.pct : a.m15.pct - b.m15.pct).slice(0, 5);
         const L = [];
-        L.push(`🌊 <b>Market-wide ${side.dir === 'up' ? 'PUMP' : 'DUMP'}</b>`);
-        L.push(`${side.list.length}/${top.length} top coins ${side.dir === 'up' ? 'up' : 'down'} ≥${CFG.breadthPct}% in 15m`);
-        L.push(`Median alt ${sg(avg, 2)}%${btc ? ` · BTC ${sg(btc.m15.pct, 2)}%` : ''}`);
-        L.push(`Biggest: ${big.map(r => `${esc(r.sym)} ${sg(r.m15.pct, 1)}%`).join(', ')}`);
-        L.push(`💡 ${side.dir === 'dn' ? 'Looks like a liquidation cascade. Wait for the flush to finish before buying the dip; check the Cascade playbook.' : 'Broad squeeze/risk-on burst. Late entries here often get faded.'}`);
-        L.push(`${hhmm(now)} · <a href="${PAGE}">scanner</a>`);
+        L.push(`🌊 <b>MARKET-WIDE ${side.dir === 'up' ? 'PUMP 🟢' : 'DUMP 🔴'}</b>`, '');
+        L.push(`<b>${side.list.length} of ${top.length}</b> top coins ${side.dir === 'up' ? 'up' : 'down'} ${CFG.breadthPct}%+ in 15m`);
+        L.push(`Median alt <b>${sg(avg, 2)}%</b>${btc ? ` · BTC <b>${sg(btc.m15.pct, 2)}%</b>` : ''}`, '');
+        L.push(`Biggest movers:`, ...big.map(r => `  ${esc(r.sym)}  ${sg(r.m15.pct, 1)}%`));
+        L.push('', `💡 ${side.dir === 'dn' ? 'Looks like a liquidation cascade. Wait for the flush to finish before buying the dip; check the Cascade playbook.' : 'Broad squeeze/risk-on burst. Late entries here often get faded.'}`);
+        L.push('', `${hhmm(now)} · <a href="${PAGE}">scanner</a>`);
         msgs.push(L.join('\n'));
       }
     }
@@ -235,27 +236,28 @@ async function scan() {
   if (spikes.length) {
     spikes.sort((x, y) => Math.abs(y.w.pct) - Math.abs(x.w.pct));
     const shown = spikes.slice(0, CFG.maxAltRows);
-    const L = [`⚡ <b>Alt volatility spike${shown.length > 1 ? 's' : ''}</b>`];
+    const L = [`⚡ <b>${shown.length > 1 ? shown.length + ' ALT SPIKES' : 'ALT SPIKE'}</b>`];
     for (const { r, w, tf, kind } of shown) {
       const p = state[`alt:${r.sym}`], dot = w.pct > 0 ? '🟢' : '🔴';
       if (kind === 'new') {
-        L.push(`${dot} ${okxLink(r.sym)} <b>${sg(w.pct, 1)}%</b> in ${tf} · vol ${w.volX.toFixed(1)}× · ${w.z.toFixed(1)}× normal move`);
-        L.push(`    ${fmtPx(r.price)} · 24h ${sg(r.ch24, 1)}% · ${fmtUsd(r.usd)} 24h vol`);
+        L.push('', `${dot} <b>${okxLink(r.sym)}  ${sg(w.pct, 1)}%</b> in ${tf}`);
+        L.push(`Volume <b>${w.volX.toFixed(0)}×</b> normal · move ${w.z.toFixed(0)}× normal`);
+        L.push(`Price ${fmtPx(r.price)} · 24h ${sg(r.ch24, 1)}% · ${fmtUsd(r.usd)}/day`);
       } else if (kind === 'vol') {
-        L.push(`🔁 ${okxLink(r.sym)} <b>again — volume doubled</b>`);
         const since = (r.price / p.px0 - 1) * 100;
-        L.push(`    ${since > 0 ? '🟢' : '🔴'} ${sg(since, 1)}% since first alert (${hhmm(p.t0)})`);
-        L.push(`    Volume now ${r[p.win].volX.toFixed(0)}× normal (was ${p.volX.toFixed(0)}×)`);
-        L.push(`    ${fmtPx(r.price)} · 24h ${sg(r.ch24, 1)}% · alert ${p.ts.filter(t => now - t < 24 * 3600e3).length + 1} of max ${CFG.altMaxPerDay} in 24h`);
+        L.push('', `🔁 <b>${okxLink(r.sym)} AGAIN</b> · volume doubled`);
+        L.push(`${since > 0 ? '🟢' : '🔴'} <b>${sg(since, 1)}%</b> since first alert (${hhmm(p.t0)})`);
+        L.push(`Volume <b>${r[p.win].volX.toFixed(0)}×</b> normal (was ${p.volX.toFixed(0)}×)`);
+        L.push(`Price ${fmtPx(r.price)} · 24h ${sg(r.ch24, 1)}% · alert ${p.ts.filter(t => now - t < 24 * 3600e3).length + 1} of max ${CFG.altMaxPerDay} in 24h`);
       } else {
-        L.push(`↩️ ${okxLink(r.sym)} <b>reversing</b>`);
-        L.push(`    ${dot} <b>${sg(w.pct, 1)}%</b> in ${tf} after ${sg(p.pct, 1)}% ${p.dir === 'up' ? 'pump' : 'dump'} (${hhmm(p.t)})`);
-        L.push(`    Volume ${w.volX.toFixed(1)}× normal · ${fmtPx(r.price)}`);
+        L.push('', `↩️ <b>${okxLink(r.sym)} REVERSING</b>`);
+        L.push(`${dot} <b>${sg(w.pct, 1)}%</b> in ${tf} after ${sg(p.pct, 1)}% ${p.dir === 'up' ? 'pump' : 'dump'} (${hhmm(p.t)})`);
+        L.push(`Volume <b>${w.volX.toFixed(0)}×</b> normal · price ${fmtPx(r.price)}`);
       }
     }
     shown.forEach(s => markAlt(s.r, s.w, s.tf === '15m' ? 'm15' : 'h1', s.kind, now));
-    if (spikes.length > shown.length) L.push(`…and ${spikes.length - shown.length} more`);
-    L.push(`${hhmm(now)} · <a href="${PAGE}">scanner</a>`);
+    if (spikes.length > shown.length) L.push('', `…and ${spikes.length - shown.length} more`);
+    L.push('', `${hhmm(now)} · <a href="${PAGE}">scanner</a>`);
     msgs.push(L.join('\n'));
   }
   return { msgs, n: res.length };
