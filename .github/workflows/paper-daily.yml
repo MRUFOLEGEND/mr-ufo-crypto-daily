@@ -4,9 +4,9 @@
 # Secrets needed (repo Settings > Secrets and variables > Actions): TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (same as vol-alerts.yml).
 name: Paper trading report (Telegram)
 
+# PAUSED 2026-11-03: Marc wants paper results on a separate Telegram bot later. Daily schedule removed;
+# to restore, add back:  schedule: [ { cron: '30 6 * * *' } ]  (and point the secrets at the new bot).
 on:
-  schedule:
-    - cron: '30 6 * * *'
   workflow_dispatch:
     inputs:
       test:
