@@ -1,0 +1,66 @@
+# Telegram BUY / SELL alerts for the two Aroon strategies on BTC / ETH / SOL (alerts/aroon_alerts.js).
+# Signals happen at the 00:00 UTC daily close. GitHub cron can start late or skip a run, so it checks three times
+# after the close; the state on the `aroon-state` branch makes sure each signal is only sent once.
+# Monday 06:40 UTC run also sends a status overview (what is open / closed).
+# Secrets needed (repo Settings > Secrets and variables > Actions): AROON_BOT_TOKEN, AROON_CHAT_ID  (a separate bot from the vol alerts).
+name: Aroon alerts (Telegram)
+
+on:
+  schedule:
+    - cron: '20 0 * * *'
+    - cron: '20 2 * * *'
+    - cron: '40 6 * * *'
+  workflow_dispatch:
+    inputs:
+      test:
+        description: 'Send a test message + status now'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aroon-alerts
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: alerts
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Load state
+        run: |
+          git fetch -q --depth 1 origin aroon-state && git show FETCH_HEAD:aroon_alerts_state.json > alerts/aroon_alerts_state.json || echo '{}' > alerts/aroon_alerts_state.json
+
+      - name: Check signals
+        working-directory: alerts
+        env:
+          AROON_BOT_TOKEN: ${{ secrets.AROON_BOT_TOKEN }}
+          AROON_CHAT_ID: ${{ secrets.AROON_CHAT_ID }}
+        run: |
+          if [ -z "$AROON_BOT_TOKEN" ] || [ -z "$AROON_CHAT_ID" ]; then echo "::warning::Aroon Telegram secrets not set yet - dry run only"; node aroon_alerts.js --dry; exit 0; fi
+          if [ "${{ inputs.test }}" = "true" ]; then node aroon_alerts.js --test; exit 0; fi
+          if [ "$(date -u +%u)" = "1" ] && [ "${{ github.event.schedule }}" = "40 6 * * *" ]; then node aroon_alerts.js --status; else node aroon_alerts.js; fi
+
+      - name: Save state
+        if: always() && inputs.test != true
+        run: |
+          [ -s alerts/aroon_alerts_state.json ] || exit 0
+          git init -q pub && cd pub
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git checkout -q --orphan aroon-state
+          cp ../alerts/aroon_alerts_state.json .
+          git add aroon_alerts_state.json
+          git commit -qm "Aroon alert state $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -qf origin aroon-state
