@@ -2641,6 +2641,141 @@ window.addEventListener('scroll', () => {
 // ─── COIN ANALYZER ────────────────────────────────────────
 let coinTfResults = {};
 const coinTfSt = {};
+let _coinExchange = 'binance'; // 'binance' | 'bybit' | 'okx' | 'gate' | 'bitget' | 'dex'
+let _coinDexPool = null;        // {net, addr, name, dex} when _coinExchange === 'dex'
+let _coinQuote = 'USDT';
+const EX_NAMES = {binance:'Binance',bybit:'Bybit',okx:'OKX',gate:'Gate.io',bitget:'Bitget',dex:'DEX'};
+function coinExName() {
+  if (_coinExchange === 'dex' && _coinDexPool) return `DEX (${_coinDexPool.dex} · ${_coinDexPool.net})`;
+  return EX_NAMES[_coinExchange] || 'Binance';
+}
+
+// Interval mappings per exchange (Binance id → exchange-specific string)
+const BYBIT_IV  = {'1w':'W','1d':'D','4h':'240','1h':'60','15m':'15','5m':'5','1m':'1'};
+const OKX_IV    = {'1w':'1W','1d':'1D','4h':'4H','1h':'1H','15m':'15m','5m':'5m','1m':'1m'};
+const GATE_IV   = {'1w':'7d','1d':'1d','4h':'4h','1h':'1h','15m':'15m','5m':'5m','1m':'1m'};
+const BITGET_IV = {'1w':'1week','1d':'1day','4h':'4h','1h':'1h','15m':'15min','5m':'5min','1m':'1min'};
+// GeckoTerminal (DEX) — free tier is heavily rate-limited, so only 4 base series are
+// fetched (1d, 1h, 5m, 1m) and the others are built from them.
+const GT_BASE   = 'https://api.geckoterminal.com/api/v2';
+const DEX_BASES = {d1:['day',1], h1:['hour',1], m5:['minute',5], m1:['minute',1]};
+const DEX_H = 3600e3, DEX_D = 24*DEX_H;
+// interval → [base series, resample bucket ms (0 = none), bucket offset ms]
+const DEX_PLAN  = {'1w':['d1',7*DEX_D,4*DEX_D],'1d':['d1',0],'4h':['h1',4*DEX_H,0],'1h':['h1',0],
+                   '15m':['m5',15*60e3,0],'5m':['m5',0],'1m':['m1',0]};
+let _dexCache = {};
+let _dexQueue = Promise.resolve();
+
+function resampleOHLCV(list, size, offset=0) {
+  const out = [];
+  for (const k of list) {
+    const b = Math.floor((k[0] + offset) / size) * size - offset;
+    const last = out[out.length - 1];
+    if (last && last[0] === b) {
+      last[2] = Math.max(last[2], +k[2]); last[3] = Math.min(last[3], +k[3]);
+      last[4] = +k[4]; last[5] += +k[5];
+    } else out.push([b, +k[1], +k[2], +k[3], +k[4], +k[5]]);
+  }
+  return out;
+}
+
+// One GeckoTerminal OHLCV series per pool, fetched one at a time with retry on rate limit
+function dexBase(key) {
+  const p = _coinDexPool;
+  const ck = p.net + p.addr + key;
+  if (_dexCache[ck]) return _dexCache[ck];
+  const [tf, agg] = DEX_BASES[key];
+  const url = `${GT_BASE}/networks/${p.net}/pools/${p.addr}/ohlcv/${tf}?aggregate=${agg}&limit=1000&currency=usd&token=base`;
+  const job = _dexQueue.then(async () => {
+    for (const wait of [0, 3000, 7000, 15000]) {
+      if (wait) await new Promise(r => setTimeout(r, wait));
+      try {
+        const data = await apiFetch(url, 10000);
+        const raw = (data?.data?.attributes?.ohlcv_list || []).slice().reverse(); // → oldest-first
+        return raw.map(k => [k[0]*1000, +k[1], +k[2], +k[3], +k[4], +k[5]]);     // volume in USD
+      } catch(e) {}
+    }
+    throw new Error('DEX data rate-limited');
+  });
+  _dexQueue = job.catch(() => {});
+  _dexCache[ck] = job;
+  job.catch(() => { delete _dexCache[ck]; });
+  return job;
+}
+
+// Find the most liquid DEX pool for a coin via its contract address(es) on CoinGecko
+async function findDexPool(coin) {
+  const addrs = Object.values(coin.platforms || {}).filter(a => a && a.length > 20);
+  for (const addr of addrs.slice(0, 3)) {
+    try {
+      const r = await apiFetch(`${GT_BASE}/search/pools?query=${encodeURIComponent(addr)}`, 8000);
+      const pools = (r?.data || []).filter(p =>
+        (p.relationships?.base_token?.data?.id || '').toLowerCase().endsWith('_' + addr.toLowerCase()));
+      if (!pools.length) continue;
+      pools.sort((a, b) => (+b.attributes?.reserve_in_usd || 0) - (+a.attributes?.reserve_in_usd || 0));
+      const p = pools[0];
+      const net = p.id.split('_')[0];
+      const dex = (p.relationships?.dex?.data?.id || 'dex').replace(/[-_]/g, ' ');
+      return {net, addr: p.attributes.address, name: p.attributes.name || '', dex,
+              liq: +p.attributes.reserve_in_usd || 0};
+    } catch(e) {}
+  }
+  return null;
+}
+
+// OKX uses hyphen notation: BTCUSDT → BTC-USDT
+function toOkxInstId(binanceSym) {
+  return binanceSym.replace(/(USDT|USDC|BTC|ETH)$/, '-$1');
+}
+
+async function fetchCoinKlines(sym, interval, limit) {
+  if (_coinExchange === 'bybit') {
+    const iv = BYBIT_IV[interval] || 'D';
+    const data = await apiFetch(
+      `https://api.bybit.com/v5/market/kline?category=spot&symbol=${sym}&interval=${iv}&limit=${limit}`
+    );
+    const list = data?.result?.list;
+    if (!Array.isArray(list) || !list.length) throw new Error('No Bybit klines');
+    return list.slice().reverse(); // newest-first → oldest-first
+  }
+  if (_coinExchange === 'okx') {
+    const iv = OKX_IV[interval] || '1D';
+    const data = await apiFetch(
+      `https://www.okx.com/api/v5/market/candles?instId=${toOkxInstId(sym)}&bar=${iv}&limit=${limit}`
+    );
+    const list = data?.data;
+    if (!Array.isArray(list) || !list.length) throw new Error('No OKX klines');
+    return list.slice().reverse(); // newest-first → oldest-first; same [ts,o,h,l,c,vol] indices as Binance
+  }
+  if (_coinExchange === 'gate') {
+    const iv = GATE_IV[interval] || '1d';
+    const pair = sym.replace(new RegExp(_coinQuote + '$'), '_' + _coinQuote);
+    const list = await apiFetch(
+      `https://api.gateio.ws/api/v4/spot/candlesticks?currency_pair=${pair}&interval=${iv}&limit=${limit}`
+    );
+    if (!Array.isArray(list) || !list.length) throw new Error('No Gate klines');
+    // Gate: [t, quoteVol, close, high, low, open, baseVol, closed] → [t, o, h, l, c, baseVol]
+    return list.map(k => [+k[0]*1000, k[5], k[3], k[4], k[2], k[6]]);
+  }
+  if (_coinExchange === 'bitget') {
+    const iv = BITGET_IV[interval] || '1day';
+    const data = await apiFetch(
+      `https://api.bitget.com/api/v2/spot/market/candles?symbol=${sym}&granularity=${iv}&limit=${limit}`
+    );
+    const list = data?.data;
+    if (!Array.isArray(list) || !list.length) throw new Error('No Bitget klines');
+    return list; // oldest-first, [ts,o,h,l,c,baseVol,...]
+  }
+  if (_coinExchange === 'dex') {
+    if (!_coinDexPool) throw new Error('No DEX pool');
+    const [base, size, offset] = DEX_PLAN[interval] || DEX_PLAN['1d'];
+    let list = await dexBase(base);
+    if (size) list = resampleOHLCV(list, size, offset);
+    if (!list.length) throw new Error('No DEX klines');
+    return list.slice(-Math.max(limit, 30));
+  }
+  return apiFetch(`${BINANCE}/klines?symbol=${sym}&interval=${interval}&limit=${limit}`);
+}
 
 function setCoinTfState(id, key, val) {
   if (!coinTfSt[id]) coinTfSt[id] = {div:'auto'};
@@ -2663,7 +2798,12 @@ function renderCoinTF(results) {
   for (const {id, label} of TFS) {
     const r = results[id];
     const st = coinTfSt[id] || {div:'auto'};
-    if (!r) { html += `<tr><td>${label}</td><td colspan="14" class="loading">No data</td></tr>`; continue; }
+    if (!r) {
+      const msg = !(id in results) ? 'Loading…'
+        : _coinExchange === 'dex' ? 'Not enough DEX history for this timeframe' : 'No data';
+      html += `<tr><td>${label}</td><td colspan="14" class="${id in results ? '' : 'loading'}" style="color:var(--dim)">${msg}</td></tr>`;
+      continue;
+    }
 
     const divVal = (st.div==='auto'||!st.div) ? (r.divAuto||'none') : st.div;
     const rowScore = r.score + divScore(divVal);
@@ -2822,7 +2962,10 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
   const commScore= coin.community_score?.toFixed(1)||'—';
   const liqScore = coin.liquidity_score?.toFixed(1)||'—';
 
-  const quoteSym = binanceSym ? binanceSym.replace(coin.symbol?.toUpperCase(),'') : 'USDT';
+  const quoteSym = binanceSym ? _coinQuote : 'USDT';
+  const dexNote = (_coinExchange === 'dex' && _coinDexPool)
+    ? `<div class="tip" style="margin:0;border-radius:0">⚠ Not on a major exchange — stats come from the biggest DEX pool (${_coinDexPool.name}, ${_coinDexPool.dex} on ${_coinDexPool.net}, liquidity ${fmtMcap(_coinDexPool.liq)}). Volume is in USD. Thin pools give noisy signals; low timeframes can have gaps.</div>`
+    : '';
 
   let fundHtml='', oiHtml='';
   if (fundingRate!==null) {
@@ -2853,7 +2996,7 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
             ${cats?`<span>${cats}</span>`:''}
             ${genesis?`<span>${genesis}</span>`:''}
             ${chainTxt?`<span style="font-size:9px;font-family:monospace">${chainTxt}</span>`:''}
-            ${binanceSym?`<span style="color:var(--bull)">✓ Binance: ${binanceSym}</span>`:`<span style="color:var(--dim)">Not found on Binance</span>`}
+            ${binanceSym?`<span style="color:var(--bull)">✓ ${coinExName()}: ${binanceSym}</span>`:`<span style="color:var(--dim)">Not found on any exchange or DEX</span>`}
           </div>
           <div class="coin-links">
             ${lnk('🌐 Website',website)}
@@ -2930,9 +3073,10 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
   <div class="card">
     <div class="card-hdr">
       <span class="card-title">⏱ Timeframe Bias — ${(coin.symbol||'').toUpperCase()}/${quoteSym}</span>
-      <span style="font-size:10px;color:var(--dim)">${binanceSym?'Live Binance · RSI · MACD · EMA · Structure · Divergence':'⚠ No Binance pair found'}</span>
+      <span style="font-size:10px;color:var(--dim)">${binanceSym?`Live ${coinExName()} · RSI · MACD · EMA · Structure · Divergence`:'⚠ Not found on any exchange or DEX'}</span>
     </div>
     <div class="card-body" style="padding:0">
+      ${dexNote}
       <div class="tf-scroll">
         <table>
           <thead><tr>
@@ -2941,7 +3085,7 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
             <th>Divergence</th><th>Period Low</th><th>Period High</th><th>EMA Stack</th><th>Score</th>
           </tr></thead>
           <tbody id="coin-tf-body">
-            <tr><td colspan="15" style="text-align:center;padding:20px" class="loading">${binanceSym?'Loading timeframe data…':'No Binance pair found for this coin'}</td></tr>
+            <tr><td colspan="15" style="text-align:center;padding:20px" class="loading">${binanceSym?'Loading timeframe data…':'No pair found on Binance, Bybit, OKX, Gate.io, Bitget or any DEX'}</td></tr>
           </tbody>
         </table>
       </div>
@@ -2951,7 +3095,7 @@ function renderCoinFull(coin, binanceSym, fundingRate, oiUsd) {
   ${binanceSym?`<div class="card">
     <div class="card-hdr">
       <span class="card-title">🔮 4H Outlook — ${(coin.symbol||'').toUpperCase()}</span>
-      <span style="font-size:10px;color:var(--dim)">Live · Binance klines · EMA · RSI · MACD · Structure</span>
+      <span style="font-size:10px;color:var(--dim)">Live · ${coinExName()} klines · EMA · RSI · MACD · Structure</span>
     </div>
     <div class="card-body" style="gap:12px;padding:14px">
       <div id="coin-4h-text" class="loading" style="color:var(--dim);font-size:12px">Loading 4H kline data…</div>
@@ -3024,12 +3168,87 @@ async function analyzeCoin() {
     // 3. Find Binance spot pair
     if (status) status.textContent = 'Checking Binance…';
     let binanceSym = null;
+    _coinExchange = 'binance';
     for (const q of ['USDT','USDC','BTC','ETH']) {
       try {
         await apiFetch(`${BINANCE}/klines?symbol=${sym}${q}&interval=1d&limit=1`, 4000);
         binanceSym = sym + q; break;
       } catch(e) {}
     }
+
+    // 3b. Fallback: Bybit spot (if not found on Binance)
+    if (!binanceSym) {
+      if (status) status.textContent = 'Checking Bybit…';
+      for (const q of ['USDT','USDC']) {
+        try {
+          const r = await apiFetch(
+            `https://api.bybit.com/v5/market/kline?category=spot&symbol=${sym}${q}&interval=D&limit=1`, 4000
+          );
+          if (r?.result?.list?.length) {
+            binanceSym = sym + q;
+            _coinExchange = 'bybit';
+            break;
+          }
+        } catch(e) {}
+      }
+    }
+
+    // 3c. Fallback: OKX spot (if not found on Binance or Bybit)
+    if (!binanceSym) {
+      if (status) status.textContent = 'Checking OKX…';
+      for (const q of ['USDT','USDC']) {
+        try {
+          const r = await apiFetch(
+            `https://www.okx.com/api/v5/market/candles?instId=${sym}-${q}&bar=1D&limit=1`, 4000
+          );
+          if (r?.data?.length) {
+            binanceSym = sym + q;
+            _coinExchange = 'okx';
+            break;
+          }
+        } catch(e) {}
+      }
+    }
+
+    // 3d. Fallback: Gate.io spot (lists most small caps)
+    if (!binanceSym) {
+      if (status) status.textContent = 'Checking Gate.io…';
+      for (const q of ['USDT','USDC']) {
+        try {
+          const r = await apiFetch(
+            `https://api.gateio.ws/api/v4/spot/candlesticks?currency_pair=${sym}_${q}&interval=1d&limit=1`, 5000
+          );
+          if (Array.isArray(r) && r.length) { binanceSym = sym + q; _coinExchange = 'gate'; break; }
+        } catch(e) {}
+      }
+    }
+
+    // 3e. Fallback: Bitget spot
+    if (!binanceSym) {
+      if (status) status.textContent = 'Checking Bitget…';
+      for (const q of ['USDT','USDC']) {
+        try {
+          const r = await apiFetch(
+            `https://api.bitget.com/api/v2/spot/market/candles?symbol=${sym}${q}&granularity=1day&limit=1`, 5000
+          );
+          if (r?.data?.length) { binanceSym = sym + q; _coinExchange = 'bitget'; break; }
+        } catch(e) {}
+      }
+    }
+
+    // 3f. Last resort: DEX pool via GeckoTerminal (uses the token contract from CoinGecko)
+    _coinDexPool = null;
+    _dexCache = {};
+    if (!binanceSym) {
+      if (status) status.textContent = 'Checking DEX pools…';
+      const pool = await findDexPool(coin);
+      if (pool) {
+        _coinDexPool = pool;
+        _coinExchange = 'dex';
+        binanceSym = pool.name || sym;
+      }
+    }
+    if (binanceSym) _coinQuote = _coinExchange === 'dex' ? 'USD' : binanceSym.slice(sym.length);
 
     // 4. Futures: funding rate + OI
     let fundingRate = null, oiUsd = null;
@@ -3052,21 +3271,22 @@ async function analyzeCoin() {
     if (binanceSym) {
       if (status) status.textContent = 'Loading timeframes…';
       coinTfResults = {};
-      const COIN_OUTLOOK_TFS = ['4h','1d','1w','1h'];
       let coin4hRendered = false;
       for (const {id} of TFS) {
-        apiFetch(klinesUrl(binanceSym, id, 250))
-          .then(data => {
-            try { coinTfResults[id] = analyzeOHLCV(data); } catch(e) {}
+        fetchCoinKlines(binanceSym, id, 250)
+          .then(data => { try { return analyzeOHLCV(data); } catch(e) { return null; } })
+          .catch(() => null)
+          .then(res => {
+            coinTfResults[id] = res; // null = fetched but no/too little data
             renderCoinTF(coinTfResults);
-            if (!coin4hRendered && COIN_OUTLOOK_TFS.every(t => coinTfResults[t])) {
+            // Outlook needs 4H/1D/1H; weekly is optional (young DEX coins have <30 weeks)
+            if (!coin4hRendered && ['4h','1d','1h'].every(t => coinTfResults[t]) && ('1w' in coinTfResults)) {
               coin4hRendered = true;
               const textEl = document.getElementById('coin-4h-text');
               const levelsEl = document.getElementById('coin-4h-levels');
               if (textEl) _render4HOutlook(sym, coinTfResults['4h'], coinTfResults['1d'], coinTfResults['1w'], coinTfResults['1h'], textEl, levelsEl);
             }
-          })
-          .catch(() => {});
+          });
       }
     }
 
