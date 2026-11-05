@@ -3,6 +3,8 @@
 # after the close; the state on the `aroon-state` branch makes sure each signal is only sent once.
 # Monday 06:40 UTC run also sends a status overview (what is open / closed).
 # Secrets needed (repo Settings > Secrets and variables > Actions): AROON_BOT_TOKEN, AROON_CHAT_ID  (a separate bot from the vol alerts).
+# LIVE SWITCH: repo variable AROON_LIVE (Settings > Secrets and variables > Actions > Variables). Only 'true' sends BUY/SELL/status.
+#   Anything else (or not set) = dry run in the log only. The manual "test" run always sends, so the bot can be checked before going live.
 name: Aroon alerts (Telegram)
 
 on:
@@ -46,9 +48,11 @@ jobs:
         env:
           AROON_BOT_TOKEN: ${{ secrets.AROON_BOT_TOKEN }}
           AROON_CHAT_ID: ${{ secrets.AROON_CHAT_ID }}
+          AROON_LIVE: ${{ vars.AROON_LIVE }}
         run: |
           if [ -z "$AROON_BOT_TOKEN" ] || [ -z "$AROON_CHAT_ID" ]; then echo "::warning::Aroon Telegram secrets not set yet - dry run only"; node aroon_alerts.js --dry; exit 0; fi
           if [ "${{ inputs.test }}" = "true" ]; then node aroon_alerts.js --test; exit 0; fi
+          if [ "$AROON_LIVE" != "true" ]; then echo "::notice::Aroon alerts NOT live (repo variable AROON_LIVE is not 'true') - dry run only, nothing sent"; node aroon_alerts.js --dry; exit 0; fi
           if [ "$(date -u +%u)" = "1" ] && [ "${{ github.event.schedule }}" = "40 6 * * *" ]; then node aroon_alerts.js --status; else node aroon_alerts.js; fi
 
       - name: Save state
