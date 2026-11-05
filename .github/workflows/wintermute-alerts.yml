@@ -1,0 +1,79 @@
+# Telegram alerts when Wintermute's Hyperliquid wallet adds or cuts a BIG long/short (alerts/wintermute_alerts.js).
+# Scans every 5 min for ~5h40m, then starts the next run itself (same chain as vol-alerts); hourly cron = backup.
+# Snapshots, cooldowns, the alert log (forward test) and the hourly position history live on the `wintermute-state` branch.
+# Telegram: own bot, secrets WM_BOT_TOKEN + WM_CHAT_ID. Until they are set it only logs (history + forward test keep running).
+# Monday ~07:00 UTC run sends the book overview + forward-test score. To stop: Actions > this workflow > Disable.
+name: Wintermute alerts (Telegram)
+
+on:
+  schedule:
+    - cron: '13 * * * *'
+  workflow_dispatch:
+    inputs:
+      test:
+        description: 'Send a test message + the current book now'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: write   # lets each run start the next one
+
+concurrency:
+  group: wintermute-alerts
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: alerts
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Load state
+        run: |
+          if git fetch -q --depth 1 origin wintermute-state; then
+            git show FETCH_HEAD:wintermute_state.json > alerts/wintermute_state.json || echo '{}' > alerts/wintermute_state.json
+            git show FETCH_HEAD:wintermute_history.jsonl > alerts/wintermute_history.jsonl || true
+          else echo '{}' > alerts/wintermute_state.json; fi
+
+      - name: Scan and alert
+        working-directory: alerts
+        env:
+          WM_BOT_TOKEN: ${{ secrets.WM_BOT_TOKEN }}
+          WM_CHAT_ID: ${{ secrets.WM_CHAT_ID }}
+        run: |
+          if [ "${{ inputs.test }}" = "true" ]; then node wintermute_alerts.js --test; node wintermute_alerts.js --status; exit 0; fi
+          # Monday: one book overview per week (first run that starts between 06:00 and 11:59 UTC)
+          if [ "$(date -u +%u)" = "1" ] && [ "$(date -u +%H)" -ge 6 ] && [ "$(date -u +%H)" -lt 12 ] && \
+             [ "$(node -e 'try{const s=require("./wintermute_state.json");console.log(Date.now()-(s.lastStatus||0)>86400e3?1:0)}catch(e){console.log(1)}')" = "1" ]; then
+            node wintermute_alerts.js --status
+          fi
+          node wintermute_alerts.js --loop 340
+
+      - name: Save state
+        if: always() && inputs.test != true
+        run: |
+          [ -s alerts/wintermute_state.json ] || exit 0
+          git init -q pub && cd pub
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git checkout -q --orphan wintermute-state
+          cp ../alerts/wintermute_state.json .
+          [ -f ../alerts/wintermute_history.jsonl ] && cp ../alerts/wintermute_history.jsonl .
+          git add .
+          git commit -qm "Wintermute state $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -qf origin wintermute-state
+
+      - name: Start next run
+        if: success() && inputs.test != true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run wintermute-alerts.yml --repo "${{ github.repository }}" --ref main
