@@ -1,4 +1,4 @@
-// Telegram entry + exit alerts for VWAP 2-Band Reversion v4 on BTC / ETH / SOL (OKX USDT perps, 1H candles).
+// Telegram entry + exit alerts for VWAP 2-Band Reversion v4 on BTC / ETH / SOL / XRP (OKX USDT perps, 1H candles).
 // Same rules and defaults as OKX Backtest Engine/vwap_2band_backtest.js (trades checked against it):
 //   entry at a 1H close: previous candle touched a daily-VWAP 2.5 sd band, this candle closes back inside it in the direction of VWAP,
 //   ADX(14,14) < 25, band width >= 2 x ATR(14). Stop = extreme of the 2 candles + 0.75 x ATR. Target = 2R.
@@ -13,7 +13,7 @@ const fs = require('fs');
 
 const API = 'https://www.okx.com/api/v5';
 const STATE_FILE = process.env.STATE_FILE || 'vwap_alerts_state.json';
-const COINS = ['BTC', 'ETH', 'SOL'];
+const COINS = ['BTC', 'ETH', 'SOL', 'XRP'];
 const args = process.argv.slice(2);
 const DRY = args.includes('--dry');
 const P = { adxLen: 14, adxSmooth: 14, maxAdx: 25, stdevMult: 2.5, atrLen: 14, minBandWidthAtr: 2, atrBufferMult: 0.75, rMultiple: 2 };
@@ -110,7 +110,7 @@ function exitMsg(coin, p, x, t) {
   ].join('\n');
 }
 function statusMsg(s, last) {
-  const lines = [`📋 <b>VWAP alerts status</b> (BTC / ETH / SOL, 1H)`, ``];
+  const lines = [`📋 <b>VWAP alerts status</b> (BTC / ETH / SOL / XRP, 1H)`, ``];
   for (const c of COINS) {
     const p = s.pos[c], n = last[c];
     if (p) lines.push(`${c}: ${p.dir.toUpperCase()} from $${px(p.entry)}, now ${n ? '$' + px(n) : '?'}, stop $${px(p.stop)}, target $${px(p.tp)}`);
@@ -182,7 +182,7 @@ async function scan(s) {
 
 async function main() {
   const s = load();
-  if (args.includes('--test')) { await send(`🔔 <b>VWAP alerts test</b>\nThe bot works. Entry and exit alerts for BTC, ETH and SOL (1H) will come here.`); return; }
+  if (args.includes('--test')) { await send(`🔔 <b>VWAP alerts test</b>\nThe bot works. Entry and exit alerts for BTC, ETH, SOL and XRP (1H) will come here.`); return; }
   if (args.includes('--status')) { const last = await scan(s); await send(statusMsg(s, last)); s.lastStatus = Date.now(); save(s); return; }
   const li = args.indexOf('--loop'), mins = li >= 0 ? +args[li + 1] || 30 : 0;
   if (!mins) { const last = await scan(s); if (DRY) console.log(statusMsg(s, last).replace(/<\/?b>/g, '')); return; }

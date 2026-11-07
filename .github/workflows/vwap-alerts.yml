@@ -1,4 +1,4 @@
-# Telegram entry + exit alerts for VWAP 2-Band Reversion on BTC / ETH / SOL, 1H (alerts/vwap_alerts.js).
+# Telegram entry + exit alerts for VWAP 2-Band Reversion on BTC / ETH / SOL / XRP, 1H (alerts/vwap_alerts.js).
 # Scans every minute for ~5h40m, then starts the next run itself (same chain as vol-alerts); hourly cron = backup.
 # Open positions and the alert results live on the `vwap-state` branch.
 # Telegram: own bot, secrets VWAP_BOT_TOKEN + VWAP_CHAT_ID. Until they are set it does one dry scan an hour and sends nothing.
