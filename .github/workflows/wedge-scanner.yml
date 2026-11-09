@@ -1,0 +1,49 @@
+# Wedge Scanner data for wedge-scanner.html (alerts/wedge/). Every 15 minutes: fetch the last 300 closed candles
+# (15m / 1H / 4H) for 110 OKX USDT perps, find forming + just-broken wedges, check 4H order blocks, and force-push
+# scan.json to the `wedge-data` branch (one commit, no history growth). The page loads it from raw.githubusercontent.
+# No secrets, no Telegram. To stop: Actions > this workflow > Disable.
+name: Wedge scanner (page data)
+
+on:
+  schedule:
+    - cron: '3,18,33,48 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wedge-scanner
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: alerts/wedge
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Scan
+        working-directory: alerts/wedge
+        run: |
+          node live_fetch.js
+          node wedge_scan.js
+          node build_scanner_page.js --data scan.json
+
+      - name: Publish scan.json to wedge-data
+        run: |
+          git init -q pub && cd pub
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git checkout -q --orphan wedge-data
+          cp ../alerts/wedge/scan.json .
+          git add scan.json
+          git commit -qm "Wedge scan $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -qf origin wedge-data
