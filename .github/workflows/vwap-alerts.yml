@@ -2,7 +2,7 @@
 # Scans every minute for ~5h40m, then starts the next run itself (same chain as vol-alerts); hourly cron = backup.
 # Open positions and the alert results live on the `vwap-state` branch.
 # Telegram: own bot, secrets VWAP_BOT_TOKEN + VWAP_CHAT_ID. Until they are set it does one dry scan an hour and sends nothing.
-# Monday run sends the status overview. To stop: Actions > this workflow > Disable.
+# Every other Monday the 2-week overview is sent (first run 06:00-11:59 UTC, >12 days after the last one). To stop: Actions > this workflow > Disable.
 name: VWAP alerts (Telegram)
 
 on:
@@ -50,9 +50,9 @@ jobs:
           if [ -z "$VWAP_BOT_TOKEN" ] || [ -z "$VWAP_CHAT_ID" ]; then echo "::warning::VWAP Telegram secrets not set yet - dry run only"; node vwap_alerts.js --dry; exit 0; fi
           if [ "${{ inputs.test }}" = "true" ]; then node vwap_alerts.js --test; node vwap_alerts.js --status; exit 0; fi
           echo "live=true" >> "$GITHUB_OUTPUT"
-          # Monday: one overview per week (first run that starts between 06:00 and 11:59 UTC)
+          # Monday: one overview every 2 weeks (first run between 06:00 and 11:59 UTC, more than 12 days after the last one)
           if [ "$(date -u +%u)" = "1" ] && [ "$(date -u +%H)" -ge 6 ] && [ "$(date -u +%H)" -lt 12 ] && \
-             [ "$(node -e 'try{const s=require("./vwap_alerts_state.json");console.log(Date.now()-(s.lastStatus||0)>86400e3?1:0)}catch(e){console.log(1)}')" = "1" ]; then
+             [ "$(node -e 'try{const s=require("./vwap_alerts_state.json");console.log(Date.now()-(s.lastStatus||0)>12*86400e3?1:0)}catch(e){console.log(1)}')" = "1" ]; then
             node vwap_alerts.js --status
           fi
           node vwap_alerts.js --loop 340
