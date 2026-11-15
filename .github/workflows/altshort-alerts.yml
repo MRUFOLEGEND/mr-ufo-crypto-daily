@@ -1,0 +1,73 @@
+# Telegram entry + exit alerts for the Alt-Short Basket (39 OKX perps, 1D UTC, cap 20, 3 ATR stop) (alerts/altshort_alerts.js).
+# Runs once an hour: the 00:07 UTC run handles the daily close (entries / exits), the other runs check the emergency stops.
+# Model positions and closed trades live on the `altshort-state` branch (first run starts from alerts/altshort_seed.json).
+# Telegram: own bot, secrets ALTSHORT_BOT_TOKEN + ALTSHORT_CHAT_ID. Until they are set it does a dry scan and sends nothing.
+# Every other Monday the 2-week overview is sent (first run 06:00-11:59 UTC, >12 days after the last one). To stop: Actions > this workflow > Disable.
+name: Alt-short alerts (Telegram)
+
+on:
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+    inputs:
+      test:
+        description: 'Send a test message + the overview now'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: altshort-alerts
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: alerts
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Load state
+        run: |
+          git fetch -q --depth 1 origin altshort-state && git show FETCH_HEAD:altshort_alerts_state.json > alerts/altshort_alerts_state.json || echo '{}' > alerts/altshort_alerts_state.json
+
+      - name: Scan and alert
+        id: scan
+        working-directory: alerts
+        env:
+          ALTSHORT_BOT_TOKEN: ${{ secrets.ALTSHORT_BOT_TOKEN }}
+          ALTSHORT_CHAT_ID: ${{ secrets.ALTSHORT_CHAT_ID }}
+        run: |
+          if [ -z "$ALTSHORT_BOT_TOKEN" ] || [ -z "$ALTSHORT_CHAT_ID" ]; then echo "::warning::Alt-short Telegram secrets not set yet - dry run only"; node altshort_alerts.js --dry; exit 0; fi
+          echo "live=true" >> "$GITHUB_OUTPUT"
+          if [ "${{ inputs.test }}" = "true" ]; then node altshort_alerts.js --test; node altshort_alerts.js --status; exit 0; fi
+          # Monday: one overview every 2 weeks (first run between 06:00 and 11:59 UTC, more than 12 days after the last one)
+          if [ "$(date -u +%u)" = "1" ] && [ "$(date -u +%H)" -ge 6 ] && [ "$(date -u +%H)" -lt 12 ] && \
+             [ "$(node -e 'try{const s=require("./altshort_alerts_state.json");console.log(Date.now()-(s.lastStatus||0)>12*86400e3?1:0)}catch(e){console.log(1)}')" = "1" ]; then
+            node altshort_alerts.js --status
+          else
+            node altshort_alerts.js
+          fi
+
+      - name: Save state
+        if: always() && steps.scan.outputs.live == 'true'
+        run: |
+          [ -s alerts/altshort_alerts_state.json ] || exit 0
+          grep -q lastBar alerts/altshort_alerts_state.json || exit 0
+          git init -q pub && cd pub
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git checkout -q --orphan altshort-state
+          cp ../alerts/altshort_alerts_state.json .
+          git add altshort_alerts_state.json
+          git commit -qm "Alt-short alert state $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -qf origin altshort-state
