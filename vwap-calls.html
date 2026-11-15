@@ -157,7 +157,7 @@ footer{font-size:13px;color:var(--dim);line-height:1.7}
     <span class="conn" id="conn">OKX not checked yet</span>
     <div class="status" id="status" role="status">Loading the bot's calls from OKX…</div>
   </section>
-  <p class="lead">Every call from the VWAP 2-Band Telegram bot (BTC, ETH, SOL · 1H). Stop = extreme of 2 candles + 0.75 ATR, target = 2R. P&amp;L in R and in $ at 1% risk on a $10,000 account ($100 per R), after a 0.05% fee per side.</p>
+  <p class="lead">Every call from the VWAP 2-Band Telegram bot (ETH and XRP · 1H only). Fresh start on 11 Nov 2026 17:00 UTC with the XRP short (target hit, +2R); earlier calls are not counted. Stop = extreme of 2 candles + 0.75 ATR, target = 2R. P&amp;L in R and in $ at 1% risk on a $10,000 account ($100 per R), after a 0.05% fee per side.</p>
 
   <section class="card pnl" id="pnl">
     <div class="pnl-head">
@@ -258,7 +258,7 @@ function entryOf(rows, ind, i) {
 
 // ===== live replay =====
 const API = 'https://www.okx.com/api/v5', STATE_URL = 'https://raw.githubusercontent.com/MRUFOLEGEND/mr-ufo-crypto-daily/vwap-state/vwap_alerts_state.json';
-const START = Date.parse('2026-11-07T15:00:00Z'), FEE = 0.0005, COINS = ['BTC', 'ETH', 'SOL'], WIN = 299; // bot sees 300 candles incl. the live one
+const START = Date.parse('2026-11-11T16:00:00Z'), FEE = 0.0005, COINS = ['ETH', 'XRP'], WIN = 299; // bot sees 300 candles incl. the live one
 const cache = { rows: {}, min: {} }; let lat = [];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function okx(p, tries = 3) {
@@ -317,7 +317,7 @@ async function botCheck(trades) {
     const r = await fetch(STATE_URL + '?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
     const s = await r.json(), upTo = Math.max(...Object.values(s.lastBar || {}));
     const bad = COINS.filter(c => { const p = s.pos && s.pos[c]; return p && !trades.some(t => t.coin === c && t.t === p.t && Math.abs(t.entry - p.entry) < 1e-9); });
-    return (bad.length ? 'MISMATCH with the bot state (' + bad.join(', ') + ')' : 'matches the bot state') + ' saved up to the ' + fmtT(upTo + H) + ' UTC close (' + (s.log || []).length + ' closed in the bot log; the bot saves every ~6 h)';
+    return (bad.length ? 'MISMATCH with the bot state (' + bad.join(', ') + ')' : 'matches the bot state') + ' saved up to the ' + fmtT(upTo + H) + ' UTC close (' + (s.log || []).filter(x => COINS.includes(x.coin) && x.t0 >= START).length + ' closed in the bot log since the start; the bot saves every ~6 h)';
   } catch (e) { return 'bot state could not be loaded (' + e.message + ')'; }
 }
 async function buildData(progress) {
@@ -343,7 +343,7 @@ async function buildData(progress) {
   const ref = closes[ok[0]];
   for (let T0 = START; T0 <= built; T0 += H) { if (T0 !== START && !(ref && ref.has(T0))) continue; curve.push({ t: T0, R: at(T0, c => closes[c] && closes[c].get(T0)) }); }
   curve.push({ t: built, R: at(built, c => now[c]) });
-  return { built, start: START, now, trades, curve, fails, check: await botCheck(trades) };
+  return { built, start: START + H, now, trades, curve, fails, check: await botCheck(trades) };
 }
 
 function render(D) {
@@ -512,7 +512,7 @@ window.addEventListener('resize', () => { clearTimeout(window.__rz); window.__rz
 function setStatus(html, err) { const s = $('status'); s.innerHTML = html; s.classList.toggle('err', !!err); s.classList.remove('flash'); void s.offsetWidth; s.classList.add('flash'); setTimeout(() => s.classList.remove('flash'), 900); }
 function stamp() {
   if (!lastOk) return; const ago = Math.round((Date.now() - lastOk) / 1000);
-  $('stamp').innerHTML = 'Updated ' + new Date(lastOk).toISOString().slice(11, 19) + ' UTC · <b>' + (ago < 60 ? ago + 's' : Math.floor(ago / 60) + 'm ' + (ago % 60) + 's') + ' ago</b> · OKX<br>Bot live since ' + fmtT(START) + ' UTC';
+  $('stamp').innerHTML = 'Updated ' + new Date(lastOk).toISOString().slice(11, 19) + ' UTC · <b>' + (ago < 60 ? ago + 's' : Math.floor(ago / 60) + 'm ' + (ago % 60) + 's') + ' ago</b> · OKX<br>Counting since ' + fmtT(START + H) + ' UTC';
 }
 async function refresh() {
   if (busy) return; busy = true; lat = [];
