@@ -133,7 +133,7 @@ td.sym a:hover{text-decoration:underline}
   <section class="card">
     <div class="rbar"><button class="rbtn" id="refresh" type="button">Refresh</button><span class="bias bias-neutral" id="conn">Connecting…</span><span class="rs" id="rstatus" role="status" aria-live="polite">Loading the latest scan…</span></div>
   </section>
-  <div class="note" id="stale" hidden>The last scan is more than 45 minutes old. The scanner normally runs every 15 minutes, so the GitHub workflow may be stopped. Levels below can be out of date.</div>
+  <div class="note" id="stale" hidden>The saved scan is more than 45 minutes old (GitHub runs the background scan less often than planned). A live scan starts automatically; tap Refresh any time for a new one.</div>
   <section class="gates" id="tiles"></section>
 
   <div class="note">This is a <b>watch list, not a trade call</b>. A wedge on its own had no edge in the backtest (110 coins, 15m/1H/4H, 2024–2026). The order-block checklist is <b>not backtested</b> yet. Check every level on your own chart before acting.</div>
@@ -171,17 +171,423 @@ td.sym a:hover{text-decoration:underline}
       <p><b>2 · Volume:</b> last third of the wedge under 0.8× the first third. A triggered wedge also needs a break candle at 1.5× the wedge average.</p>
       <p><b>3 · Sweep:</b> a wick beyond the outer line by more than 0.1 ATR that closed back inside, in the last third of the wedge.</p>
       <p><b>4 · Divergence:</b> RSI(14) lower at the last swing high than at the one before, while price is higher (mirror for falling).</p>
-      <p><b>5 · Derivatives:</b> open interest up more than 3% over 24h, funding positive for a short idea and negative for a long idea. Only fetched for coins at a fresh order block.</p>
+      <p><b>5 · Derivatives:</b> open interest up more than 3% over 24h, funding positive for a short idea and negative for a long idea. Only fetched for coins at a fresh order block. OKX blocks open-interest data in the browser, so after a live Refresh this check usually shows –.</p>
       <p><b>6 · Context:</b> coin's 4H EMA50 below EMA200 for a short idea (above for long), and BTC 4H close on the same side of its EMA50.</p>
       <p><b>Plan:</b> trigger = next value of the trigger line. Stop = beyond the wedge extreme or the order-block edge, whichever is further, plus 0.25 ATR. Target 1 = 2R. "R to zone" = distance to the nearest opposite live 4H order block in R. Under 2R means skip.</p>
     </div>
   </section>
 
-  <footer>A GitHub workflow rescans all coins every 15 minutes. Refresh loads the newest scan; it does not start a new one. Wedges alone were backtested with no edge; the order-block filter is not backtested. Keep live risk at 0.5–1% per trade. Not financial advice.</footer>
+  <footer>Refresh runs a live scan of all coins in your browser straight from OKX (about 30–60 s). A GitHub workflow also saves a background scan a few times a day. Wedges alone were backtested with no edge; the order-block filter is not backtested. Keep live risk at 0.5–1% per trade. Not financial advice.</footer>
 </main>
 
 <script>
 window.WEDGE_SRC="https://raw.githubusercontent.com/MRUFOLEGEND/mr-ufo-crypto-daily/wedge-data/scan.json";
+window.WEDGE_UNIVERSE=["BTC-USDT-SWAP","ETH-USDT-SWAP","ZEC-USDT-SWAP","SOL-USDT-SWAP","AKE-USDT-SWAP","XRP-USDT-SWAP","PEPE-USDT-SWAP","HYPE-USDT-SWAP","DOGE-USDT-SWAP","TRUMP-USDT-SWAP","NEAR-USDT-SWAP","PUMP-USDT-SWAP","WLD-USDT-SWAP","UNI-USDT-SWAP","LIT-USDT-SWAP","CT-USDT-SWAP","BCH-USDT-SWAP","SUI-USDT-SWAP","ENA-USDT-SWAP","LINK-USDT-SWAP","FIL-USDT-SWAP","ARB-USDT-SWAP","BNB-USDT-SWAP","AAVE-USDT-SWAP","CAP-USDT-SWAP","ADA-USDT-SWAP","INJ-USDT-SWAP","ONE-USDT-SWAP","ONDO-USDT-SWAP","XPL-USDT-SWAP","BEAT-USDT-SWAP","AVAX-USDT-SWAP","LTC-USDT-SWAP","STRK-USDT-SWAP","WLFI-USDT-SWAP","TAO-USDT-SWAP","PONS-USDT-SWAP","BTW-USDT-SWAP","USELESS-USDT-SWAP","DGAI-USDT-SWAP","PENGU-USDT-SWAP","OKB-USDT-SWAP","HUMA-USDT-SWAP","XLM-USDT-SWAP","PIEVERSE-USDT-SWAP","APR-USDT-SWAP","MERL-USDT-SWAP","ZRO-USDT-SWAP","LAB-USDT-SWAP","OP-USDT-SWAP","DOT-USDT-SWAP","DOOD-USDT-SWAP","ASTER-USDT-SWAP","DASH-USDT-SWAP","AERO-USDT-SWAP","VVV-USDT-SWAP","TIA-USDT-SWAP","ATOM-USDT-SWAP","STX-USDT-SWAP","TRX-USDT-SWAP","ETHFI-USDT-SWAP","SHIB-USDT-SWAP","MAGIC-USDT-SWAP","GRASS-USDT-SWAP","SAND-USDT-SWAP","CRV-USDT-SWAP","ETC-USDT-SWAP","APT-USDT-SWAP","ZAMA-USDT-SWAP","RAY-USDT-SWAP","W-USDT-SWAP","ICP-USDT-SWAP","GRAM-USDT-SWAP","HBAR-USDT-SWAP","ALGO-USDT-SWAP","CASHCAT-USDT-SWAP","PARTI-USDT-SWAP","AXIS-USDT-SWAP","CC-USDT-SWAP","BAT-USDT-SWAP","IRYS-USDT-SWAP","FARTCOIN-USDT-SWAP","BOME-USDT-SWAP","WIF-USDT-SWAP","QUANT-USDT-SWAP","POL-USDT-SWAP","ALLO-USDT-SWAP","JTO-USDT-SWAP","VIRTUAL-USDT-SWAP","PYTH-USDT-SWAP","RIVER-USDT-SWAP","SOON-USDT-SWAP","KAITO-USDT-SWAP","CHIP-USDT-SWAP","ACT-USDT-SWAP","BASED-USDT-SWAP","AEON-USDT-SWAP","NIGHT-USDT-SWAP","DNA-USDT-SWAP","ORDI-USDT-SWAP","BONK-USDT-SWAP","ARX-USDT-SWAP","MUBARAK-USDT-SWAP","FOGO-USDT-SWAP","JUP-USDT-SWAP","LDO-USDT-SWAP","INIT-USDT-SWAP","RENDER-USDT-SWAP","PEOPLE-USDT-SWAP","MEGA-USDT-SWAP"];
+(function(){var module={exports:{}};
+// Wedge detector (rising + falling), no lookahead: a signal at bar i uses only bars <= i, and only pivots
+// already confirmed by bar i. Works on log prices so slopes mean the same on a $0.10 coin and on BTC.
+// A falling wedge is a rising wedge on the mirrored series (-log price), so one rule set covers both.
+//
+// Rising wedge at breakout bar i (mirror for falling):
+//   lower line = through 2 swing lows a<b, upper line = through 2 swing highs c<d
+//   both lines slope up; lower slope > upper slope (converging); width at i <= conv x width at start; apex not passed
+//   no CLOSE outside either line between start and i-1, wicks may poke through by up to wick x ATR
+//   close[i] is the first close through the lower line (bar i-1 was still inside)
+//   start = min(a,c); dur = i-start in [minDur,maxDur]; touches = swing points within tol x ATR of a line
+// Trade: rising -> short at next open, falling -> long at next open. Stop = wedge extreme + stopBuf x ATR.
+const DEF = { pivR: 2, minDur: 10, maxDur: 80, minTouch: 4, conv: 0.8, wick: 0.6, tol: 0.35, stopBuf: 0.25 };
+
+function atrWilder(H, L, C, n = 14) {
+  const out = new Array(C.length).fill(NaN); let s = 0, a = NaN;
+  for (let i = 1; i < C.length; i++) {
+    const tr = Math.max(H[i] - L[i], Math.abs(H[i] - C[i - 1]), Math.abs(L[i] - C[i - 1]));
+    if (i <= n) { s += tr; if (i === n) a = s / n; } else a = (a * (n - 1) + tr) / n;
+    out[i] = a;
+  }
+  return out;
+}
+function ema(src, n) {
+  const k = 2 / (n + 1), o = new Array(src.length).fill(NaN); let v = NaN, s = 0;
+  for (let i = 0; i < src.length; i++) { if (i < n - 1) s += src[i]; else if (i === n - 1) v = (s + src[i]) / n; else v = src[i] * k + v * (1 - k); o[i] = v; }
+  return o;
+}
+function pivots(hi, lo, R) { // indices of swing highs / lows; each becomes usable at index + R
+  const ph = [], pl = [];
+  for (let i = R; i < hi.length - R; i++) {
+    let isH = true, isL = true;
+    for (let k = 1; k <= R; k++) {
+      if (hi[i - k] >= hi[i] || hi[i + k] > hi[i]) isH = false;
+      if (lo[i - k] <= lo[i] || lo[i + k] < lo[i]) isL = false;
+    }
+    if (isH) ph.push(i);
+    if (isL) pl.push(i);
+  }
+  return { ph, pl };
+}
+
+// One direction, on (possibly mirrored) log series. Returns the best wedge that breaks at bar i, or null.
+function scanDir(i, Hg, Lg, Cg, atrPct, phs, pls, o) {
+  const A = atrPct[i], c0 = Cg[i], c1 = Cg[i - 1];
+  if (!(A > 0)) return null;
+  let best = null;
+  for (let bk = pls.length - 1; bk >= 1; bk--) {
+    const b = pls[bk];
+    if (b + o.pivR > i) continue;
+    if (i - b > o.maxDur) break;
+    for (let ak = bk - 1; ak >= 0; ak--) {
+      const a = pls[ak];
+      if (i - a > o.maxDur) break;
+      if (b - a < 3) continue;
+      const sl = (Lg[b] - Lg[a]) / (b - a);
+      if (sl <= 0) continue;
+      const li = Lg[a] + sl * (i - a), lp = li - sl;
+      if (!(c0 < li && c1 >= lp)) continue;                                   // first close through the lower line
+      let ok = true;
+      for (let k = a; k < i; k++) { const v = Lg[a] + sl * (k - a); if (Cg[k] < v || Lg[k] < v - o.wick * A) { ok = false; break; } }
+      if (!ok) continue;
+      for (let dk = phs.length - 1; dk >= 1; dk--) {
+        const d = phs[dk];
+        if (d + o.pivR > i) continue;
+        if (d <= a) break;
+        for (let ck = dk - 1; ck >= 0; ck--) {
+          const c = phs[ck];
+          if (d - c < 3) continue;
+          if (i - c > o.maxDur) break;
+          const su = (Hg[d] - Hg[c]) / (d - c);
+          if (su <= 0 || su >= sl) continue;
+          const start = Math.min(a, c), dur = i - start;
+          if (dur < o.minDur || dur > o.maxDur) continue;
+          if (Math.abs(a - c) > 0.5 * dur) continue;                          // both lines must start near each other
+          if (Math.max(b, d) < start + 0.5 * dur) continue;                   // lines must be informed by the back half
+          const uS = Hg[c] + su * (start - c), lS = Lg[a] + sl * (start - a), uE = Hg[c] + su * (i - c), lE = li;
+          const wS = uS - lS, wE = uE - lE;
+          if (wS <= 0 || wE <= 0 || wE > o.conv * wS) continue;
+          let good = true;
+          for (let k = start; k < i; k++) { const v = Hg[c] + su * (k - c); if (Cg[k] > v || Hg[k] > v + o.wick * A) { good = false; break; } }
+          if (!good) continue;
+          let tl = 0, tu = 0;
+          for (const p of pls) if (p >= start && p + o.pivR <= i && Math.abs(Lg[p] - (Lg[a] + sl * (p - a))) <= o.tol * A) tl++;
+          for (const p of phs) if (p >= start && p + o.pivR <= i && Math.abs(Hg[p] - (Hg[c] + su * (p - c))) <= o.tol * A) tu++;
+          if (tl + tu < o.minTouch) continue;
+          const score = (tl + tu) * 100 + dur;
+          if (!best || score > best.score) best = { score, a, b, c, d, sl, su, start, dur, tl, tu, wS, wE };
+        }
+      }
+    }
+  }
+  return best;
+}
+
+// Returns every signal over the series (from bar `from`). c = {time,open,high,low,close,vol} arrays.
+function detect(c, opts = {}, from = 60) {
+  const o = { ...DEF, ...opts }, n = c.close.length;
+  const lh = c.high.map(Math.log), ll = c.low.map(Math.log), lc = c.close.map(Math.log);
+  const atr = atrWilder(c.high, c.low, c.close), atrPct = atr.map((a, i) => a / c.close[i]);
+  const e200 = ema(c.close, 200), e50 = ema(c.close, 50);
+  const mh = ll.map(v => -v), ml = lh.map(v => -v), mc = lc.map(v => -v);
+  const P = pivots(lh, ll, o.pivR), M = pivots(mh, ml, o.pivR);
+  const out = [];
+  const win = (arr, i) => { const r = []; for (let k = arr.length - 1; k >= 0; k--) { if (arr[k] > i) continue; if (i - arr[k] > o.maxDur + 5) break; r.unshift(arr[k]); } return r; };
+  for (let i = Math.max(from, 30); i < n; i++) {
+    for (const dir of [-1, 1]) { // -1 rising wedge -> short, +1 falling wedge -> long
+      const Hg = dir < 0 ? lh : mh, Lg = dir < 0 ? ll : ml, Cg = dir < 0 ? lc : mc, pv = dir < 0 ? P : M;
+      const w = scanDir(i, Hg, Lg, Cg, atrPct, win(pv.ph, i), win(pv.pl, i), o);
+      if (!w) continue;
+      let ext = -Infinity, extK = w.start, base = Infinity;
+      for (let k = w.start; k <= i; k++) { if (Hg[k] > ext) { ext = Hg[k]; extK = k; } if (Lg[k] < base) base = Lg[k]; }
+      const A = atrPct[i], stopLog = ext + o.stopBuf * A;
+      const stop = dir < 0 ? Math.exp(stopLog) : Math.exp(-stopLog);
+      const third = Math.max(2, Math.floor(w.dur / 3));
+      let v1 = 0, v3 = 0, vAll = 0;
+      for (let k = w.start; k < w.start + third; k++) v1 += c.vol[k];
+      for (let k = i - third; k < i; k++) v3 += c.vol[k];
+      for (let k = w.start; k < i; k++) vAll += c.vol[k];
+      const lb = Math.min(w.dur, w.start);
+      out.push({
+        i, time: c.time[i], dir, type: dir < 0 ? 'rising' : 'falling', close: c.close[i], stop,
+        base: dir < 0 ? Math.exp(base) : Math.exp(-base),
+        start: w.start, startTime: c.time[w.start], dur: w.dur, touches: w.tl + w.tu,
+        steep: (w.sl + w.su) / 2 / A,            // mean line slope in ATR per bar: the "angle"
+        slowSlope: w.su / A, fastSlope: w.sl / A,
+        heightAtr: (ext - base) / A, convRatio: w.wE / w.wS, apexPos: 1 - w.wE / w.wS,
+        extBarsAgo: i - extK, riskPct: Math.abs(c.close[i] / stop - 1) * 100, riskAtr: Math.abs(stopLog - Cg[i]) / A,
+        atrPct: A * 100, volFade: v3 / Math.max(v1, 1e-9), breakVol: c.vol[i] / (vAll / w.dur),
+        aboveE200: c.close[i] > e200[i] ? 1 : 0, e50vsE200: e50[i] > e200[i] ? 1 : 0,
+        preMoveAtr: (Hg[w.start] - Hg[w.start - lb]) / A,   // positive = price already moved in the wedge's direction before it started
+        lines: { a: w.a, b: w.b, c: w.c, d: w.d },
+      });
+    }
+  }
+  return out;
+}
+module.exports = { detect, atrWilder, ema, DEF };
+
+var WL=module.exports;(function(){var module={exports:{}};var require=function(){return WL};
+// Shared wedge scan logic, used by wedge_scan.js (GitHub workflow) AND by the page's in-browser "Scan now".
+// Same wedge rules as wedge_lib.js (the backtested detector); the order-block rules below are NOT backtested.
+const { detect, atrWilder, ema, DEF } = require('./wedge_lib.js');
+const o = { ...DEF };
+
+function pivots(hi, lo, R) {
+  const ph = [], pl = [];
+  for (let i = R; i < hi.length - R; i++) {
+    let isH = true, isL = true;
+    for (let k = 1; k <= R; k++) {
+      if (hi[i - k] >= hi[i] || hi[i + k] > hi[i]) isH = false;
+      if (lo[i - k] <= lo[i] || lo[i + k] < lo[i]) isL = false;
+    }
+    if (isH) ph.push(i); if (isL) pl.push(i);
+  }
+  return { ph, pl };
+}
+function rsi(C, n = 14) {
+  const out = new Array(C.length).fill(NaN); let g = 0, l = 0;
+  for (let i = 1; i < C.length; i++) {
+    const d = C[i] - C[i - 1], up = Math.max(d, 0), dn = Math.max(-d, 0);
+    if (i <= n) { g += up; l += dn; if (i === n) { g /= n; l /= n; out[i] = 100 - 100 / (1 + g / (l || 1e-12)); } }
+    else { g = (g * (n - 1) + up) / n; l = (l * (n - 1) + dn) / n; out[i] = 100 - 100 / (1 + g / (l || 1e-12)); }
+  }
+  return out;
+}
+
+// Forming wedge at the last bar i: same geometry as scanDir in wedge_lib.js, but price must still be INSIDE both lines.
+function formingDir(i, Hg, Lg, Cg, A, phs, pls) {
+  let best = null;
+  for (let bk = pls.length - 1; bk >= 1; bk--) {
+    const b = pls[bk]; if (b + o.pivR > i) continue; if (i - b > o.maxDur) break;
+    for (let ak = bk - 1; ak >= 0; ak--) {
+      const a = pls[ak]; if (i - a > o.maxDur) break; if (b - a < 3) continue;
+      const sl = (Lg[b] - Lg[a]) / (b - a); if (sl <= 0) continue;
+      let ok = true;
+      for (let k = a; k <= i; k++) { const v = Lg[a] + sl * (k - a); if (Cg[k] < v || Lg[k] < v - o.wick * A) { ok = false; break; } }
+      if (!ok) continue;
+      for (let dk = phs.length - 1; dk >= 1; dk--) {
+        const d = phs[dk]; if (d + o.pivR > i) continue; if (d <= a) break;
+        for (let ck = dk - 1; ck >= 0; ck--) {
+          const c = phs[ck]; if (d - c < 3) continue; if (i - c > o.maxDur) break;
+          const su = (Hg[d] - Hg[c]) / (d - c); if (su <= 0 || su >= sl) continue;
+          const start = Math.min(a, c), dur = i - start;
+          if (dur < o.minDur || dur > o.maxDur) continue;
+          if (Math.abs(a - c) > 0.5 * dur) continue;
+          if (Math.max(b, d) < start + 0.5 * dur) continue;
+          const wS = (Hg[c] + su * (start - c)) - (Lg[a] + sl * (start - a)), wE = (Hg[c] + su * (i - c)) - (Lg[a] + sl * (i - a));
+          if (wS <= 0 || wE <= 0 || wE > o.conv * wS) continue;
+          let good = true;
+          for (let k = start; k <= i; k++) { const v = Hg[c] + su * (k - c); if (Cg[k] > v || Hg[k] > v + o.wick * A) { good = false; break; } }
+          if (!good) continue;
+          let tl = 0, tu = 0;
+          for (const p of pls) if (p >= start && p + o.pivR <= i && Math.abs(Lg[p] - (Lg[a] + sl * (p - a))) <= o.tol * A) tl++;
+          for (const p of phs) if (p >= start && p + o.pivR <= i && Math.abs(Hg[p] - (Hg[c] + su * (p - c))) <= o.tol * A) tu++;
+          if (tl + tu < o.minTouch) continue;
+          const score = (tl + tu) * 100 + dur;
+          if (!best || score > best.score) best = { score, a, b, c, d, start, dur, touches: tl + tu, steep: (sl + su) / 2 / A };
+        }
+      }
+    }
+  }
+  return best;
+}
+function forming(c) {
+  const n = c.close.length, i = n - 1;
+  const lh = c.high.map(Math.log), ll = c.low.map(Math.log), lc = c.close.map(Math.log);
+  const atr = atrWilder(c.high, c.low, c.close), A = atr[i] / c.close[i];
+  const P = pivots(lh, ll, o.pivR), M = pivots(ll.map(v => -v), lh.map(v => -v), o.pivR);
+  const win = arr => arr.filter(k => k <= i && i - k <= o.maxDur + 5);
+  const out = [];
+  for (const dir of [-1, 1]) {
+    const Hg = dir < 0 ? lh : ll.map(v => -v), Lg = dir < 0 ? ll : lh.map(v => -v), Cg = dir < 0 ? lc : lc.map(v => -v), pv = dir < 0 ? P : M;
+    const w = formingDir(i, Hg, Lg, Cg, A, win(pv.ph), win(pv.pl));
+    if (w) out.push({ ...w, dir, i, status: 'FORMING' });
+  }
+  return out;
+}
+
+// 4H order blocks. Supply = last bullish candle before a drop of >= 2 ATR within 3 bars that closes below the last
+// confirmed swing low. Demand = mirror. Zone = that candle's low-high. Dead once a 4H candle CLOSES through the far side.
+function orderBlocks(c) {
+  const n = c.close.length, atr = atrWilder(c.high, c.low, c.close), P = pivots(c.high, c.low, 2), out = [];
+  const lastBefore = (arr, j) => { let r = -1; for (const p of arr) if (p + 2 <= j) r = p; else break; return r; };
+  for (let j = 20; j < n - 3; j++) {
+    if (!(atr[j] > 0)) continue;
+    const nx = [1, 2, 3].map(k => c.close[j + k]);
+    if (c.close[j] > c.open[j]) {
+      const sw = lastBefore(P.pl, j), mn = Math.min(...nx);
+      if (c.close[j] - mn >= 2 * atr[j] && sw >= 0 && mn < c.low[sw]) out.push({ type: 'supply', j, lo: c.low[j], hi: c.high[j], t: c.time[j] });
+    }
+    if (c.close[j] < c.open[j]) {
+      const sw = lastBefore(P.ph, j), mx = Math.max(...nx);
+      if (mx - c.close[j] >= 2 * atr[j] && sw >= 0 && mx > c.high[sw]) out.push({ type: 'demand', j, lo: c.low[j], hi: c.high[j], t: c.time[j] });
+    }
+  }
+  for (const b of out) {
+    b.dead = false; b.firstTouch = null;
+    for (let k = b.j + 4; k < n; k++) {
+      if (b.type === 'supply') { if (b.firstTouch == null && c.high[k] >= b.lo) b.firstTouch = c.time[k]; if (c.close[k] > b.hi) { b.dead = true; break; } }
+      else { if (b.firstTouch == null && c.low[k] <= b.hi) b.firstTouch = c.time[k]; if (c.close[k] < b.lo) { b.dead = true; break; } }
+    }
+  }
+  return out.filter(b => !b.dead);
+}
+
+
+function analyse(sym, tf, c, w, c4, obs, btc4) {
+  const n = c.close.length, i = n - 1, dir = w.dir, short = dir < 0;
+  const atr = atrWilder(c.high, c.low, c.close), A = atr[i];
+  // trigger line through (a,b), outer line through (c,d); rising: trigger = lows, outer = highs. Falling: trigger = highs, outer = lows.
+  const trigSrc = short ? c.low : c.high, outSrc = short ? c.high : c.low;
+  const mk = (src, p, q) => { const s = (Math.log(src[q]) - Math.log(src[p])) / (q - p); return k => Math.exp(Math.log(src[p]) + s * (k - p)); };
+  const trig = mk(trigSrc, w.a, w.b), outer = mk(outSrc, w.c, w.d);
+  let ext = short ? -Infinity : Infinity, base = short ? Infinity : -Infinity;
+  for (let k = w.start; k <= i; k++) {
+    if (short) { ext = Math.max(ext, c.high[k]); base = Math.min(base, c.low[k]); }
+    else { ext = Math.min(ext, c.low[k]); base = Math.max(base, c.high[k]); }
+  }
+  const startT = c.time[w.start], third = Math.max(2, Math.floor(w.dur / 3));
+  // 1 location: a live 4H OB of the right type, created before the wedge, not touched before the wedge started, wedge extreme in or near it
+  const atr4 = atrWilder(c4.high, c4.low, c4.close), A4 = atr4[c4.close.length - 1];
+  const want = short ? 'supply' : 'demand';
+  const cand = obs.filter(b => b.type === want && b.t + 4 * 14400 <= startT)
+    .filter(b => short ? (ext >= b.lo - 0.5 * A4 && ext <= b.hi + 0.5 * A4) : (ext <= b.hi + 0.5 * A4 && ext >= b.lo - 0.5 * A4));
+  cand.sort((x, y) => y.t - x.t);
+  const ob = cand[0] || null, fresh = ob ? (ob.firstTouch == null || ob.firstTouch >= startT) : false;
+  // 2 volume: fades inside the wedge (last third < 0.8x first third); triggered wedges also need a break bar >= 1.5x average
+  let v1 = 0, v3 = 0, vAll = 0; for (let k = w.start; k < w.start + third; k++) v1 += c.vol[k];
+  const endIn = w.status === 'TRIGGERED' ? w.breakI : i + 1;
+  for (let k = endIn - third; k < endIn; k++) v3 += c.vol[k]; for (let k = w.start; k < endIn; k++) vAll += c.vol[k];
+  const volFade = v3 / Math.max(v1, 1e-12), breakVol = w.status === 'TRIGGERED' ? c.vol[w.breakI] / (vAll / (endIn - w.start)) : null;
+  // 3 sweep / throw-over: a wick beyond the OUTER line by > 0.1 ATR that closed back inside, in the last third
+  let sweep = false; const lastIn = w.status === 'TRIGGERED' ? w.breakI - 1 : i;
+  for (let k = lastIn - third; k <= lastIn; k++) { const v = outer(k); if (short ? (c.high[k] > v + 0.1 * A && c.close[k] <= v) : (c.low[k] < v - 0.1 * A && c.close[k] >= v)) sweep = true; }
+  // 4 RSI divergence across the last two outer-line pivots
+  const R = rsi(c.close), pv = pivots(c.high, c.low, 2), piv = (short ? pv.ph : pv.pl).filter(p => p >= w.start && p + 2 <= lastIn);
+  let div = false; if (piv.length >= 2) { const [p, q] = piv.slice(-2); div = short ? (c.high[q] > c.high[p] && R[q] < R[p]) : (c.low[q] < c.low[p] && R[q] > R[p]); }
+  // 6 context: coin 4H trend against the wedge + BTC 4H on the trade side of its EMA50
+  const e50 = ema(c4.close, 50), e200 = ema(c4.close, 200), m = c4.close.length - 1;
+  const b50 = ema(btc4.close, 50), bm = btc4.close.length - 1;
+  const trendOk = short ? e50[m] < e200[m] : e50[m] > e200[m], btcOk = short ? btc4.close[bm] < b50[bm] : btc4.close[bm] > b50[bm];
+  // trade plan
+  const trigNow = trig(i + 1), outerNow = outer(i + 1);
+  const entry = w.status === 'TRIGGERED' ? c.close[w.breakI] : trigNow;
+  const stopBase = short ? Math.max(ext, ob ? ob.hi : -Infinity) : Math.min(ext, ob ? ob.lo : Infinity);
+  const stop = short ? stopBase + 0.25 * A : stopBase - 0.25 * A, risk = Math.abs(stop - entry);
+  const t1 = short ? entry - 2 * risk : entry + 2 * risk;
+  const opp = obs.filter(b => b.type === (short ? 'demand' : 'supply') && (short ? b.hi < entry : b.lo > entry));
+  opp.sort((x, y) => short ? y.hi - x.hi : x.lo - y.lo);
+  const zone = opp[0] || null, zoneEdge = zone ? (short ? zone.hi : zone.lo) : null;
+  const rrZone = zone ? Math.abs(zoneEdge - entry) / risk : null, rrBase = Math.abs(base - entry) / risk;
+  const movedR = w.status === 'TRIGGERED' ? (short ? (entry - c.close[i]) : (c.close[i] - entry)) / risk : 0;
+  const pts = {
+    location: !!(ob && fresh), volume: w.status === 'TRIGGERED' ? (volFade < 0.8 && breakVol >= 1.5) : volFade < 0.8,
+    sweep, divergence: div, derivatives: null, context: trendOk && btcOk,
+  };
+  const s0 = Math.max(0, w.start - 15);
+  const bars = []; for (let k = s0; k <= i; k++) bars.push([c.open[k], c.high[k], c.low[k], c.close[k]]);
+  return {
+    sym, tf, dir: short ? 'short' : 'long', type: short ? 'Rising wedge' : 'Falling wedge', status: w.status, barsSinceBreak: w.status === 'TRIGGERED' ? i - w.breakI : null,
+    lastClose: c.close[i], lastTime: c.time[i], startTime: startT, dur: w.dur, touches: w.touches, steep: w.steep,
+    trigNow, outerNow, trigSlopePct: (trig(i + 2) / trig(i + 1) - 1) * 100, outerSlopePct: (outer(i + 2) / outer(i + 1) - 1) * 100,
+    ext, base, entry, movedR, stop, risk, riskPct: risk / entry * 100, t1, zone: zone && { lo: zone.lo, hi: zone.hi, t: zone.t }, rrZone, rrBase,
+    ob: ob && { lo: ob.lo, hi: ob.hi, t: ob.t, fresh }, anyOb: cand.length > 0,
+    volFade, breakVol, trend: { coin: trendOk, btc: btcOk }, pts,
+    chart: { s0, bars, a: w.a - s0, b: w.b - s0, c: w.c - s0, d: w.d - s0, start: w.start - s0, trigSrc: short ? 'low' : 'high' },
+    lines: { trigA: [w.a - s0, trigSrc[w.a]], trigB: [w.b - s0, trigSrc[w.b]], outA: [w.c - s0, outSrc[w.c]], outB: [w.d - s0, outSrc[w.d]] },
+  };
+}
+
+// D = { SYM: {'15m':candles,'1H':candles,'4H':candles} }, getDer(sym) -> Promise<{funding, oiChg}> (may return nulls).
+async function scanAll(D, getDer, onProgress) {
+  const btc4 = D.BTC['4H'], hits = [];
+  for (const sym of Object.keys(D)) {
+    const X = D[sym];
+    if (!X['4H'] || X['4H'].close.length < 60) continue;
+    const obs = orderBlocks(X['4H']);
+    for (const tf of ['15m', '1H', '4H']) {
+      const c = X[tf]; if (!c || c.close.length < 120) continue;
+      const n = c.close.length;
+      for (const w of forming(c)) hits.push(analyse(sym, tf, c, w, X['4H'], obs, btc4));
+      for (const x of detect(c, {}, n - 3)) {
+        hits.push(analyse(sym, tf, c, { ...x.lines, start: x.start, dur: x.dur, touches: x.touches, steep: x.steep, dir: x.dir, status: 'TRIGGERED', breakI: x.i }, X['4H'], obs, btc4));
+      }
+    }
+  }
+  // keep one triggered per coin/TF/direction (the latest break)
+  const seen = new Set(), list = [];
+  for (const h of hits.sort((a, b) => (a.barsSinceBreak ?? -1) - (b.barsSinceBreak ?? -1))) { const k = [h.sym, h.tf, h.dir, h.status].join('|'); if (seen.has(k)) continue; seen.add(k); list.push(h); }
+  // derivatives for coins with an OB-confluence hit (funding now, OI change over the last 24h)
+  const need = [...new Set(list.filter(h => h.pts.location).map(h => h.sym))], der = {};
+  for (let k = 0; k < need.length; k++) { der[need[k]] = await getDer(need[k]); if (onProgress) onProgress(k + 1, need.length); }
+  for (const h of list) {
+    const d = der[h.sym]; h.der = d || null;
+    if (d && d.funding != null && d.oiChg != null) h.pts.derivatives = d.oiChg > 3 && (h.dir === 'short' ? d.funding > 0 : d.funding < 0);
+    const extra = ['volume', 'sweep', 'divergence', 'derivatives', 'context'].filter(k => h.pts[k] === true).length;
+    h.score = (h.pts.location ? 1 : 0) + extra;
+    h.level = !h.pts.location ? (h.anyOb ? 'TESTED OB' : 'NO OB') : extra >= 2 ? 'WATCH' : 'WEAK';
+  }
+  const rank = { WATCH: 0, WEAK: 1, 'TESTED OB': 2, 'NO OB': 3 }, tfr = { '4H': 0, '1H': 1, '15m': 2 };
+  list.sort((a, b) => rank[a.level] - rank[b.level] || b.score - a.score || tfr[a.tf] - tfr[b.tf] || a.sym.localeCompare(b.sym));
+  return list;
+}
+
+// Slim page format (what scan.json on wedge-data holds and what the page draws).
+const r6 = x => x == null ? null : +(+x).toPrecision(6);
+function slim(S) {
+  return { at: S.at, coins: S.coins, list: S.list.map(h => { const o = { ...h, bars: h.chart.bars.map(b => b.map(r6)), start: h.chart.start,
+    lines: { tA: [h.lines.trigA[0], r6(h.lines.trigA[1])], tB: [h.lines.trigB[0], r6(h.lines.trigB[1])], oA: [h.lines.outA[0], r6(h.lines.outA[1])], oB: [h.lines.outB[0], r6(h.lines.outB[1])] } };
+    delete o.chart; return o; }) };
+}
+// OKX candle rows (newest first) -> closed candles, oldest first.
+function toCandles(d) { const rows = d.filter(x => x[8] === '1').reverse();
+  return { time: rows.map(x => +x[0] / 1000), open: rows.map(x => +x[1]), high: rows.map(x => +x[2]), low: rows.map(x => +x[3]), close: rows.map(x => +x[4]), vol: rows.map(x => +x[5]) }; }
+function derFrom(fr, oi) {
+  const funding = fr && fr[0] ? +fr[0].fundingRate * 100 : null;
+  let oiChg = null; if (oi && oi.length >= 7) { const now = +oi[0][3], ago = +oi[6][3]; if (ago > 0) oiChg = (now / ago - 1) * 100; }
+  return { funding, oiChg };
+}
+module.exports = { scanAll, slim, toCandles, derFrom };
+
+window.WedgeCore=module.exports})()})();
+// In-browser "Refresh": pulls the last 300 closed 15m / 1H / 4H candles for every coin straight from the OKX public
+// API and runs the same scan code as the GitHub workflow (scan_core.js + wedge_lib.js, inlined by build_scanner_page.js).
+// Needs window.WedgeCore and window.WEDGE_UNIVERSE. OKX candle limit is 40 calls / 2 s; 4 workers stay under it.
+(function () {
+  var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+  async function get(url, tries) {
+    for (var t = 0; t < (tries || 3); t++) {
+      try { var j = await (await fetch(url, { cache: 'no-store' })).json(); if (j.code === '0') return j.data; } catch (e) {}
+      await sleep(900 * (t + 1));
+    }
+    return null;
+  }
+  window.WedgeScanNow = async function (onProgress) {
+    var C = window.WedgeCore, U = window.WEDGE_UNIVERSE, TF = ['15m', '1H', '4H'], jobs = [], D = {}, done = 0, bad = 0;
+    U.forEach(function (id) { TF.forEach(function (tf) { jobs.push([id, tf]); }); });
+    var next = 0;
+    async function worker() {
+      while (next < jobs.length) {
+        var jb = jobs[next++], id = jb[0], tf = jb[1], sym = id.split('-')[0];
+        var d = await get('https://www.okx.com/api/v5/market/candles?instId=' + id + '&bar=' + tf + '&limit=300');
+        if (d) { (D[sym] = D[sym] || {})[tf] = C.toCandles(d); } else bad++;
+        done++; onProgress('Fetching candles ' + done + ' / ' + jobs.length);
+        await sleep(160);
+      }
+    }
+    var at = Date.now();
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    if (!D.BTC || !D.BTC['4H']) throw new Error('could not load BTC candles from OKX');
+    onProgress('Finding wedges…'); await sleep(30);
+    var list = await C.scanAll(D, async function (s) {
+      var id = s + '-USDT-SWAP';
+      var fr = await get('https://www.okx.com/api/v5/public/funding-rate?instId=' + id, 2);
+      // OKX does not allow browser access to open-interest history, so this usually comes back empty -> check 5 shows "–"
+      var oi = await get('https://www.okx.com/api/v5/rubik/stat/contracts/open-interest-history?instId=' + id + '&period=4H&limit=8', 1);
+      return C.derFrom(fr, oi);
+    }, function (k, n) { onProgress('Funding check ' + k + ' / ' + n); });
+    var out = C.slim({ at: at, coins: Object.keys(D).length, list: list });
+    out.local = true; out.failed = bad;
+    return out;
+  };
+})();
+
 (function(){
   var DATA=[],META=null;
   var F={level:'ob',tf:'all',dir:'all',st:'all',q:''};
@@ -288,7 +694,26 @@ window.WEDGE_SRC="https://raw.githubusercontent.com/MRUFOLEGEND/mr-ufo-crypto-da
       conn.className='bias bias-bear';conn.textContent='Scan data unreachable';
     }).then(function(){btn.disabled=false;btn.textContent='Refresh';st.classList.add('flash');setTimeout(function(){st.classList.remove('flash')},1200)});
   }
-  if(window.WEDGE_EMBED){setData(window.WEDGE_EMBED)}else{btn.addEventListener('click',load);load()}
+  // Refresh = live scan in this browser, straight from OKX (same code as the workflow). Falls back to the saved scan.
+  function scan(){
+    if(!window.WedgeScanNow){load();return}
+    var t0=Date.now();btn.disabled=true;btn.textContent='Scanning…';st.className='rs';
+    conn.className='bias bias-neutral';conn.textContent='Live scan from OKX';
+    window.WedgeScanNow(function(msg){st.textContent=msg+' · '+Math.round((Date.now()-t0)/1000)+'s'}).then(function(j){
+      setData(j);var w=DATA.filter(function(h){return h.level==='WATCH'}).length;
+      st.className='rs ok';st.textContent='✓ Live scan done at '+new Date().toISOString().slice(11,19)+' UTC in '+Math.round((Date.now()-t0)/1000)+'s · '+DATA.length+' wedges · '+w+' watch'+(j.failed?' · '+j.failed+' candle sets failed':'');
+      conn.className='bias bias-bull';conn.textContent='Live · this device';
+    }).catch(function(e){
+      st.className='rs bad';st.textContent='✗ Live scan failed: '+e.message+'. '+(META?'Still showing the scan from '+iso(META.at)+'.':'');
+      conn.className='bias bias-bear';conn.textContent='OKX unreachable';
+    }).then(function(){btn.disabled=false;btn.textContent='Refresh';st.classList.add('flash');setTimeout(function(){st.classList.remove('flash')},1200)});
+  }
+  if(window.WEDGE_EMBED){setData(window.WEDGE_EMBED)}else{
+    btn.addEventListener('click',scan);
+    // open: show the saved scan at once; if it is more than 45 min old, start a live scan automatically
+    var b0=btn;load();
+    var chk=setInterval(function(){if(b0.disabled)return;clearInterval(chk);if(!META||(!META.local&&Date.now()-META.at>45*60000))scan()},300);
+  }
 })();
 
 </script>

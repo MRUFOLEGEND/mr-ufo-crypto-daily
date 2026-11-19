@@ -7,10 +7,8 @@ const fs = require('fs'), path = require('path');
 const arg = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const DATA_URL = 'https://raw.githubusercontent.com/MRUFOLEGEND/mr-ufo-crypto-daily/wedge-data/scan.json';
 const S = JSON.parse(fs.readFileSync(path.join(__dirname, 'live/scan.json'), 'utf8'));
-const r6 = x => x == null ? null : +(+x).toPrecision(6);
-const slim = { at: S.at, coins: S.coins, list: S.list.map(h => { const o = { ...h, bars: h.chart.bars.map(b => b.map(r6)), start: h.chart.start,
-  lines: { tA: [h.lines.trigA[0], r6(h.lines.trigA[1])], tB: [h.lines.trigB[0], r6(h.lines.trigB[1])], oA: [h.lines.outA[0], r6(h.lines.outA[1])], oB: [h.lines.outB[0], r6(h.lines.outB[1])] } };
-  delete o.chart; return o; }) };
+const { slim: toSlim } = require('./scan_core.js');
+const slim = toSlim(S);
 if (arg('--data')) { fs.writeFileSync(arg('--data'), JSON.stringify(slim)); console.log('wrote', arg('--data'), (JSON.stringify(slim).length / 1024).toFixed(0) + ' KB'); process.exit(0); }
 
 const pages = !!arg('--pages'), out = arg('--pages') || path.join(__dirname, 'wedge_scanner.html');
@@ -22,6 +20,15 @@ const css = fs.readFileSync(path.join(__dirname, 'brand.css'), 'utf8') + `
 .rs{font-size:14px;color:var(--dim);transition:background .4s}.rs.ok{color:var(--bull)}.rs.bad{color:var(--bear)}.rs.flash{background:var(--surface2)}
 `;
 const client = fs.readFileSync(path.join(__dirname, 'scanner_client.js'), 'utf8');
+// GitHub Pages version also carries the scan code itself, so Refresh can run a live scan in the browser.
+const rd = f => fs.readFileSync(path.join(__dirname, f), 'utf8');
+const live = pages ? `window.WEDGE_UNIVERSE=${JSON.stringify(JSON.parse(rd('universe.json')))};
+(function(){var module={exports:{}};
+${rd('wedge_lib.js')}
+var WL=module.exports;(function(){var module={exports:{}};var require=function(){return WL};
+${rd('scan_core.js')}
+window.WedgeCore=module.exports})()})();
+${rd('scan_browser.js')}` : '';
 const head = pages
   ? `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<title>Wedge Scanner</title>\n<link rel="icon" href="BASC.png">`
   : `<title>Wedge Scanner</title>\n<meta name="claude:viewport-fit-sides" content="cover">`;
@@ -40,7 +47,7 @@ ${pages ? '</head><body>' : ''}
 ${pages ? `  <section class="card">
     <div class="rbar"><button class="rbtn" id="refresh" type="button">Refresh</button><span class="bias bias-neutral" id="conn">Connecting…</span><span class="rs" id="rstatus" role="status" aria-live="polite">Loading the latest scan…</span></div>
   </section>
-  <div class="note" id="stale" hidden>The last scan is more than 45 minutes old. The scanner normally runs every 15 minutes, so the GitHub workflow may be stopped. Levels below can be out of date.</div>` : '  <button id="refresh" hidden></button><span id="conn" hidden></span><span id="rstatus" hidden></span>'}
+  <div class="note" id="stale" hidden>The saved scan is more than 45 minutes old (GitHub runs the background scan less often than planned). A live scan starts automatically; tap Refresh any time for a new one.</div>` : '  <button id="refresh" hidden></button><span id="conn" hidden></span><span id="rstatus" hidden></span>'}
   <section class="gates" id="tiles"></section>
 
   <div class="note">This is a <b>watch list, not a trade call</b>. A wedge on its own had no edge in the backtest (110 coins, 15m/1H/4H, 2024–2026). The order-block checklist is <b>not backtested</b> yet. Check every level on your own chart before acting.</div>
@@ -78,17 +85,18 @@ ${pages ? `  <section class="card">
       <p><b>2 · Volume:</b> last third of the wedge under 0.8× the first third. A triggered wedge also needs a break candle at 1.5× the wedge average.</p>
       <p><b>3 · Sweep:</b> a wick beyond the outer line by more than 0.1 ATR that closed back inside, in the last third of the wedge.</p>
       <p><b>4 · Divergence:</b> RSI(14) lower at the last swing high than at the one before, while price is higher (mirror for falling).</p>
-      <p><b>5 · Derivatives:</b> open interest up more than 3% over 24h, funding positive for a short idea and negative for a long idea. Only fetched for coins at a fresh order block.</p>
+      <p><b>5 · Derivatives:</b> open interest up more than 3% over 24h, funding positive for a short idea and negative for a long idea. Only fetched for coins at a fresh order block. OKX blocks open-interest data in the browser, so after a live Refresh this check usually shows –.</p>
       <p><b>6 · Context:</b> coin's 4H EMA50 below EMA200 for a short idea (above for long), and BTC 4H close on the same side of its EMA50.</p>
       <p><b>Plan:</b> trigger = next value of the trigger line. Stop = beyond the wedge extreme or the order-block edge, whichever is further, plus 0.25 ATR. Target 1 = 2R. "R to zone" = distance to the nearest opposite live 4H order block in R. Under 2R means skip.</p>
     </div>
   </section>
 
-  <footer>${pages ? 'A GitHub workflow rescans all coins every 15 minutes. Refresh loads the newest scan; it does not start a new one.' : 'Snapshot only: levels move with every candle, and this page does not update itself. Ask Claude to "refresh the wedge scanner" for new data.'} Wedges alone were backtested with no edge; the order-block filter is not backtested. Keep live risk at 0.5–1% per trade. Not financial advice.</footer>
+  <footer>${pages ? 'Refresh runs a live scan of all coins in your browser straight from OKX (about 30–60 s). A GitHub workflow also saves a background scan a few times a day.' : 'Snapshot only: levels move with every candle, and this page does not update itself. Ask Claude to "refresh the wedge scanner" for new data.'} Wedges alone were backtested with no edge; the order-block filter is not backtested. Keep live risk at 0.5–1% per trade. Not financial advice.</footer>
 </main>
 
 <script>
-${pages ? `window.WEDGE_SRC=${JSON.stringify(DATA_URL)};` : `window.WEDGE_EMBED=${JSON.stringify(slim)};`}
+${pages ? `window.WEDGE_SRC=${JSON.stringify(DATA_URL)};
+${live}` : `window.WEDGE_EMBED=${JSON.stringify(slim)};`}
 ${client}
 </script>
 ${pages ? '</body></html>' : ''}

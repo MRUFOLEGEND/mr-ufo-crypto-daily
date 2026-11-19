@@ -104,5 +104,24 @@
       conn.className='bias bias-bear';conn.textContent='Scan data unreachable';
     }).then(function(){btn.disabled=false;btn.textContent='Refresh';st.classList.add('flash');setTimeout(function(){st.classList.remove('flash')},1200)});
   }
-  if(window.WEDGE_EMBED){setData(window.WEDGE_EMBED)}else{btn.addEventListener('click',load);load()}
+  // Refresh = live scan in this browser, straight from OKX (same code as the workflow). Falls back to the saved scan.
+  function scan(){
+    if(!window.WedgeScanNow){load();return}
+    var t0=Date.now();btn.disabled=true;btn.textContent='Scanning…';st.className='rs';
+    conn.className='bias bias-neutral';conn.textContent='Live scan from OKX';
+    window.WedgeScanNow(function(msg){st.textContent=msg+' · '+Math.round((Date.now()-t0)/1000)+'s'}).then(function(j){
+      setData(j);var w=DATA.filter(function(h){return h.level==='WATCH'}).length;
+      st.className='rs ok';st.textContent='✓ Live scan done at '+new Date().toISOString().slice(11,19)+' UTC in '+Math.round((Date.now()-t0)/1000)+'s · '+DATA.length+' wedges · '+w+' watch'+(j.failed?' · '+j.failed+' candle sets failed':'');
+      conn.className='bias bias-bull';conn.textContent='Live · this device';
+    }).catch(function(e){
+      st.className='rs bad';st.textContent='✗ Live scan failed: '+e.message+'. '+(META?'Still showing the scan from '+iso(META.at)+'.':'');
+      conn.className='bias bias-bear';conn.textContent='OKX unreachable';
+    }).then(function(){btn.disabled=false;btn.textContent='Refresh';st.classList.add('flash');setTimeout(function(){st.classList.remove('flash')},1200)});
+  }
+  if(window.WEDGE_EMBED){setData(window.WEDGE_EMBED)}else{
+    btn.addEventListener('click',scan);
+    // open: show the saved scan at once; if it is more than 45 min old, start a live scan automatically
+    var b0=btn;load();
+    var chk=setInterval(function(){if(b0.disabled)return;clearInterval(chk);if(!META||(!META.local&&Date.now()-META.at>45*60000))scan()},300);
+  }
 })();
